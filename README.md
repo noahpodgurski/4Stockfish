@@ -1,15 +1,5 @@
-# meleelight
-Melee Light Platform Fighter
-
-![Starting Scene](https://raw.githubusercontent.com/amilajack/meleelight/master/screenshots/starting.png)
-![Gameplay Scene](https://raw.githubusercontent.com/amilajack/meleelight/master/screenshots/scene.png)
-
-Play Stable Build: http://ikneedata.com/meleelight
-
-Join the discussion on Discord: https://discord.gg/qagFayt
-
-Smashboards Thread: https://smashboards.com/threads/melee-light-browser-based-melee-clone-play-the-beta.439646/
-
+# 4Stockfish
+Chess-like Melee engine
 
 ## Table of Contents
 1. [Getting Started](#getting-started)
@@ -18,8 +8,6 @@ Smashboards Thread: https://smashboards.com/threads/melee-light-browser-based-me
   2. [Commands](#commands)
   3. [Project layout](#project-layout)
 3. [FAQ](#faq)
-
-
 
 ## Development
 

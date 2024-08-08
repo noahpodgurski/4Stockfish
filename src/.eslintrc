@@ -1,5 +1,5 @@
 {
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
   "env": {
     "browser": true,
     "node": true,
@@ -26,6 +26,8 @@
     "prefer-arrow-callback": ["error"],
     "no-confusing-arrow": ["error"],
     "no-dupe-class-members": ["error"],
-    "eqeqeq": ["error", "always"]
+    "eqeqeq": ["error", "always"],
+    "flowtype-errors/show-errors": 0,
+    "indent": 0
   }
 }

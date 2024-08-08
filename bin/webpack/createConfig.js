@@ -1,147 +1,81 @@
-function createConfig(options) {
-  const path = require("path");
-  const webpack = require("webpack");
-  const WebpackNotifierPlugin = require("webpack-notifier");
-  var HappyPack = require('happypack');
+const path = require("path");
+const webpack = require("webpack");
+const WebpackNotifierPlugin = require("webpack-notifier");
+const { GenerateSW } = require('workbox-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 
-  var SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
+function createConfig(options) {
   const { isMinified } = options;
 
   const srcDir = path.join(process.cwd(), "src");
   const distDir = path.join(process.cwd(), "dist");
   const distJsDir = path.join(distDir, "js");
-  const min = isMinified ? ".min": "";
+  const min = isMinified ? ".min" : "";
 
   /// PLUGINS ///
-
   const plugins = [
-    // Growl notifications
     new WebpackNotifierPlugin(),
+    new CleanWebpackPlugin(),
+    new webpack.DefinePlugin({
+      "process.env.NODE_ENV": JSON.stringify(isMinified ? 'production' : 'development')
+    }),
+    new GenerateSW({
+      cacheId: 'meleelight',
+      swDest: 'service-worker.js',
+      runtimeCaching: [{
+        urlPattern: /.*/,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'runtime-cache',
+          expiration: {
+            maxEntries: 50,
+          },
+        },
+      }],
+      skipWaiting: true,
+    }),
+    new ESLintPlugin({
+      extensions: ['js', 'jsx'],
+      exclude: 'node_modules',
+      emitError: true,
+      emitWarning: true,
+    })
   ];
 
-  if (isMinified) {
-    // Allow production-only code
-    plugins.push(
-      new webpack.DefinePlugin({
-        "process.env": {
-          "NODE_ENV": '"prod"'
-        }
-      })
-    );
-
-    // Minify JS
-    plugins.push(
-      new webpack.optimize.UglifyJsPlugin({
-        compress: {
-          warnings: false,
-        },
-      })
-    );
-
-    // Give the most commonly used chunks lower IDs
-    plugins.push(
-      new webpack.optimize.OccurenceOrderPlugin(true)
-    );
-    plugins.push(
-        new SWPrecacheWebpackPlugin(
-            {
-              cacheId: 'meleelight',
-              filename: 'service-worker.js',
-              runtimeCaching: [{
-                handler: 'cacheFirst',
-                urlPattern: /.*/,
-              }],
-            }
-        )
-    );
-    plugins.push(
-        new HappyPack({
-          // loaders is the only required parameter:
-          loaders: [
-            {
-              loader: 'babel-loader',
-              query: {
-
-                presets: ['es2015'],
-                plugins: ['transform-flow-strip-types','transform-class-properties']
-              }
-            }
-          ],
-          threads: 8
-        })
-    );
-  }
-  else {
-    // Allow dev-only code
-    plugins.push(
-      new webpack.DefinePlugin({
-        "process.env": {
-          "NODE_ENV": '"dev"'
-        }
-      })
-    );
-
-    plugins.push(
-        new SWPrecacheWebpackPlugin(
-            {
-              cacheId: 'meleelight',
-              filename: 'service-worker.js',
-              runtimeCaching: [{
-                handler: 'cacheFirst',
-                urlPattern: /.*/,
-              }]
-            }
-        )
-    );
-    plugins.push(
-        new HappyPack({
-          // loaders is the only required parameter:
-          loaders: [
-            {
-              loader: 'babel-loader',
-              query: {
-
-                presets: ['es2015'],
-                plugins: ['transform-flow-strip-types','transform-class-properties']
-              }
-            }
-          ],
-          threads:8
-
-        })
-    );
+  if (!isMinified) {
+    plugins.push(new webpack.HotModuleReplacementPlugin());
   }
 
-  /// MODULES (LOADERS) ///
-
-  const modules = {
-    preLoaders: [{
-      // ESLint
+  /// MODULE RULES ///
+  const rules = [
+    {
       test: /\.jsx?$/,
-      loader: "eslint-loader",
-      exclude: [
-        /node_modules/,
+      exclude: /node_modules/,
+      use: [
+        'thread-loader',
+        {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+            plugins: [
+              '@babel/plugin-transform-flow-strip-types',
+              '@babel/plugin-proposal-class-properties',
+            ],
+          },
+        }
       ],
-    }],
-
-    loaders: [{
-      // Babel
-      test: /\.jsx?$/,
-      exclude: [
-        /node_modules/,
-      ],
-      loader: "happypack/loader",
-    }],
-  };
-
-
+    },
+  ];
 
   /// CONFIG ///
-
   return {
-    cache: true,
-    debug: !isMinified,
-    devtool: isMinified ? undefined: "eval",
+    mode: isMinified ? 'production' : 'development',
+    cache: {
+      type: 'filesystem',
+    },
+    devtool: isMinified ? false : 'eval-source-map',
     entry: {
       index: path.join(srcDir, "index"),
       main: path.join(srcDir, "main"),
@@ -151,15 +85,33 @@ function createConfig(options) {
       filename: `[name]${min}.js`,
     },
     resolve: {
-      extensions: ["", ".js"],
-      root: [srcDir],
+      extensions: [".js"],
+      modules: [srcDir, "node_modules"],
     },
-    eslint: {
-      emitError: true,
-      emitWarning: true,
+    module: {
+      rules: rules,
     },
-    module: modules,
+    optimization: isMinified ? {
+      minimize: true,
+      minimizer: [new TerserPlugin({
+        parallel: true,
+        terserOptions: {
+          compress: {
+            warnings: false,
+          },
+          format: {
+            comments: false,
+          },
+        },
+        extractComments: false,
+      })],
+    } : {},
     plugins: plugins,
+    devServer: isMinified ? undefined : {
+      contentBase: distDir,
+      hot: true,
+      open: true,
+    }
   };
 }
 

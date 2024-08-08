@@ -4,7 +4,7 @@ const distJsPath = path.join(process.cwd(), "dist/js");
 
 module.exports = {
   cache: true,
-  debug: false,
+  mode: 'production',
   entry: [path.join(srcPath, "animations.js")],
   output: {
     path: distJsPath,
@@ -12,6 +12,24 @@ module.exports = {
   },
   resolve: {
     extensions: ["", ".js"],
-    root: [srcPath],
+    modules: [srcPath],
   },
 };
+
+
+
+// module.exports = {
+//   cache: {
+//     type: 'filesystem',
+//   },
+//   mode: 'production',
+//   entry: path.join(srcPath, "animations.js"),
+//   output: {
+//     path: distJsPath,
+//     filename: "animations.js",
+//   },
+//   resolve: {
+//     extensions: [".js"],
+//     modules: [srcPath, 'node_modules'],
+//   },
+// };

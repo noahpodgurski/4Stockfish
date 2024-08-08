@@ -1,5 +1,5 @@
 {
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
   "env": {
     "browser": true,
     "node": true,
@@ -8,15 +8,12 @@
   },
   "rules": {
     "flowtype-errors/show-errors": 2,
-    // Style / cleanliness
     "indent": ["error", 2, { "SwitchCase": 1 }],
     "no-var": ["error"],
     "arrow-parens": ["error"],
     "no-duplicate-imports": ["error"],
     "one-var": ["error", "never"],
     "camelcase": ["error"],
-
-    // Logic / errors / performance
     "semi": ["error", "always"],
     "no-undef": ["error"],
     "prefer-const": ["error"],
