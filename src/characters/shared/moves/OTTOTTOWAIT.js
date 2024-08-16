@@ -79,7 +79,7 @@ export default {
       return true;
     }
     else if (Math.abs(input[p][0].lsX) > 0.6){
-      actionStates[characterSelections[p]].WALK.init(p,true,input);
+      actionStates[characterSelections[p]].WALK.init(p,input, true);
       return true;
     }
     else {

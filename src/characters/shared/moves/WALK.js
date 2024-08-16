@@ -12,7 +12,7 @@ export default {
   name : "WALK",
   canEdgeCancel : true,
   canBeGrabbed : true,
-  init : function(p,addInitV,input){
+  init : function(p,input,addInitV){
     player[p].actionState = "WALK";
     player[p].timer = 1;
     if (addInitV){

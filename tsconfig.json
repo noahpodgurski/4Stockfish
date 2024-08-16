@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,  // Enable incremental compilation
+    "tsBuildInfoFile": "./.tsbuildinfo",  // Enable caching
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "paths": {
+      "*": ["*"]
+    },
+    "types": ["node"]
+  },
+  // "files": [
+  "include": [
+    "src/**/*.ts",
+    "src/index.d.ts",
+    // "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "./node_modules", 
+    "./node_modules/*", 
+    "./node_modules/typescript/lib/lib.dom.d.ts", 
+    "dist"
+  ]
+}

@@ -14,7 +14,7 @@ export default {
     player[p].phys.shielding = true;
     player[p].phys.shieldPosition = new Vec2D(0,0);
     player[p].phys.powerShielded = false;
-    shieldSize(p,true,input);
+    shieldSize(p,input, true);
     if (Math.max(input[p][0].lA,input[p][0].rA) === 1){
       player[p].phys.powerShieldActive = true;
       player[p].phys.powerShieldReflectActive = true;
@@ -28,7 +28,7 @@ export default {
   main : function(p,input){
     if (player[p].hit.shieldstun > 0){
       reduceByTraction(p,false);
-      shieldTilt(p,true,input);
+      shieldTilt(p,input, true);
     }
     else {
       player[p].timer++;

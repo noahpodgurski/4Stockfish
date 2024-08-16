@@ -93,7 +93,7 @@ export default {
         return true;
       }
       else if (Math.abs(input[p][0].lsX) > 0.3){
-        WALK.init(p,true,input);
+        WALK.init(p,input, true);
         return true;
       }
       else {

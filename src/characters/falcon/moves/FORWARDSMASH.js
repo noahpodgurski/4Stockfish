@@ -123,7 +123,7 @@ export default {
         return true;
       }
       else if (input[p][0].lsX*player[p].phys.face > 0.3 && Math.abs(input[p][0].lsX) > input[p][0].lsY*-1){
-        WALK.init(p,true,input);
+        WALK.init(p,input, true);
         return true;
       }
       else {

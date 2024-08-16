@@ -81,15 +81,15 @@ catch(err) {
 
 
 // Checkout the download branch
-try {
-  console.log("Switching to the download branch...");
-  cmd("git checkout download");
-}
-catch(err) {
-  printError(err, "Unable to checkout branch 'download'!");
-  removeTmpDir();
-  process.exit();
-}
+// try {
+//   console.log("Switching to the download branch...");
+//   cmd("git checkout download");
+// }
+// catch(err) {
+//   printError(err, "Unable to checkout branch 'download'!");
+//   removeTmpDir();
+//   process.exit();
+// }
 
 
 // Copy the files out

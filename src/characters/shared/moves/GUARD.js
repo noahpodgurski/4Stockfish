@@ -15,7 +15,7 @@ export default {
   main : function(p,input){
     if (player[p].hit.shieldstun > 0){
       reduceByTraction(p,false);
-      shieldTilt(p,true,input);
+      shieldTilt(p,input, true);
     }
     else {
       player[p].timer++;

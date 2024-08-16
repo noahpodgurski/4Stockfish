@@ -15,7 +15,6 @@
     "camelcase": ["error"],
 
     // Logic / errors / performance
-    "semi": ["error", "always"],
     "no-undef": ["error"],
     "prefer-const": ["error"],
     "no-const-assign": ["error"],
@@ -28,6 +27,8 @@
     "no-dupe-class-members": ["error"],
     "eqeqeq": ["error", "always"],
     "flowtype-errors/show-errors": 0,
-    "indent": 0
+    "indent": 0,
+    "semi": 0,
+    "no-implicit-any": 0
   }
 }

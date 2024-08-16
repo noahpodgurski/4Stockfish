@@ -37,7 +37,7 @@ function createConfig(options) {
       skipWaiting: true,
     }),
     new ESLintPlugin({
-      extensions: ['js', 'jsx'],
+      extensions: ['js', 'jsx', 'ts', 'tsx'],
       exclude: 'node_modules',
       emitError: true,
       emitWarning: true,
@@ -50,6 +50,11 @@ function createConfig(options) {
 
   /// MODULE RULES ///
   const rules = [
+    {
+      test: /\.tsx?$/,
+      exclude: /node_modules/,
+      use: 'ts-loader'
+    },
     {
       test: /\.jsx?$/,
       exclude: /node_modules/,
@@ -77,15 +82,18 @@ function createConfig(options) {
     },
     devtool: isMinified ? false : 'eval-source-map',
     entry: {
-      index: path.join(srcDir, "index"),
-      main: path.join(srcDir, "main"),
+      index: path.join(srcDir, "index.ts"),
+      main: path.join(srcDir, "main.ts"),
     },
     output: {
       path: distJsDir,
       filename: `[name]${min}.js`,
     },
     resolve: {
-      extensions: [".js"],
+      alias: {
+        src: path.resolve(__dirname, 'src')
+      },
+      extensions: [".js", ".jsx", ".ts", ".tsx"],
       modules: [srcDir, "node_modules"],
     },
     module: {

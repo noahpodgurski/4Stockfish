@@ -321,7 +321,7 @@ export function saveNetworkInputs(playerSlot, inputData) {
   //playerInputBuffer[playerSlot][0] = inputData;
 }
 
-export function retrieveNetworkInputs(playerSlot) {
+export function retrieveNetworkInputs(playerSlot, controllerIndex) {
   return playerInputBuffer[playerSlot][0];
 }
 

@@ -35,8 +35,8 @@ function byteToTrigger ( byte ) {
 }
 
 function inputToBytes (input) {
-  const byte0 = boolsToByte(input.a, input.b, input.x, input.y, input.s, input.z, input.l, input.r);
-  const byte1 = boolsToByte(input.du, input.dr, input.dd, input.dl, false, false, false, false);
+  const byte0 = booleansToByte(input.a, input.b, input.x, input.y, input.s, input.z, input.l, input.r);
+  const byte1 = booleansToByte(input.du, input.dr, input.dd, input.dl, false, false, false, false);
   const byte2 = axisToByte(input.lsX);
   const byte3 = axisToByte(input.lsY);
   const byte4 = axisToByte(input.csX);
@@ -49,20 +49,20 @@ function inputToBytes (input) {
 function bytesToInput( bytes ){
   const input = new inputData ();
 
-  const bools0 = byteToBools(bytes[0]);
-  input.a = bools0[0];
-  input.b = bools0[1];
-  input.x = bools0[2];
-  input.y = bools0[3];
-  input.s = bools0[4];
-  input.z = bools0[5];
-  input.l = bools0[6];
-  input.r = bools0[7];
-  const bools1 = byteToBools(bytes[1]);
-  input.du = bools1[0];
-  input.dr = bools1[1];
-  input.dd = bools1[2];
-  input.dl = bools1[3];
+  const booleans0 = byteToBools(bytes[0]);
+  input.a =booleans0[0];
+  input.b =booleans0[1];
+  input.x =booleans0[2];
+  input.y =booleans0[3];
+  input.s =booleans0[4];
+  input.z =booleans0[5];
+  input.l =booleans0[6];
+  input.r =booleans0[7];
+  const booleans1 = byteToBools(bytes[1]);
+  input.du =booleans1[0];
+  input.dr =booleans1[1];
+  input.dd =booleans1[2];
+  input.dl =booleans1[3];
   input.lsX = byteToAxis(bytes[2]);
   input.lsY = byteToAxis(bytes[3]);
   input.csX = byteToAxis(bytes[4]);
@@ -73,7 +73,7 @@ function bytesToInput( bytes ){
   return input;
 }
 
-function boolsToByte( b0, b1, b2, b3, b4, b5, b6, b7) {
+function booleansToByte( b0, b1, b2, b3, b4, b5, b6, b7) {
   return b0?128:0 + b1?64:0 + b2?32:0 + b3?16:0 + b4?8:0 + b5?4:0 + b6?2:0 + b7?1:0;
 }
 

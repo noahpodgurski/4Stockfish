@@ -5,7 +5,7 @@ export default {
   canEdgeCancel : true,
   disableTeeter : true,
   canBeGrabbed : true,
-  init : function(p,type,input){
+  init : function(p,input,type){
     player[p].actionState = "KNEEBEND";
     player[p].timer = 0;
     player[p].phys.jumpType = 1;
