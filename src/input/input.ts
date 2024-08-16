@@ -11,7 +11,6 @@ import $ from 'jquery';
 
 import type {GamepadInfo, StickCardinals} from "./gamepad/gamepadInfo";
 import {replayActive, retrieveReplayInputs} from "../main/replay";
-import {retrieveNetworkInputs} from "../main/multiplayer/streamclient";
 import { Button, Gamepad } from "./gamepad/gamepad";
 
 export type Input = { a :boolean
@@ -131,16 +130,12 @@ export function pollInputs ( gameMode : number, frameByFrame :boolean, controlle
     }else if (controllerInfo === "keyboard") { // keyboard controls
       input = pollKeyboardInputs(gameMode, frameByFrame, keys);
     // } else if (playertype === 2 || controllerInfo === 99) { // np: online play?
-    //   input = pollNetworkInputs(gameMode, controllerInfo, playerSlot, controllerIndex, frameByFrame);
     }else if (playertype === 0) {
       input = pollGamepadInputs(gameMode, controllerInfo, playerSlot, controllerIndex, frameByFrame);
     }
     return input;
   }
 
-function pollNetworkInputs(gameMode, controllerType, playerSlot, controllerIndex, frameByFrame) {
-  return retrieveNetworkInputs(playerSlot,controllerIndex);
-}
 
 function pollReplayInputs(gameMode, controllerType, playerSlot, controllerIndex, frameByFrame) {
   return retrieveReplayInputs(playerSlot,controllerIndex);

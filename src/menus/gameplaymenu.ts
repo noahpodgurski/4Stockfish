@@ -4,7 +4,6 @@ import {player, changeGamemode, setCookie, ports, bg1, fg1, clearScreen,bg2, shi
 import {gameSettings} from "settings";
 import {sounds} from "main/sfx";
 import {stickHold, stickHoldEach, increaseStick, resetStick} from "menus/menu";
-import {meHost} from "../main/multiplayer/streamclient";
 /* eslint-disable */
 
 export let menuIndex = [0,0];
@@ -25,14 +24,14 @@ export function gameplayMenuControls (i, input){
   if (input[i][0].b && !input[i][1].b) {
     sounds.menuBack.play();
     input[i][1].b = true;
-    if(meHost) {
-      var keys = Object.keys(gameSettings);
-      for (var j = 0; j < keys.length; j++) {
-        setCookie(keys[j], gameSettings[keys[j]], 36500);
-      }
-    } else{
-      alert("Settings not saved because you joined a host. Reload the game if this is a mistake");
-    }
+    // if(meHost) {
+    //   var keys = Object.keys(gameSettings);
+    //   for (var j = 0; j < keys.length; j++) {
+    //     setCookie(keys[j], gameSettings[keys[j]], 36500);
+    //   }
+    // } else{
+    //   alert("Settings not saved because you joined a host. Reload the game if this is a mistake");
+    // }
     changeGamemode(1);
   } else if (input[i][0].a && !input[i][1].a) {
     sounds.menuSelect.play();

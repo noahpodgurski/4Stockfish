@@ -1,17 +1,18 @@
 const path = require("path");
 const srcPath = path.join(process.cwd(), "src");
 const distJsPath = path.join(process.cwd(), "dist/js");
+const distAnimationsPath = path.join(process.cwd(), "dist/animations");
 
 module.exports = {
   cache: true,
   mode: 'production',
-  entry: [path.join(srcPath, "animations.js")],
+  entry: [path.join(srcPath, "animations.ts")],
   output: {
-    path: distJsPath,
+    path: distAnimationsPath,
     filename: "animations.js",
   },
   resolve: {
-    extensions: ["", ".js"],
+    extensions: ["", ".js", ".ts"],
     modules: [srcPath],
   },
 };

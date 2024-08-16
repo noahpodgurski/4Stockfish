@@ -200,7 +200,7 @@ export function shieldTilt (p,shieldstun,input){
     player[p].charAttributes.shieldOffset[1] / 4.5));
 }
 
-export function reduceByTraction (p,applyDouble){
+export function reduceByTraction (p,applyDouble=false){
   if (player[p].phys.cVel.x > 0){
     if (applyDouble && player[p].phys.cVel.x > player[p].charAttributes.maxWalk){
       player[p].phys.cVel.x -= player[p].charAttributes.traction*2;
@@ -296,7 +296,7 @@ export function shieldDepletion (p,input){
       face: player[p].phys.face
     });
     sounds.shieldbreak.play();
-    actionStates[characterSelections[p]].SHIELDBREAKFALL.init(p,input);
+    actionStates[characterSelections[p]].SHIELDBREAKFALL.init?.(p,input);
   }
 }
 
@@ -392,18 +392,18 @@ export function checkForIASA(p,input,isAerial): boolean {
       const a = checkForAerials(p,input);
       if ((checkForDoubleJump(p, input) && (!player[p].phys.doubleJumped)) || (checkForMultiJump(p, input) && player[p].phys.jumpsUsed < 5 && player[p].charAttributes.multiJump)){
         if (input[p][0].lsX*player[p].phys.face < -0.3){
-          JUMPAERIALB.init(p,input);
+          JUMPAERIALB.init?.(p,input);
         } else {
-          JUMPAERIALF.init(p,input);
+          JUMPAERIALF.init?.(p,input);
         }
         return true;
         } else if (a[0]) {
           if (characterSelections[p] == 0) {
-            MARTHMOVES[a[1]].init(p,input);
+            MARTHMOVES[a[1]].init?.(p,input);
           } else if (characterSelections[p] == 1) {
-            PUFFMOVES[a[1]].init(p,input);
+            PUFFMOVES[a[1]].init?.(p,input);
           } else if (characterSelections[p] == 2) {
-            FOXMOVES[a[1]].init(p,input);
+            FOXMOVES[a[1]].init?.(p,input);
           }
           return true;
         } else {
@@ -529,25 +529,25 @@ export function turboAirborneInterrupt (p,input){
   var b = checkForSpecials(p,input);
   if (a[0] && a[1] != player[p].actionState) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]][a[1] as string].init(p,input);
+    actionStates[characterSelections[p]][a[1] as string].init?.(p,input);
     return true;
   } else if ((input[p][0].l && !input[p][1].l) || (input[p][0].r && !input[p][1].r)) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].ESCAPEAIR.init(p,input);
+    actionStates[characterSelections[p]].ESCAPEAIR.init?.(p,input);
     return true;
   } else if (((input[p][0].x && !input[p][1].x) || (input[p][0].y && !input[p][1].y) ||
       (input[p][0].lsY > 0.7 && input[p][1].lsY <= 0.7)) && (!player[p].phys.doubleJumped ||
       (player[p].phys.jumpsUsed < 5 && player[p].charAttributes.multiJump))) {
     turnOffHitboxes(p);
     if (input[p][0].lsX * player[p].phys.face < -0.3) {
-      actionStates[characterSelections[p]].JUMPAERIALB.init(p,input);
+      actionStates[characterSelections[p]].JUMPAERIALB.init?.(p,input);
     } else {
-      actionStates[characterSelections[p]].JUMPAERIALF.init(p,input);
+      actionStates[characterSelections[p]].JUMPAERIALF.init?.(p,input);
     }
     return true;
   } else if (b[0] && b[1] != player[p].actionState) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]][b[1] as string].init(p,input);
+    actionStates[characterSelections[p]][b[1] as string].init?.(p,input);
     return true;
   } else {
     return false;
@@ -561,48 +561,48 @@ export function turboGroundedInterrupt (p,input){
   var j = checkForJump(p,input);
   if (j[0]) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].KNEEBEND.initWithType(p, input, j[1]);
+    actionStates[characterSelections[p]].KNEEBEND.initWithType?.(p, input, j[1]);
     return true;
   } else if (input[p][0].l || input[p][0].r) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].GUARDON.init(p,input);
+    actionStates[characterSelections[p]].GUARDON.init?.(p,input);
     return true;
   } else if (input[p][0].lA > 0 || input[p][0].rA > 0) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].GUARDON.init(p,input);
+    actionStates[characterSelections[p]].GUARDON.init?.(p,input);
     return true;
   } else if (b[0] && b[1] != player[p].actionState) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]][b[1] as string].init(p,input);
+    actionStates[characterSelections[p]][b[1] as string].init?.(p,input);
     return true;
   } else if (s[0] && s[1] != player[p].actionState) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]][s[1] as string].init(p,input);
+    actionStates[characterSelections[p]][s[1] as string].init?.(p,input);
     return true;
   } else if (t[0] && t[1] != player[p].actionState) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]][t[1] as string].init(p,input);
+    actionStates[characterSelections[p]][t[1] as string].init?.(p,input);
     return true;
   } else if (checkForSquat(p,input)) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].SQUAT.init(p,input);
+    actionStates[characterSelections[p]].SQUAT.init?.(p,input);
     return true;
   } else if (checkForDash(p,input)) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].DASH.init(p,input);
+    actionStates[characterSelections[p]].DASH.init?.(p,input);
     return true;
   } else if (checkForSmashTurn(p,input)) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].SMASHTURN.init(p,input);
+    actionStates[characterSelections[p]].SMASHTURN.init?.(p,input);
     return true;
   } else if (checkForTiltTurn(p,input)) {
     turnOffHitboxes(p);
     player[p].phys.dashbuffer = tiltTurnDashBuffer(p,input);
-    actionStates[characterSelections[p]].TILTTURN.init(p,input);
+    actionStates[characterSelections[p]].TILTTURN.init?.(p,input);
     return true;
   } else if (Math.abs(input[p][0].lsX) > 0.3) {
     turnOffHitboxes(p);
-    actionStates[characterSelections[p]].WALK.init(p, input, true);
+    actionStates[characterSelections[p]].WALK.init?.(p, input, true);
     return true;
   } else {
     return false;

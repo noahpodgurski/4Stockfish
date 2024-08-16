@@ -14,7 +14,7 @@
     "no-duplicate-imports": ["error"],
     "one-var": ["error", "never"],
     "camelcase": ["error"],
-    "semi": ["error", "always"],
+    "semi": 0,
     "no-undef": ["error"],
     "prefer-const": ["error"],
     "no-const-assign": ["error"],
@@ -26,7 +26,7 @@
     "no-confusing-arrow": ["error"],
     "no-dupe-class-members": ["error"],
     "eqeqeq": ["error", "always"],
-    "no-implicit-any": 0
+    "no-implicit-any": 0,
   },
   "plugins": [
     "flowtype-errors"

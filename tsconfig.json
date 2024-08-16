@@ -3,17 +3,19 @@
     "target": "es6",
     "module": "commonjs",
     "strict": true,
+    "sourceMap": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,  // Enable incremental compilation
     "tsBuildInfoFile": "./.tsbuildinfo",  // Enable caching
-    "outDir": "./dist",
+    "outDir": "./tsc",
     "baseUrl": "./src",
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "paths": {
-      "*": ["*"]
+      "*": ["*"],
+      "characters/*": ["tsc/characters/*"]
     },
     "types": ["node"]
   },
@@ -27,6 +29,6 @@
     "./node_modules", 
     "./node_modules/*", 
     "./node_modules/typescript/lib/lib.dom.d.ts", 
-    "dist"
+    "tsc"
   ]
 }

@@ -115,11 +115,11 @@ export function drawStageInit() {
 
   fg1.strokeStyle = "#E7A44C";
   fg1.lineWidth = 2;
-  for (let i=0;i<activeStage.ledge.length;i++){
+  for (let i = 0; i < activeStage.ledge.length; i++) {
     const e: Ledge = activeStage.ledge[i];
     const pA: Vec2D = activeStage[e[0]][e[1]][e[2]] as Vec2D;
-    const pB: Vec2D = activeStage[e[0]][e[1]][1-e[2]] as Vec2D;
-    const ang = Math.atan2((pB.y - pA.y) , (pB.x - pA.x));
+    const pB: Vec2D = activeStage[e[0]][e[1]][1 - e[2]] as Vec2D;
+    const ang = Math.atan2((pB.y - pA.y), (pB.x - pA.x));
     const magnitude = euclideanDist(pA, pB);
     const length = Math.min(0.4 * magnitude, 20 / activeStage.scale);
     const pC = new Vec2D(pA.x + length * Math.cos(ang), pA.y + length * Math.sin(ang));
@@ -129,7 +129,7 @@ export function drawStageInit() {
     fg1.closePath();
     fg1.stroke();
   }
-};
+}
 
 const swirlTimer = 0;
 const swirlSwitch = false;

@@ -1,20 +1,20 @@
 // @flow
 /*eslint indent:0*/
 
-import {Vec2D} from "../../main/util/Vec2D.js";
-import {deepCopyObject, deepCopyArray} from "../../main/util/deepCopy.js";
-import {setUsingCustomControls, currentPlayers, setControllerReset, mType} from "../../main/main.js";
-import {updateControllerMenu, setCustomInUse} from "../../menus/controllermenu.js";
-import {nullGamepadInfo} from "./gamepadInfo.js";
-import {getGamepad} from "./gamepad.js";
-import {setCustomGamepadInfo, getCustomGamepadInfo, storeCustomGamepadInfo} from "./gamepads/custom.js";
-import {getGamepadNameAndInfo} from "./findGamepadInfo.js";
-import {sounds} from "../../main/sfx.js";
+import {Vec2D} from "../../main/util/Vec2D";
+import {deepCopyObject, deepCopyArray} from "../../main/util/deepCopy";
+import {setUsingCustomControls, currentPlayers, setControllerReset, mType} from "../../main/main";
+import {updateControllerMenu, setCustomInUse} from "../../menus/controllermenu";
+import {nullGamepadInfo} from "./gamepadInfo";
+import {getGamepad} from "./gamepad";
+import {setCustomGamepadInfo, getCustomGamepadInfo, storeCustomGamepadInfo} from "./gamepads/custom";
+import {getGamepadNameAndInfo} from "./findGamepadInfo";
+import {sounds} from "../../main/sfx";
 
 // eslint-disable-next-line no-duplicate-imports
-import type {ButtonInfo, StickInfo, StickCardinals, TriggerInfo, DPadInfo, GamepadInfo} from "./gamepadInfo.js";
+import type {ButtonInfo, StickInfo, StickCardinals, TriggerInfo, DPadInfo, GamepadInfo} from "./gamepadInfo";
 // eslint-disable-next-line no-duplicate-imports
-import type {Gamepad, Button} from "./gamepad.js";
+import type {Gamepad, Button} from "./gamepad";
 
 
 const calibrationInProgress = [false, false, false, false];

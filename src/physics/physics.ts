@@ -97,9 +97,9 @@ function dealWithWallCollision(i: number, newPosition: Vec2D, pt: number, wallTy
   if (inDamageState && player[i].phys.techTimer > 0) {
     player[i].phys.face = sign;
     if (input[i][0].x || input[i][0].y || input[i][0].lsY > 0.7) {
-      actionStates[characterSelections[i]].WALLTECHJUMP.init(i, input);
+      actionStates[characterSelections[i]].WALLTECHJUMP.init?.(i, input);
     } else {
-      actionStates[characterSelections[i]].WALLTECH.init(i, input);
+      actionStates[characterSelections[i]].WALLTECH.init?.(i, input);
     }
   }
   else if (inDamageState && Math.sign(player[i].phys.kVel) !== sign && player[i].hit.hitlag === 0 && Math.pow(player[i].phys.kVel.x, 2) + Math.pow(player[i].phys.kVel.y, 2) >= 2.25) {
@@ -110,7 +110,7 @@ function dealWithWallCollision(i: number, newPosition: Vec2D, pt: number, wallTy
       face: sign,
       f: wallNormal
     });
-    actionStates[characterSelections[i]].WALLDAMAGE.initWithNormal(i,input, wallNormal);
+    actionStates[characterSelections[i]].WALLDAMAGE.init?.WithNormal(i,input, wallNormal);
   }
   else if (player[i].hit.hitlag === 0) {
     if (damageType !== undefined && damageType !== null
@@ -134,7 +134,7 @@ function dealWithWallCollision(i: number, newPosition: Vec2D, pt: number, wallTy
           player[i].charAttributes.walljump) {
         player[i].phys.wallJumpTimer = 254;
         player[i].phys.face = sign;
-        actionStates[characterSelections[i]].WALLJUMP.init(i, input);
+        actionStates[characterSelections[i]].WALLJUMP.init?.(i, input);
       } else {
         player[i].phys.wallJumpTimer++;
       }
@@ -216,7 +216,7 @@ function fallOffGround(i: number, side: string
     else {
       player[i].phys.cVel.x = 0;
       player[i].phys.pos.x = groundEdgePosition.x + sign * additionalOffset;
-      actionStates[characterSelections[i]].OTTOTTO.init(i,input);
+      actionStates[characterSelections[i]].OTTOTTO.init?.(i,input);
     }
   }
   else if (player[i].phys.cVel.x === 0
@@ -361,7 +361,7 @@ function dealWithCeilingCollision(i: number, newPosition: Vec2D
   else if (actionStates[characterSelections[i]][player[i].actionState].headBonk && player[i].phys.cVel.y + player[i].phys.kVel.y > 0) {
     if (player[i].hit.hitstun > 0) {
       if (player[i].phys.techTimer > 0) {
-        actionStates[characterSelections[i]].TECHU.init(i, input);
+        actionStates[characterSelections[i]].TECHU.init?.(i, input);
       } else {
         drawVfx({
           name: "ceilingBounce",
@@ -370,10 +370,10 @@ function dealWithCeilingCollision(i: number, newPosition: Vec2D
           f: ceilingNormal
         });
         sounds.bounce.play();
-        actionStates[characterSelections[i]].STOPCEIL.initWithNormal(i, input, ceilingNormal);
+        actionStates[characterSelections[i]].STOPCEIL.init?.WithNormal(i, input, ceilingNormal);
       }
     } else {
-      actionStates[characterSelections[i]].STOPCEIL.init(i, input);
+      actionStates[characterSelections[i]].STOPCEIL.init?.(i, input);
     }
   }
 };
@@ -421,9 +421,9 @@ export function land(i: number, newPosition: Vec2D
     case 0:
       // LANDING / NIL
       if (player[i].phys.cVel.y >= -1) {
-        actionStates[characterSelections[i]].WAIT.init(i, input);
+        actionStates[characterSelections[i]].WAIT.init?.(i, input);
       } else {
-        actionStates[characterSelections[i]].LANDING.init(i, input);
+        actionStates[characterSelections[i]].LANDING.init?.(i, input);
       }
       break;
     case 1:
@@ -434,18 +434,18 @@ export function land(i: number, newPosition: Vec2D
       // KNOCKDOWN / TECH
       if (player[i].phys.techTimer > 0) {
         if (input[i][0].lsX * player[i].phys.face > 0.5) {
-          actionStates[characterSelections[i]].TECHF.init(i, input);
+          actionStates[characterSelections[i]].TECHF.init?.(i, input);
         } else if (input[i][0].lsX * player[i].phys.face < -0.5) {
-          actionStates[characterSelections[i]].TECHB.init(i, input);
+          actionStates[characterSelections[i]].TECHB.init?.(i, input);
         } else {
-          actionStates[characterSelections[i]].TECHN.init(i, input);
+          actionStates[characterSelections[i]].TECHN.init?.(i, input);
         }
       } else {
-        actionStates[characterSelections[i]].DOWNBOUND.init(i, input);
+        actionStates[characterSelections[i]].DOWNBOUND.init?.(i, input);
       }
       break;
     default:
-      actionStates[characterSelections[i]].LANDING.init(i, input);
+      actionStates[characterSelections[i]].LANDING.init?.(i, input);
       break;
   }
   player[i].phys.cVel.y = 0;
@@ -941,7 +941,7 @@ function dealWithLedges(i: number, input: any): void {
             player[i].phys.ledgeRegrabTimeout = 30;
             player[i].phys.face = foundLedge[2] * -2 + 1;
             player[i].phys.pos = new Vec2D(activeStage[foundLedge[0]][foundLedge[1]][foundLedge[2]].x + edgeOffset[0][0], activeStage[foundLedge[0]][foundLedge[1]][foundLedge[2]].y + edgeOffset[0][1]);
-            actionStates[characterSelections[i]].CLIFFCATCH.init(i, input);
+            actionStates[characterSelections[i]].CLIFFCATCH.init?.(i, input);
           }
         } else if (lsBB > -1) {
           foundLedge = activeStage.ledge[lsBB];
@@ -950,7 +950,7 @@ function dealWithLedges(i: number, input: any): void {
             player[i].phys.ledgeRegrabTimeout = 30;
             player[i].phys.face = foundLedge[2] * -2 + 1;
             player[i].phys.pos = new Vec2D(activeStage[foundLedge[0]][foundLedge[1]][foundLedge[2]].x + edgeOffset[1][0], activeStage[foundLedge[0]][foundLedge[1]][foundLedge[2]].y + edgeOffset[1][1]);
-            actionStates[characterSelections[i]].CLIFFCATCH.init(i, input);
+            actionStates[characterSelections[i]].CLIFFCATCH.init?.(i, input);
           }
         }
       }
@@ -979,7 +979,7 @@ function dealWithDeath(i: number, input: any): void {
       if (player[i].stocks === 0 && versusMode) {
         player[i].stocks = 1;
       }
-      actionStates[characterSelections[i]][state].init(i, input);
+      actionStates[characterSelections[i]][state].init?.(i, input);
     }
   }
 };
@@ -1140,14 +1140,14 @@ export function physics (i : number, input : any) : void {
           player[i].actionState = actionStates[characterSelections[i]][player[i].actionState].airborneState;
         } else {
           if (actionStates[characterSelections[i]][player[i].actionState].missfoot && backward) {
-            actionStates[characterSelections[i]].MISSFOOT.init(i,input);
+            actionStates[characterSelections[i]].MISSFOOT.init?.(i,input);
           } else {
             if (player[i].phys.grabbing !== -1) {
-              actionStates[characterSelections[player[i].phys.grabbing]].FALL.init(player[i].phys.grabbing,input,true);
+              actionStates[characterSelections[player[i].phys.grabbing]].FALL.init?.(player[i].phys.grabbing,input,true);
               player[player[i].phys.grabbing].phys.grabbedBy = -1;
               player[i].phys.grabbing = -1;
             }
-            actionStates[characterSelections[i]].FALL.init(i,input);
+            actionStates[characterSelections[i]].FALL.init?.(i,input);
           }
           if (Math.abs(player[i].phys.cVel.x) > player[i].charAttributes.aerialHmaxV) {
             player[i].phys.cVel.x = Math.sign(player[i].phys.cVel.x) * player[i].charAttributes.aerialHmaxV;

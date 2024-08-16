@@ -53,6 +53,7 @@ yarn-error.log*
 
 # Built files
 dist/js
+dist/animations
 .tmp
 .happypack
 MeleeLight-darwin-x64/*
@@ -66,3 +67,5 @@ node_modules/*
 js/*
 
 \.idea/
+.tsbuildinfo
+tsc/*

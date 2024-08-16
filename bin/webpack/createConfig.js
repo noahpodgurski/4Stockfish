@@ -1,10 +1,11 @@
 const path = require("path");
 const webpack = require("webpack");
 const WebpackNotifierPlugin = require("webpack-notifier");
-const { GenerateSW } = require('workbox-webpack-plugin');
+const { GenerateSW, InjectManifest } = require('workbox-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
+const HappyPack = require('happypack');
 
 function createConfig(options) {
   const { isMinified } = options;
@@ -39,21 +40,50 @@ function createConfig(options) {
     new ESLintPlugin({
       extensions: ['js', 'jsx', 'ts', 'tsx'],
       exclude: 'node_modules',
-      emitError: true,
+      emitError: false,
       emitWarning: true,
     })
   ];
 
-  if (!isMinified) {
-    plugins.push(new webpack.HotModuleReplacementPlugin());
-  }
+  // Allow dev-only code
+  // plugins.push(
+  //   new webpack.DefinePlugin({
+  //     "process.env": {
+  //       "NODE_ENV": '"dev"'
+  //     }
+  //   })
+  // );
+
+  // plugins.push(
+  //   new InjectManifest({
+  //     swSrc: path.join(srcDir, 'custom-service-worker.js'),
+  //     swDest: 'service-worker.js'
+  //   })
+  // )
+  plugins.push(
+      new HappyPack({
+        // loaders is the only required parameter:
+        loaders: [
+          {
+            loader: 'babel-loader',
+            query: {
+
+              presets: ['@babel/preset-env'],
+              plugins: ['@babel/plugin-transform-flow-strip-types', '@babel/plugin-proposal-class-properties']
+            }
+          }
+        ],
+        threads:8
+
+      })
+  );
 
   /// MODULE RULES ///
   const rules = [
     {
       test: /\.tsx?$/,
       exclude: /node_modules/,
-      use: 'ts-loader'
+      use: 'ts-loader',
     },
     {
       test: /\.jsx?$/,
@@ -88,8 +118,12 @@ function createConfig(options) {
     output: {
       path: distJsDir,
       filename: `[name]${min}.js`,
+      // filename: 'bundle.js',
     },
     resolve: {
+      fallback: {
+        "url": require.resolve("url/")
+      },
       alias: {
         src: path.resolve(__dirname, 'src')
       },
@@ -100,6 +134,9 @@ function createConfig(options) {
       rules: rules,
     },
     optimization: isMinified ? {
+      splitChunks: {
+        chunks: 'all'
+      },
       minimize: true,
       minimizer: [new TerserPlugin({
         parallel: true,

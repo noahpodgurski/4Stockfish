@@ -33,7 +33,6 @@ import {actionStates} from "physics/actionStateShortcuts";
 import {setCS, gameMode} from "../main/main";
 import {chars} from "../main/characters";
 import {Vec2D} from "../main/util/Vec2D";
-import {syncCharacter, syncGameMode, syncTagText, inServerMode} from "../main/multiplayer/streamclient";
 import {gameSettings} from "../settings";
 import { animations } from "../animations";
 import $ from 'jquery';
@@ -167,7 +166,6 @@ export function setTokenPosValue(index, val) {
 
 export function changeCharacter(i, c) {
   setCS(i, c);
-  syncCharacter(i, c);
   player[i].actionState = "WAIT";
   player[i].timer = 0;
   player[i].charAttributes = chars[characterSelections[i]].attributes;
@@ -176,8 +174,7 @@ export function changeCharacter(i, c) {
 
 function cancelSetTag() {
   sounds.menuSelect.play();
-  tagText[choosingTag] = $("#pTagEdit" + choosingTag).val() as string;
-  syncTagText(choosingTag, tagText[choosingTag]);
+  tagText[choosingTag] = $("#pTagEdit" + choosingTag).val() as string; //179:59  error  Parsing error: Missing semicolon. (179:59)
   $("#pTagEdit" + choosingTag).hide();
   choosingTag = -1;
 }
@@ -426,7 +423,6 @@ export function cssControls(i, input) {
           sounds.menuSelect.play();
           hasTag[i] = true;
           tagText[i] = randomTags[Math.round((randomTags.length - 1) * Math.random())];
-          syncTagText(i, tagText[i]);
         } else if (handPos[i].x > 286 + i * 225) {
           // remove
           sounds.menuSelect.play();
@@ -450,12 +446,10 @@ export function cssControls(i, input) {
     if (pause[i][0] && !pause[i][1]) {
       sounds.menuForward.play();
       changeGamemode(6);
-      syncGameMode(6);
     }
   } else if (choosingTag == -1 && input[i][0].du && !input[i][1].du) {
     sounds.menuForward.play();
     changeGamemode(6);
-    syncGameMode(6);
   } else if (choosingTag == -1 && input[i][0].dr && !input[i][1].dr) {
     chosenChar[i] = 3;
     changeCharacter(i, 3);
@@ -1185,16 +1179,14 @@ export function drawCSS() {
     }
   }
 
-  if (inServerMode) {
-    ui.fillStyle = "white";
+  ui.fillStyle = "white";
 
-    var keys = Object.keys(gameSettings);
-    let spacer = 50;
-    for (var j = 0; j < keys.length; j++) {
-      if (gameSettingsText[keys[j]] !== "") {
-        ui.fillText(gameSettingsText[keys[j]] + ":" + gameSettingsValueTranslation[keys[j]](gameSettings[keys[j]]), 820, 130 + spacer);
-        spacer = spacer + 30;
-      }
+  var keys = Object.keys(gameSettings);
+  let spacer = 50;
+  for (var j = 0; j < keys.length; j++) {
+    if (gameSettingsText[keys[j]] !== "") {
+      ui.fillText(gameSettingsText[keys[j]] + ":" + gameSettingsValueTranslation[keys[j]](gameSettings[keys[j]]), 820, 130 + spacer);
+      spacer = spacer + 30;
     }
 
   }

@@ -7,6 +7,6 @@
     "@babel/plugin-proposal-class-properties"
   ],
   "ignore": [
-    "src/characters/**/*animations.js"
+    "src/characters/**/*animations.ts"
   ]
 }

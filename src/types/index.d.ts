@@ -15,5 +15,6 @@ declare global {
         mobile: boolean;
         mType: [any, any, any, any];
         isOffstage: (cpu: any) => boolean;
+        start: () => void;
     }
 }

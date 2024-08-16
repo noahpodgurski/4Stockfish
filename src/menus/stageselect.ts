@@ -4,7 +4,6 @@ import {
   , setStageSelect
 } from "main/main";
 import {twoPi} from "main/render";
-import {syncStartGame} from "../main/multiplayer/streamclient";
 /* eslint-disable */
 
 /*
@@ -83,7 +82,6 @@ export function sssControls (i, input){
       stageSelected = Math.floor(Math.random() * (smallBoxStageNames.length - 0.01));
     }
     setStageSelect(stageSelected);
-    syncStartGame(stageSelected);
     startGame();
   }
 }

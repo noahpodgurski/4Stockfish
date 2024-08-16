@@ -33,6 +33,7 @@ function loadNextScript() {
 
     const finished = scriptsLoaded >= scripts.length;
     const scriptTag = document.createElement("script");
+    console.log(xhr);
     scriptTag.innerHTML = xhr?.responseText ?? "";
 
     if (finished) {
@@ -41,7 +42,6 @@ function loadNextScript() {
         document.body.appendChild(scriptTag);
         screenEl.className = "fadeout";
         window.start();
-        window.
         setTimeout(() => {
           screenEl.remove();
         }, 300);
