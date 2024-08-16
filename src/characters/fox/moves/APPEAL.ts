@@ -11,11 +11,11 @@ export default {
     player[p].actionState = "APPEAL";
     player[p].timer = 0;
     player[p].phys.cVel.x = 0;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].timer > 1 && player[p].timer < 18) {
         player[p].phys.cVel.x = this.setVelocities1[player[p].timer-2] * player[p].phys.face;
       }

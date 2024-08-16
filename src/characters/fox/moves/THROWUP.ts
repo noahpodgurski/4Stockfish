@@ -26,12 +26,12 @@ export default {
     const frame = framesData[characterSelections[grabbing]].THROWNFOXUP;
     player[p].phys.releaseFrame = frame+1;
     player[p].hitboxes.id[0] = player[p].charHitboxes.throwup.id0;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     const prevFrame = player[p].timer;
     player[p].timer+=7/player[p].phys.releaseFrame;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (prevFrame < 13 && player[p].timer >= 13){
         sounds.foxlasercock.play();
       }

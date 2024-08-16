@@ -17,11 +17,11 @@ export default {
     player[p].actionState = "FIREFOXBOUNCE";
     player[p].timer = 0;
     player[p].phys.grounded = false;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].phys.cVel.x !== 0){
         player[p].phys.cVel.x -= 0.03*player[p].phys.face;
         if (player[p].phys.cVel.x*player[p].phys.face < 0){

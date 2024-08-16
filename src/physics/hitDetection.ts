@@ -3,7 +3,7 @@ import {playerType, player, characterSelections, screenShake, gameMode, percentS
 import {gameSettings} from "settings";
 import {sounds} from "main/sfx";
 import {turnOffHitboxes, actionStates} from "physics/actionStateShortcuts";
-import {drawVfx} from "main/vfx/drawVfx";
+import {drawVfx} from "../main/vfx/drawVfx";
 import {Vec2D} from "../main/util/Vec2D";
 import {Segment2D} from "../main/util/Segment2D";
 import {euclideanDist} from "../main/linAlg";
@@ -477,7 +477,10 @@ export function bluntHit(a,h){
   if(frame > 1){
     frame = 1;
   }
-  drawVfx("clank", new Vec2D(player[a].phys.pos.x + (player[a].hitboxes.id[h].offset[frame].x * player[a].phys.face), player[a].phys.pos.y + player[a].hitboxes.id[h].offset[frame].y));
+  drawVfx({
+    name: "clank", 
+    pos: new Vec2D(player[a].phys.pos.x + (player[a].hitboxes.id[h].offset[frame].x * player[a].phys.face), player[a].phys.pos.y + player[a].hitboxes.id[h].offset[frame].y)
+  });
 }
 
 export function executeRegularHit (input, v, a, h, shieldHit, isThrow, drawBounce, phantom, stageDamage, hitbox) {

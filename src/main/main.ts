@@ -26,7 +26,7 @@ import {resetVfxQueue} from "../main/vfx/vfxQueue";
 import {setVsStage, getActiveStage, activeStage} from "../stages/activeStage";
 import {MusicManager} from "./music";
 import {isShowSFX, toggleShowSFX} from "../main/vfx";
-import {renderVfx} from "./vfx/renderVfx";
+import {renderVfx} from "../main/vfx/renderVfx";
 import {Box2D} from "./util/Box2D";
 import {Vec2D} from "./util/Vec2D";
 import {saveGameState, loadReplay, gameTickDelay} from "./replay";
@@ -45,7 +45,7 @@ import {setTokenPosSnapToChar} from "../menus/css";
 export var snowCount = 150;
 
 //todo find 'Player' object
-export const player:PlayerObjectType | null[] = [null, null, null, null];
+export const player:PlayerObjectType[] = [];
 export const renderTime = [10,0,100,0];
 export const gamelogicTime = [5,0,100,0];
 export const framerate = [0,0,0];
@@ -227,12 +227,13 @@ export function setCookie (cname, cvalue, exdays) {
 export function setVersusMode (val){
   versusMode = val;
 }
-export function getCookie(cname: string): string {
+export function getCookie(cname: string | null): string | null {
+  if (cname === null) return "";
   if (usingLocalStorage){
     const x = localStorage.getItem(cname);
-    if (x === null) {
-      throw Error("unable to get cookie");
-    }
+    // if (x === null) {
+    //   throw Error("unable to get cookie");
+    // }
     return x;
   } else {
     var name = cname + "=";

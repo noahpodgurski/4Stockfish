@@ -27,12 +27,12 @@ export default {
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.throwdown.id0;
     randomShout(characterSelections[p]);
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     const prevFrame = player[p].timer;
     player[p].timer+=33/player[p].phys.releaseFrame;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (Math.floor(player[p].timer+0.01) >= 33 && Math.floor(prevFrame+0.01) < 33){
         player[p].hitboxes.id[0] = player[p].charHitboxes.throwdown.id0;
         hitQueue.push([player[p].phys.grabbing,p,0,false,true,true]);

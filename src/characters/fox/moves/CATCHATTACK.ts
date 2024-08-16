@@ -12,11 +12,11 @@ export default {
     player[p].timer = 0;
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.pummel.id0;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].timer === 10){
         player[p].hitboxes.active = [true,false,false,false];
         player[p].hitboxes.frame = 0;

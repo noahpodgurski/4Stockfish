@@ -634,6 +634,7 @@ export const actionStates: {
     "THROWUP": State
     "ATTACKAIRF": State
     "CLIFFGETUPSLOW": State
+    "DOWNSPECIALGROUND": State
     "DOWNSPECIALGROUNDSTART": State
     "DOWNSPECIALGROUNDLOOP": State
     "DOWNSPECIALGROUNDEND": State
@@ -659,6 +660,7 @@ export const actionStates: {
     "LANDINGATTACKAIRB": State
     "RUNTURN": State
     "THROWDOWN": State
+    "UPSPECIAL": State
     "UPSPECIALCHARGE": State
     "ATTACKDASH": State
     "CLIFFWAIT": State

@@ -19,11 +19,11 @@ export default {
     player[p].actionState = "NEUTRALSPECIALAIR";
     player[p].timer = 0;
     player[p].phys.laserCombo = false;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       fastfall(p,input);
       airDrift(p,input);
       if (player[p].timer >= 4 && player[p].timer <= 14){

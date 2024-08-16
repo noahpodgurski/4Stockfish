@@ -17,7 +17,7 @@ export default {
     player[p].hitboxes.id[0] = player[p].charHitboxes.fsmash1.id0;
     player[p].hitboxes.id[1] = player[p].charHitboxes.fsmash1.id1;
     player[p].hitboxes.id[2] = player[p].charHitboxes.fsmash1.id2;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     if (player[p].timer === 7){
@@ -41,7 +41,7 @@ export default {
       player[p].timer++;
       player[p].phys.charging = false;
     }
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       reduceByTraction(p,true);
       if (player[p].timer < 9){
         player[p].phys.cVel.x = 0;

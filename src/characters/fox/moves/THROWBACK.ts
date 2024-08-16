@@ -27,12 +27,12 @@ export default {
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.throwback.id0;
     randomShout(characterSelections[p]);
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     const prevFrame = player[p].timer;
     player[p].timer+=8/player[p].phys.releaseFrame;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (prevFrame < 10 && player[p].timer >= 10){
         player[p].phys.face *= -1;
       }

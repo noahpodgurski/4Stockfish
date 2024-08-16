@@ -19,11 +19,11 @@ export default {
       player[p].timer = 0;
     }
     player[p].phys.grounded = false;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].timer > 0){
         if(player[p].phys) {
           const grabbedBy = player[p].phys.grabbedBy;

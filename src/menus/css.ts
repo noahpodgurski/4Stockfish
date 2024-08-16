@@ -29,7 +29,7 @@ import {
 } from "../main/main";
 import {drawArrayPathCompress, twoPi} from "main/render";
 import {sounds} from "main/sfx";
-import {actionStates} from "physics/actionStateShortcuts";
+import {actionStates} from "../physics/actionStateShortcuts";
 import {setCS, gameMode} from "../main/main";
 import {chars} from "../main/characters";
 import {Vec2D} from "../main/util/Vec2D";
@@ -875,14 +875,13 @@ export function drawCSS() {
 
     ui.fillText(text, 163 + i * 225, 445);
   }
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 4; i++) { //todo change back when added back chars
     if (playerType[i] > -1) {
       var frame = Math.floor(player[i].timer);
       if (frame == 0) {
         frame = 1;
       }
       var face = player[i].phys.face;
-
       var model = animations[characterSelections[i]][actionStates[characterSelections[i]][player[i].actionState].name][frame - 1];
 
       switch (player[i].actionState) {

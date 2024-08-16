@@ -36,11 +36,11 @@ export default {
       }
     }
     player[p].rotationPoint = new Vec2D(0,40);
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].timer < 31){
         if (player[p].timer%2){
           drawVfx({

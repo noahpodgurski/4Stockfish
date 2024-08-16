@@ -40,16 +40,16 @@ export default {
     });
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.downspecial.id0;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
     player[p].phys.inShine++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].phys.grounded){
         player[p].actionState = "DOWNSPECIALGROUND";
         player[p].timer--;
-        DOWNSPECIALGROUND.main(p,input);
+        DOWNSPECIALGROUND.main!(p,input);
       }
       else {
         if (player[p].phys.cVel.x > 0){

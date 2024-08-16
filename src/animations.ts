@@ -2,16 +2,16 @@
 // and `module.exports` rather than loading this all through babel and using
 // its `import` and `export` statements.
 // const marth = require("./animations/marth");
-// const puff = require("./animations/puff");
+const puff = require("./animations/puff");
 const fox = require("./animations/fox");
-// const falco = require("./animations/falco");
-// const falcon = require("./animations/falcon");
+const falco = require("./animations/falco");
+const falcon = require("./animations/falcon");
 
 // window.animations = [
 export const animations = [
   // marth,
-  // puff,
+  puff,
   fox,
-  // falco,
-  // falcon
+  falco,
+  falcon
 ];

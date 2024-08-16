@@ -26,11 +26,11 @@ export default {
     sounds.foxupbburn.play();
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.upb1.id0;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       const frame = (player[p].timer-1) % 10;
       drawVfx({
         name: "firefoxcharge",

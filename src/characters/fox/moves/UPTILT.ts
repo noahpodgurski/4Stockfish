@@ -26,11 +26,11 @@ export default {
     player[p].hitboxes.id[1] = player[p].charHitboxes.uptilt.id1;
     player[p].hitboxes.id[2] = player[p].charHitboxes.uptilt.id2;
     player[p].hitboxes.id[3] = player[p].charHitboxes.uptilt.id3;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       reduceByTraction(p,true);
 
       if (player[p].timer === 5){

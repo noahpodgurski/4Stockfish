@@ -116,7 +116,7 @@ export function getKeyboardCookie (){
     var keys = Object.keys(keymapItems);
     for (var i = 0; i < keys.length; i++) {
         var keymapData = getCookie(keys[i]);
-        if (keymapData != undefined && keymapData != null && keymapData != "") {
+        if (keymapData !== undefined && keymapData !== null && keymapData !== "") {
             if (keymapItems[keys[i]].type == 1) {
                 // if modifier
                 var modVal = keymapData.split("-");
@@ -125,10 +125,10 @@ export function getKeyboardCookie (){
                 keymapItems[keys[i]].binding[keymapItems[keys[i]].index][2] = parseFloat(modVal[2]);
             } else if (keymapItems[keys[i]].type == 2) {
                 // if range
-                keymapItems[keys[i]].binding[keymapItems[keys[i]].index] = parseFloat(getCookie(keys[i]));
+                keymapItems[keys[i]].binding[keymapItems[keys[i]].index] = parseFloat(getCookie(keys[i]) ?? "0");
             } else {
                 // if button
-                keymapItems[keys[i]].binding[keymapItems[keys[i]].index] = parseInt(getCookie(keys[i]));
+                keymapItems[keys[i]].binding[keymapItems[keys[i]].index] = parseInt(getCookie(keys[i]) ?? "0");
             }
         }
     }

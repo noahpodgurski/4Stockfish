@@ -14,11 +14,11 @@ const CLIFFESCAPEQUICK: State = {
     player[p].actionState = "CLIFFESCAPEQUICK";
     player[p].timer = 0;
     player[p].phys.intangibleTimer = 34;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       const onLedge = player[p].phys.onLedge;
       if(onLedge === -1){
         this.canGrabLedge = false;

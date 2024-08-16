@@ -26,11 +26,11 @@ export default {
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.jab2.id0;
     player[p].hitboxes.id[1] = player[p].charHitboxes.jab2.id1;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].timer === 1){
         player[p].phys.cVel.x = 0;
       }

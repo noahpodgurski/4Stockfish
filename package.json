@@ -71,6 +71,7 @@
     "howler": "^2.2.4",
     "jquery": "3.7.1",
     "localforage": "^1.10.0",
+    "madge": "^8.0.0",
     "nodemon": "^3.1.4",
     "optimist": "^0.6.1",
     "pako": "^2.1.0",

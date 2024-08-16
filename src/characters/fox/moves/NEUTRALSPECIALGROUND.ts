@@ -18,11 +18,11 @@ export default {
     player[p].actionState = "NEUTRALSPECIALGROUND";
     player[p].timer = 0;
     player[p].phys.laserCombo = false;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       reduceByTraction(p);
       if (player[p].timer >= 4 && player[p].timer <= 16){
         if (input[p][0].b && !input[p][1].b){

@@ -13,11 +13,11 @@ export default {
     player[p].timer = 0;
     player[p].phys.jabCombo = false;
     turnOffHitboxes(p);
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       reduceByTraction(p,true);
       if (player[p].timer > 6 && player[p].timer < 43 && input[p][0].a && !input[p][1].a){
         player[p].phys.jabCombo = true;

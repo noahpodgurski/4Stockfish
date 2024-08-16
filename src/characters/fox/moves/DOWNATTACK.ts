@@ -15,11 +15,11 @@ export default {
     player[p].hitboxes.id[0] = player[p].charHitboxes.downattack1.id0;
     player[p].hitboxes.id[1] = player[p].charHitboxes.downattack1.id1;
     player[p].hitboxes.id[2] = player[p].charHitboxes.downattack1.id2;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       reduceByTraction(p,true);
       if (player[p].timer === 1){
         player[p].phys.intangibleTimer = 26;

@@ -36,12 +36,12 @@ export default {
     });
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.downspecial.id0;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
     player[p].phys.inShine++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].phys.onSurface[0] === 1 && player[p].timer > 1){
         if (input[p][0].lsY < -0.66 && input[p][6].lsY >= 0){
           player[p].phys.grounded = false;
@@ -104,7 +104,7 @@ export default {
       else {
         player[p].actionState = "DOWNSPECIALAIR";
         player[p].timer--;
-        DOWNSPECIALAIR.main(p,input);
+        DOWNSPECIALAIR.main!(p,input);
       }
     }
   },

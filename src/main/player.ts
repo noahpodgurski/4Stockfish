@@ -44,12 +44,12 @@ export class createHitboxes {
 }
 
 export type PhysicsObjectType = {
-  cVel: any;
-  kVel: any;
-  kDec: any;
-  pos: any;
-  posPrev: any;
-  posDelta: any;
+  cVel: Vec2D;
+  kVel: Vec2D;
+  kDec: Vec2D;
+  pos: Vec2D;
+  posPrev: Vec2D;
+  posDelta: Vec2D;
   grounded: any;
   airborneTimer: number;
   fastfalled: any;
@@ -121,12 +121,12 @@ export type PhysicsObjectType = {
 }
 
 export class physicsObject implements PhysicsObjectType {
-  cVel: any;
-  kVel: any;
-  kDec: any;
-  pos: any;
-  posPrev: any;
-  posDelta: any;
+  cVel: Vec2D;
+  kVel: Vec2D;
+  kDec: Vec2D;
+  pos: Vec2D;
+  posPrev: Vec2D;
+  posDelta: Vec2D;
   grounded: any;
   airborneTimer: number;
   fastfalled: any;
@@ -379,6 +379,8 @@ export type PlayerObjectType = {
   hasHit: any;
   shocked: any;
   burning: any;
+  inAerial: boolean;
+  shieldBreakerID: any;
 }
 
 //todo make type PlayerObject
@@ -417,6 +419,8 @@ export class playerObject implements PlayerObjectType {
   hasHit: any;
   shocked: any;
   burning: any;
+  inAerial: boolean;
+  shieldBreakerID: any;
 
   constructor(character, pos, face){
     this.phys = new physicsObject(pos, face);
@@ -461,5 +465,6 @@ export class playerObject implements PlayerObjectType {
     this.hasHit = false;
     this.shocked = 0;
     this.burning = 0;
+    this.inAerial = false;
   }
 }

@@ -260,7 +260,7 @@ export function generalAI(i) {
     aiInputBank[i][0].lsY = isNaN(inputs.lsY) ? 0 : inputs.lsY;
     return;
   }
-  if (!(player[i].grounded) && window.isOffstage(player[i]) && player[i].currentAction == "NONE") {
+  if (!(player[i].phys.grounded) && window.isOffstage(player[i]) && player[i].currentAction == "NONE") {
     inputs = CPUrecover(player[i], i);
     //do inputs
     aiInputBank[i][0].lsX = isNaN(inputs.lsX) ? 0 : inputs.lsX;

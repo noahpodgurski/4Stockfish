@@ -1,5 +1,5 @@
-import vfxData from 'main/vfx/vfxData';
-import dVfxData from 'main/vfx/dVfx';
+import vfxData from './vfx/vfxData';
+import dVfxData from './vfx/dVfx';
 const twoPi = Math.PI * 2;
 
 export let showVfx = true;

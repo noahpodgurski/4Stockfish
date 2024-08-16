@@ -29,6 +29,10 @@
     "flowtype-errors/show-errors": 0,
     "indent": 0,
     "semi": 0,
-    "no-implicit-any": 0
-  }
+    "no-implicit-any": 0,
+    "import/no-cycle": ["error", { "maxDepth": 1 }]
+  },
+  "plugins": [
+    "import"
+  ]
 }

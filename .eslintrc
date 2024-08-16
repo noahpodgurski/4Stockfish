@@ -27,8 +27,10 @@
     "no-dupe-class-members": ["error"],
     "eqeqeq": ["error", "always"],
     "no-implicit-any": 0,
+    "import/no-cycle": ["error", { "maxDepth": 1 }]
   },
   "plugins": [
-    "flowtype-errors"
+    "flowtype-errors",
+    "import"
   ]
 }

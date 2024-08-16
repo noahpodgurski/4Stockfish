@@ -30,11 +30,11 @@ export default {
     });
     turnOffHitboxes(p);
     sounds.star.play();
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       if (player[p].phys.grounded){
         if (player[p].timer === 21){
           articles.ILLUSION.init({
@@ -69,7 +69,7 @@ export default {
       else {
         player[p].actionState = "SIDESPECIALAIR";
         player[p].timer--;
-        SIDESPECIALAIR.main(p,input);
+        SIDESPECIALAIR.main!(p,input);
       }
 
       if (player[p].timer >= 21 && player[p].timer <= 24){

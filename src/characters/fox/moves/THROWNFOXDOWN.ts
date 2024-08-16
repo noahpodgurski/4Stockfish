@@ -22,11 +22,11 @@ export default {
     player[p].phys.grounded = false;
     player[p].phys.face *= -1;
     player[p].phys.pos = new Vec2D(player[grabbedBy].phys.pos.x,player[grabbedBy].phys.pos.y);
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       let timer = player[p].timer;
       if (timer > 0){
         const grabbedBy = player[p].phys.grabbedBy;

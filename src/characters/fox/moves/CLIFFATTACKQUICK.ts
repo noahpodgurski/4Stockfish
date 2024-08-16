@@ -20,11 +20,11 @@ const CLIFFATTACKQUICK: State = {
     player[p].hitboxes.id[0] = player[p].charHitboxes.ledgegetupquick.id0;
     player[p].hitboxes.id[1] = player[p].charHitboxes.ledgegetupquick.id1;
     player[p].hitboxes.id[2] = player[p].charHitboxes.ledgegetupquick.id2;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       const onLedge = player[p].phys.onLedge;
       if(onLedge === -1){
         this.canGrabLedge = false;

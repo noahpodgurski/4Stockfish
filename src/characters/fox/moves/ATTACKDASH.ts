@@ -26,11 +26,11 @@ export default {
     turnOffHitboxes(p);
     player[p].hitboxes.id[0] = player[p].charHitboxes.dashattack1.id0;
     player[p].hitboxes.id[1] = player[p].charHitboxes.dashattack1.id1;
-    this.main(p,input);
+    this.main!(p,input);
   },
   main : function(p,input){
     player[p].timer++;
-    if (!this.interrupt(p,input)){
+    if (!this.interrupt!(p,input)){
       player[p].phys.cVel.x = this.setVelocities![player[p].timer-1]*player[p].phys.face;
 
       if (player[p].timer === 4){
