@@ -300,7 +300,7 @@ export function shieldDepletion (p,input){
   }
 }
 
-export function shieldSize (p,lock,input){
+export function shieldSize (p,input,lock=false){
    //shield size * 0.575 * model scaling
   //(shield size * 0.575 * hp/60) + (1-input)*0.60714*shieldsize
   player[p].phys.shieldAnalog = Math.max(input[p][0].lA, input[p][0].rA);

@@ -27,7 +27,7 @@ const GUARD: State = {
           shieldDepletion(p,input);
         }
         shieldTilt(p,false,input);
-        shieldSize(p,null,input);
+        shieldSize(p,input);
       }
     }
   },

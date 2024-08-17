@@ -116,7 +116,8 @@ function parseBox2D ( s1 : string, s2 : string, s3 : string, s4 : string ) : Box
 }
 
 export function surfaceToVec2DArray(surface: Surface): [Vec2D, Vec2D] {
-  const [vec1, vec2] = surface;
+  const vec1:Vec2D = surface[0];
+  const vec2:Vec2D = surface[1];
   return [vec1, vec2];
 }
 

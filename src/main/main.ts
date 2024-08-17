@@ -40,10 +40,6 @@ import { GamepadInfo } from '../input/gamepad/gamepadInfo';
 import {deepObjectMerge} from "./util/deepCopyObject";
 import {setTokenPosSnapToChar} from "../menus/css";
 
-/*globals performance*/
-
-export var snowCount = 150;
-
 //todo find 'Player' object
 export const player:PlayerObjectType[] = [];
 export const renderTime = [10,0,100,0];
@@ -1168,6 +1164,8 @@ export function renderTick (){
 }
 
 export function buildPlayerObject (i){
+  console.log(characterSelections)
+  console.log(i)
   player[i] = new playerObject(characterSelections[i],startingPoint[i],startingFace[i]);
   player[i].phys.ECB1 = [new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y)];
   player[i].phys.ECBp = [new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y)];

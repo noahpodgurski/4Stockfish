@@ -10,7 +10,7 @@ import {
   showDebug,
   gameMode
 } from "../main/main";
-import {framesData, ecb} from "../main/characters";
+import {ecb, framesData, getEcB} from "../main/characters";
 import {sounds} from "../main/sfx";
 import {gameSettings} from "../settings";
 import {actionStates, turboAirborneInterrupt, turboGroundedInterrupt, turnOffHitboxes} from "./actionStateShortcuts";
@@ -1087,9 +1087,15 @@ export function physics (i : number, input : any) : void {
   }
   //console.log(actionStates[characterSelections[i]][player[i].actionState].name+" "+(frame-1));
 
-  /* global ecb */
-  let ecb: any;
-  const ecbOffset = actionStates[characterSelections[i]][player[i].actionState].dead ? [0, 0, 0, 0] : [ecb[characterSelections[i]][player[i].actionState][frame - 1][0]*player[i].charAttributes.ecbScale, ecb[characterSelections[i]][player[i].actionState][frame - 1][1]*player[i].charAttributes.ecbScale, ecb[characterSelections[i]][player[i].actionState][frame - 1][2]*player[i].charAttributes.ecbScale, ecb[characterSelections[i]][player[i].actionState][frame - 1][3]*player[i].charAttributes.ecbScale];
+  // let ecb: any = getEcB(i);
+  const ecbOffset = actionStates[characterSelections[i]][player[i].actionState].dead ? 
+    [0, 0, 0, 0] : 
+    [
+      ecb[characterSelections[i]][player[i].actionState][frame - 1][0]*player[i].charAttributes.ecbScale, 
+      ecb[characterSelections[i]][player[i].actionState][frame - 1][1]*player[i].charAttributes.ecbScale, 
+      ecb[characterSelections[i]][player[i].actionState][frame - 1][2]*player[i].charAttributes.ecbScale, 
+      ecb[characterSelections[i]][player[i].actionState][frame - 1][3]*player[i].charAttributes.ecbScale
+    ];
 
   const playerPosX = player[i].phys.pos.x;
   const playerPosY = player[i].phys.pos.y;

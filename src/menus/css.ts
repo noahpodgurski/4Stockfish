@@ -875,14 +875,14 @@ export function drawCSS() {
 
     ui.fillText(text, 163 + i * 225, 445);
   }
-  for (var i = 0; i < 4; i++) { //todo change back when added back chars
+  for (var i = 0; i < 4; i++) {
     if (playerType[i] > -1) {
       var frame = Math.floor(player[i].timer);
       if (frame == 0) {
         frame = 1;
       }
       var face = player[i].phys.face;
-      var model = animations[characterSelections[i]][actionStates[characterSelections[i]][player[i].actionState].name][frame - 1];
+      var model = animations[characterSelections[i]].get(actionStates[characterSelections[i]][player[i].actionState].name)[frame - 1];
 
       switch (player[i].actionState) {
         case 15:
@@ -892,7 +892,7 @@ export function drawCSS() {
         case 61:
         case 72:
         case 94:
-          var model = animations[characterSelections[i]][actionStates[characterSelections[i]][player[i].actionState].name][0];
+          var model = animations[characterSelections[i]].get(actionStates[characterSelections[i]][player[i].actionState].name)[0];
           break;
         default:
           break;

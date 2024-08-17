@@ -91,14 +91,14 @@ export function renderPlayer(i) {
     if (frame > framesData[characterSelections[i]][player[i].actionState]) {
         frame = framesData[characterSelections[i]][player[i].actionState];
     }
-    if(animations[characterSelections[i]][player[i].actionState] === undefined){
+    if(animations[characterSelections[i]].get(player[i].actionState) === undefined){
       return;
     }
-    if(animations[characterSelections[i]][player[i].actionState][frame - 1] === undefined){
+    if(animations[characterSelections[i]].get(player[i].actionState)[frame - 1] === undefined){
       return;
     }
 
-    var model = animations[characterSelections[i]][player[i].actionState][frame - 1];
+    var model = animations[characterSelections[i]].get(player[i].actionState)[frame - 1];
 
     if (actionStates[characterSelections[i]][player[i].actionState].reverseModel) {
         face *= -1;

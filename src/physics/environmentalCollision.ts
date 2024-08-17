@@ -15,7 +15,7 @@ import { surfaceToVec2DArray, Vec2DArrayToSurface } from "../stages/encode";
 // eslint-disable-next-line no-duplicate-imports
 import type {ECB, SquashDatum} from "../main/util/ecbTransform";
 // eslint-disable-next-line no-duplicate-imports
-import type {Stage, Surface, LabelledSurface} from "../stages/stage";
+import type {Stage, Surface, LabelledSurface, SurfaceLabel} from "../stages/stage";
 // eslint-disable-next-line no-duplicate-imports
 import type {XOrY} from "../main/util/Vec2D";
 import type {DamageType} from "./damageTypes";
@@ -380,9 +380,12 @@ export function findCollision ( ecb1 : ECB, ecbp : ECB, labelledSurface : Labell
 // the ECB cannot collide a left wall on its left vertex
 // the ECB cannot collide a right wall on its right vertex
 // walls and corners push out horizontally, grounds/ceilings/platforms push out vertically
-
+  
   // const [wall, [wallType, wallIndex]] = labelledSurface;
-  const { surface: wall, label: [wallType, wallIndex] } = labelledSurface;
+  const wall2D: [Vec2D, Vec2D] = surfaceToVec2DArray(labelledSurface.surface);
+  const wall: Surface = labelledSurface.surface;
+  const wallType: string = labelledSurface.label[0];
+  const wallIndex: number = labelledSurface.label[1];
   const damageType = wall[2] !== undefined ? wall[2].damageType : null;
 
   // start defining useful constants/variables
@@ -438,7 +441,7 @@ export function findCollision ( ecb1 : ECB, ecbp : ECB, labelledSurface : Labell
     }
 
     const closestEdgeCollision = runEdgeSweep(ecb1, ecbp, same, wallType, wallLeft, wallRight, wallBottomOrLeft, wallTopOrRight, xOrY, damageType);
-    const closestPointCollision = runPointSweep(ecb1, ecbp, same, surfaceToVec2DArray(wall), wallType, wallIndex, wallBottomOrLeft, wallTopOrRight, xOrY);
+    const closestPointCollision = runPointSweep(ecb1, ecbp, same, wall2D, wallType, wallIndex, wallBottomOrLeft, wallTopOrRight, xOrY);
 
     let finalCollision: CollisionDatum = null;
 
@@ -474,8 +477,9 @@ type TouchingDatum = null | { sweep : number, object : { kind : "surface", surfa
 function findClosestCollision(ecb1: ECB, ecbp: ECB
     , labelledSurfaces: Array<LabelledSurface>): TouchingDatum {
   const touchingData: Array<TouchingDatum> = [null]; // initialise list of new collisions
-  const collisionData = labelledSurfaces.map(
-      (labelledSurface) => findCollision(ecb1, ecbp, labelledSurface));
+  const collisionData = labelledSurfaces.map((labelledSurface) => {
+    return findCollision(ecb1, ecbp, labelledSurface);
+  });
   for (let i = 0; i < collisionData.length; i++) {
     const collisionDatum = collisionData[i];
     if (collisionDatum !== null) {
@@ -1277,17 +1281,33 @@ export function runCollisionRoutine(ecb1: ECB, ecbp: ECB, position: Vec2D
   }
 
   const allSurfacesMinusPlatforms = stageWalls.concat(stageGrounds).concat(stageCeilings);
-  let relevantSurfaces = [];
+  let relevantSurfaces: LabelledSurface[] = [];
   switch (horizIgnore) {
     case "platforms":
-      relevantSurfaces = stageWalls.concat(stageGrounds).concat(stageCeilings);
+      // relevantSurfaces = stageWalls.concat(stageGrounds).concat(stageCeilings);
+      relevantSurfaces = (stageWalls.concat(stageGrounds).concat(stageCeilings)).map((pair) => {
+        return {
+          surface: pair[0] as Surface,
+          label: pair[1] as SurfaceLabel
+        }
+      });
       break;
     case "none":
     default:
-      relevantSurfaces = stageWalls.concat(stageGrounds).concat(stageCeilings).concat(stagePlatforms);
+      relevantSurfaces = (stageWalls.concat(stageGrounds).concat(stageCeilings).concat(stagePlatforms)).map((pair) => {
+        return {
+          surface: pair[0] as Surface,
+          label: pair[1] as SurfaceLabel
+        }
+      });
       break;
     case "all":
-      relevantSurfaces = stageWalls;
+      relevantSurfaces = stageWalls.map((pair) => {
+        return {
+          surface: pair[0] as Surface,
+          label: pair[1] as SurfaceLabel
+        }
+      });
       break;
   }
 

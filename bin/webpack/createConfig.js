@@ -6,6 +6,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const HappyPack = require('happypack');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 function createConfig(options) {
   const { isMinified } = options;
@@ -77,6 +78,10 @@ function createConfig(options) {
 
       })
   );
+
+  // plugins.push(
+  //   new BundleAnalyzerPlugin(),
+  // )
 
   /// MODULE RULES ///
   const rules = [

@@ -1,17 +1,16 @@
 {
-  "name": "meleelight",
+  "name": "4Stockfish",
   "version": "0.0.1",
   "description": "Melee Light Platform Fighter",
   "main": "app.js",
   "scripts": {
     "build": "cross-env FORCE_COLOR=1 webpack --progress --config=bin/webpack/build.config.js",
-    "comp": "nodemon npx tsc",
     "flow": "flow status src; test $? -eq 0 -o $? -eq 2",
     "lint": "eslint .",
     "dev": "cross-env FORCE_COLOR=1 webpack --progress --watch --config=bin/webpack/dev.config.js",
     "animations": "cross-env FORCE_COLOR=1 webpack --progress --config=bin/webpack/animations.config.js",
     "release": "node bin/release.js",
-    "serve": "node app",
+    "serve": "nodemon app",
     "postinstall": "npm run animations && npm run build",
     "rebuild": "./node_modules/.bin/electron-rebuild -w uws"
   },
@@ -21,20 +20,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/schmooblidon/meleelight.git"
+    "url": "git+https://github.com/noahpodgurski/4Stockfish"
   },
   "keywords": [
     "melee"
   ],
-  "author": "schmooblidon",
+  "author": "noahpodgurski",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/schmooblidon/meleelight/issues"
+    "url": "https://github.com/noahpodgurski/4Stockfish/issues"
   },
-  "homepage": "https://github.com/schmooblidon/meleelight#readme",
+  "homepage": "https://github.com/noahpodgurski/4Stockfish#readme",
   "dependencies": {
     "howler": "^2.2.4",
     "jquery": "3.7.1",
+    "large-map": "^1.0.0",
+    "large-set": "^1.0.3",
     "url": "^0.11.4"
   },
   "devDependencies": {
@@ -80,6 +81,7 @@
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.4",
     "webpack": "^5.93.0",
+    "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
     "webpack-notifier": "^1.15.0",
     "workbox-webpack-plugin": "^7.1.0",
