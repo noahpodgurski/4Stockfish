@@ -50,6 +50,7 @@ export type PhysicsObjectType = {
   pos: Vec2D;
   posPrev: Vec2D;
   posDelta: Vec2D;
+  posEntrance: Vec2D;
   grounded: any;
   airborneTimer: number;
   fastfalled: any;
@@ -127,6 +128,7 @@ export class physicsObject implements PhysicsObjectType {
   pos: Vec2D;
   posPrev: Vec2D;
   posDelta: Vec2D;
+  posEntrance: Vec2D;
   grounded: any;
   airborneTimer: number;
   fastfalled: any;
@@ -196,13 +198,14 @@ export class physicsObject implements PhysicsObjectType {
   groundAngle: any;
   raptorBoost: any;
 
-  constructor(pos, face) {
+  constructor(pos: Vec2D, face) {
     this.cVel = new Vec2D(0, 0);
     this.kVel = new Vec2D(0, 0);
     this.kDec = new Vec2D(0, 0);
-    this.pos = new Vec2D(pos[0], pos[1]);
+    this.pos = new Vec2D(pos.x, pos.y);
     this.posPrev = new Vec2D(0, 0);
     this.posDelta = new Vec2D(0, 0);
+    this.posEntrance = new Vec2D(pos.x, pos.y);
     this.grounded = false;
     this.airborneTimer = 0;
     this.fastfalled = false;
@@ -422,7 +425,7 @@ export class playerObject implements PlayerObjectType {
   inAerial: boolean;
   shieldBreakerID: any;
 
-  constructor(character, pos, face){
+  constructor(character, pos: Vec2D, face){
     this.phys = new physicsObject(pos, face);
     this.actionState = "ENTRANCE";
     this.prevActionState = "";

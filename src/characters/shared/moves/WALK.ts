@@ -14,7 +14,7 @@ const WALK: State = {
   name : "WALK",
   canEdgeCancel : true,
   canBeGrabbed : true,
-  init : function(p,input,addInitV){
+  init : function(p,input,addInitV=false){
     player[p].actionState = "WALK";
     player[p].timer = 1;
     if (addInitV){
@@ -65,7 +65,7 @@ const WALK: State = {
     const s = checkForSmashes(p,input);
     const j = checkForJump(p,input);
     if (player[p].timer > framesData[characterSelections[p]].WALK){
-      actionStates[characterSelections[p]].WALK.init(p,false,input);
+      actionStates[characterSelections[p]].WALK.init(p,input,false);
       return true;
     }
     if (input[p][0].lsX === 0){

@@ -4,7 +4,7 @@ import {tiltTurnDashBuffer, checkForTiltTurn, checkForSmashTurn, checkForDash, c
     , checkForSmashes
     , reduceByTraction
     , actionStates
-} from "physics/actionStateShortcuts";
+} from "../../../physics/actionStateShortcuts";
 import {characterSelections, player} from "main/main";
 import {framesData} from 'main/characters';
 import { State } from "../../State";

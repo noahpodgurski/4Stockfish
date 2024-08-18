@@ -1130,7 +1130,13 @@ export function moveAlongGround(pos: Vec2D, posNext: Vec2D, ecbHeight: number, g
       let startECB = makeECB(groundStart, additionalOffset, smallestECBHeight);
       let endECB = makeECB(groundEnd, additionalOffset, smallestECBHeight);
 
-      const labelledCeilings = zipLabels(ceilings, "c"); // should not recalculate this every time...
+      // should not recalculate this every time...
+      const labelledCeilings: LabelledSurface[] = zipLabels(ceilings, "c").map((pair) => {
+        return {
+          surface: pair[0] as Surface,
+          label: pair[1] as SurfaceLabel
+        } as LabelledSurface
+      });
       let firstCeilingCollision = findClosestCollision(startECB, endECB, labelledCeilings);
       if (firstCeilingCollision === null) {
         if (ecbHeight > smallestECBHeight) {
@@ -1280,7 +1286,12 @@ export function runCollisionRoutine(ecb1: ECB, ecbp: ECB, position: Vec2D
     horizIgnore = playerStatusInfo.ignoringPlatforms ? "platforms" : "none";
   }
 
-  const allSurfacesMinusPlatforms = stageWalls.concat(stageGrounds).concat(stageCeilings);
+  const allSurfacesMinusPlatforms: LabelledSurface[] = (stageWalls.concat(stageGrounds).concat(stageCeilings)).map((pair) => {
+    return {
+      surface: pair[0] as Surface,
+      label: pair[1] as SurfaceLabel
+    } as LabelledSurface
+  });
   let relevantSurfaces: LabelledSurface[] = [];
   switch (horizIgnore) {
     case "platforms":
@@ -1289,7 +1300,7 @@ export function runCollisionRoutine(ecb1: ECB, ecbp: ECB, position: Vec2D
         return {
           surface: pair[0] as Surface,
           label: pair[1] as SurfaceLabel
-        }
+        } as LabelledSurface
       });
       break;
     case "none":
@@ -1298,7 +1309,7 @@ export function runCollisionRoutine(ecb1: ECB, ecbp: ECB, position: Vec2D
         return {
           surface: pair[0] as Surface,
           label: pair[1] as SurfaceLabel
-        }
+        } as LabelledSurface
       });
       break;
     case "all":
@@ -1306,7 +1317,7 @@ export function runCollisionRoutine(ecb1: ECB, ecbp: ECB, position: Vec2D
         return {
           surface: pair[0] as Surface,
           label: pair[1] as SurfaceLabel
-        }
+        } as LabelledSurface
       });
       break;
   }
@@ -1327,7 +1338,11 @@ export function runCollisionRoutine(ecb1: ECB, ecbp: ECB, position: Vec2D
   }
   let newSquashDatum = {location: newSquashLocation, factor: newSquashFactor};
   newSquashDatum.factor *= ecbSquashDatum.factor;
+  console.log(position)
+  console.log(newECBp)
+  console.log(ecbp)
   let newPosition: Vec2D = subtract(add(position, newECBp[0]), ecbp[0]);
+  console.log(newPosition)
 
   if (newSquashDatum.factor < 1) {
     let squashingLocation: number | null = null;

@@ -47,6 +47,9 @@ import type {DamageType} from "./damageTypes";
 
 
 function updatePosition(i: number, newPosition: Vec2D): void {
+  if (newPosition.x === undefined || newPosition.y === undefined || isNaN(newPosition.x) || isNaN(newPosition.y)){
+    newPosition = new Vec2D(player[i].phys.posEntrance.x, player[i].phys.posEntrance.y);
+  };
   player[i].phys.pos = newPosition;
 };
 
@@ -261,7 +264,7 @@ function dealWithGround(i: number, ground: Surface, groundTypeAndIndex: [string,
     player[i].phys.ECBp = moveECB(player[i].phys.ECBp, new Vec2D(maybeNextPosX - player[i].phys.ECBp[0].x, 0));
   }
   if ( player[i].phys.ECBp[0].x < leftmostGroundPoint.x) {
-    if (connected !== null && connected !== undefined) {
+    if (connected[0].length !== 0 && connected !== null && connected !== undefined) {
       maybeLeftGroundTypeAndIndex = groundTypeAndIndex[0] === "g"
           ? connected[0][groundTypeAndIndex[1]][0]
           : connected[1][groundTypeAndIndex[1]][0];
@@ -292,7 +295,7 @@ function dealWithGround(i: number, ground: Surface, groundTypeAndIndex: [string,
     }
   }
   else if (player[i].phys.ECBp[0].x > rightmostGroundPoint.x) {
-    if (connected !== null && connected !== undefined) {
+    if (connected[0].length !== 0 && connected !== null && connected !== undefined) {
       maybeRightGroundTypeAndIndex = groundTypeAndIndex[0] === "g"
           ? connected[0][groundTypeAndIndex[1]][1]
           : connected[1][groundTypeAndIndex[1]][1];

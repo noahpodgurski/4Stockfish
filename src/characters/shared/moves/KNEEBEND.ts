@@ -7,7 +7,7 @@ const KNEEBEND: State = {
   canEdgeCancel : true,
   disableTeeter : true,
   canBeGrabbed : true,
-  init : function(p,input,type){
+  init : function(p,type,input){
     player[p].actionState = "KNEEBEND";
     player[p].timer = 0;
     player[p].phys.jumpType = 1;
@@ -20,7 +20,7 @@ const KNEEBEND: State = {
       reduceByTraction(p,true);
       // if jumpsquat initiated by stick
       if (player[p].phys.jumpSquatType){
-        if (input[p][0].lsY < 0.67){
+        if (input[p][0].lsY < 0.67){ //check if stick is high enough to initiate
           player[p].phys.jumpType = 0;
         }
       }
@@ -45,22 +45,21 @@ const KNEEBEND: State = {
         actionStates[characterSelections[p]].JUMPB.init(p,player[p].phys.jumpType,input);
       }
       return true;
+    } else if (input[0] !== undefined) {
+      if (input[p][0].a && !input[p][1].a && (input[p][0].lA > 0 || input[p][0].rA > 0)){
+        actionStates[characterSelections[p]].GRAB.init(p,input);
+        return true;
+      }
+      else if ((input[p][0].a && !input[p][1].a && input[p][0].lsY >= 0.8 && input[p][3].lsY < 0.3) || (input[p][0].csY >= 0.8 && input[p][3].csY < 0.3)){
+        actionStates[characterSelections[p]].UPSMASH.init(p,input);
+        return true;
+      }
+      else if (input[p][0].b && !input[p][1].b && input[p][0].lsY > 0.58){
+        actionStates[characterSelections[p]].UPSPECIAL.init(p,input);
+        return true;
+      }
     }
-    else if (input[p][0].a && !input[p][1].a && (input[p][0].lA > 0 || input[p][0].rA > 0)){
-      actionStates[characterSelections[p]].GRAB.init(p,input);
-      return true;
-    }
-    else if ((input[p][0].a && !input[p][1].a && input[p][0].lsY >= 0.8 && input[p][3].lsY < 0.3) || (input[p][0].csY >= 0.8 && input[p][3].csY < 0.3)){
-      actionStates[characterSelections[p]].UPSMASH.init(p,input);
-      return true;
-    }
-    else if (input[p][0].b && !input[p][1].b && input[p][0].lsY > 0.58){
-      actionStates[characterSelections[p]].UPSPECIAL.init(p,input);
-      return true;
-    }
-    else {
-      return false;
-    }
+    return false;
   }
 };
 

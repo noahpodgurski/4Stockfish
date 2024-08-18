@@ -957,7 +957,7 @@ export function gameTick (oldInputBuffers){
       }
     }
     executeHits(input);
-      resetHitQueue();
+    resetHitQueue();
     findPlayers();
   } else if (gameMode == 6) {
     // stage select
@@ -968,7 +968,7 @@ export function gameTick (oldInputBuffers){
       }
     }
   } else if (playing || frameByFrame) {
-    //console.log("test0");
+    //on first frame of READY - by this time player[i].phys.pos.x is already undefined (somehow)
     /*delta = timestamp - lastFrameTimeMs; // get the delta time since last frame
     lastFrameTimeMs = timestamp;
     console.log(delta);*/
@@ -1164,8 +1164,6 @@ export function renderTick (){
 }
 
 export function buildPlayerObject (i){
-  console.log(characterSelections)
-  console.log(i)
   player[i] = new playerObject(characterSelections[i],startingPoint[i],startingFace[i]);
   player[i].phys.ECB1 = [new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y)];
   player[i].phys.ECBp = [new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y),new Vec2D(startingPoint[i].x,startingPoint[i].y)];
@@ -1174,19 +1172,12 @@ export function buildPlayerObject (i){
 
 
 
-export function initializePlayers (i,target){
+export function initializePlayers (i){
   buildPlayerObject(i);
-  if (target) {
-    drawVfx({
-      name: "entrance",
-      pos: new Vec2D(activeStage.startingPoint[0].x, activeStage.startingPoint[0].y)
-    });
-  } else {
-    drawVfx({
-      name: "entrance",
-      pos: new Vec2D(startingPoint[i][0], startingPoint[i][1])
-    });
-  }
+  drawVfx({
+    name: "entrance",
+    pos: new Vec2D(startingPoint[i][0], startingPoint[i][1])
+  });
 }
 
 export function startGame (){
@@ -1196,7 +1187,7 @@ export function startGame (){
   resetVfxQueue();
   for (var n = 0; n < 4; n++) {
     if (playerType[n] > -1) {
-      initializePlayers(n, false);
+      initializePlayers(n);
       renderPlayer(n);
       player[n].inCSS = false;
     }
