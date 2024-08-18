@@ -2,7 +2,7 @@ import {setupActionStates} from "../../physics/actionStateShortcuts";
 import baseActionStates from "../shared/moves";
 import {CHARIDS} from "../../main/characters";
 import moves from "./moves";
-import {actionStates} from "physics/actionStateShortcuts";
+import {actionStates} from "../../../physics/actionStateShortcuts";
 
 const Falcon = {
   moves,

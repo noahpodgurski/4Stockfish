@@ -1,8 +1,18 @@
 import marth from "./index";
-import {player, characterSelections} from "../../../main/main";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
 import {actionStates, turnOffHitboxes, randomShout} from "../../../physics/actionStateShortcuts";
 import {framesData} from "../../../main/characters";
-import {hitQueue} from 'physics/hitDetection';
+import {hitQueue} from '../../../physics/hitDetection';
 import WAIT from "../../shared/moves/WAIT";
 import CATCHCUT from "../../shared/moves/CATCHCUT";
 import { State } from "../../State";

@@ -1,7 +1,17 @@
-import {finishGame, characterSelections, percentShake, screenShake, player} from "main/main";
-import {playSounds, actionStates, isFinalDeath} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
-import {drawVfx} from "main/vfx/drawVfx";
+let finishGame, characterSelections, percentShake, screenShake, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ finishGame, characterSelections, percentShake, screenShake, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ finishGame, characterSelections, percentShake, screenShake, player } = mainModule);
+  }
+})();
+import {playSounds, actionStates, isFinalDeath} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import { State } from "../../State";
 
 const DEADUP: State = {

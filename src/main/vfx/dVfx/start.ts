@@ -1,7 +1,17 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {sounds} from "main/sfx";
-import {fg2, getStartTimer} from "main/main";
-import {makeColour} from "main/vfx/makeColour";
+import {vfxQueue} from "../vfxQueue";
+import {sounds} from "../../../main/sfx";
+let fg2, getStartTimer;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2, getStartTimer } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2, getStartTimer } = mainModule);
+  }
+})();
+import {makeColour} from "../makeColour";
 export default (posInQueue)=> {
   // hack method to ensure sounds are played in 30fps mode
   // index 3 and 5 are unoccupied so i've made them say if the sound has played

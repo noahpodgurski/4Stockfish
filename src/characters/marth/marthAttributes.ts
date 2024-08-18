@@ -12,7 +12,7 @@ import {  offsets,    charObject,
     setIntangibility
     ,
     setActionSounds,setFrames
-} from "main/characters";
+} from "../../../main/characters";
 import {Vec2D} from "../../main/util/Vec2D";
 import {createHitboxObject} from "../../main/util/createHitboxObject";
 import {createHitbox} from "../../main/util/createHitBox";

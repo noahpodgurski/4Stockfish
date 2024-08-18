@@ -1,8 +1,18 @@
-import {pPal, palettes, characterSelections, player} from "main/main";
-import {reduceByTraction, actionStates} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
-import {framesData} from 'main/characters';
-import {blendColours} from "main/vfx/blendColours";
+let pPal, palettes, characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ pPal, palettes, characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ pPal, palettes, characterSelections, player } = mainModule);
+  }
+})();
+import {reduceByTraction, actionStates} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
+import {framesData} from '../../../main/characters';
+import {blendColours} from "../../../main/vfx/blendColours";
 import { State } from "../../State";
 
 const FURASLEEPSTART: State = {

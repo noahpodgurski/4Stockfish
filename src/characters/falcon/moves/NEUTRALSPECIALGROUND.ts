@@ -1,9 +1,19 @@
 
 import WAIT from "../../shared/moves/WAIT";
-import { player} from "main/main";
-import {sounds} from "main/sfx";
-import {reduceByTraction, turnOffHitboxes} from "physics/actionStateShortcuts";
-import {drawVfx} from "main/vfx/drawVfx";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {reduceByTraction, turnOffHitboxes} from "../../../physics/actionStateShortcuts";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
 
 import { State } from "../../State";

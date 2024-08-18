@@ -1,36 +1,17 @@
-import {
-  cpuDifficulty,
-  characterSelections,
-  player,
-  changeGamemode,
-  playerType,
-  bg1,
-  ui,
-  palettes,
-  pPal,
-  clearScreen,
-  versusMode,
-  tagText,
-  pause
-  ,
-  hasTag
-  ,
-  randomTags
-  ,
-  layers
-  ,
-  togglePort
-  ,
-  keys
-  ,
-  ports
-  ,
-  setVersusMode
-} from "../main/main";
-import {drawArrayPathCompress, twoPi} from "main/render";
-import {sounds} from "main/sfx";
+import {drawArrayPathCompress, twoPi} from "../main/render";
+import {sounds} from "../main/sfx";
 import {actionStates} from "../physics/actionStateShortcuts";
-import {setCS, gameMode} from "../main/main";
+let setCS, gameMode, cpuDifficulty, characterSelections, player, changeGamemode, playerType, bg1, ui, palettes, pPal, clearScreen, versusMode, tagText, pause, hasTag, randomTags, layers, togglePort, keys, ports, setVersusMode;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ setCS, gameMode, cpuDifficulty, characterSelections, player, changeGamemode, playerType, bg1, ui, palettes, pPal, clearScreen, versusMode, tagText, pause, hasTag, randomTags, layers, togglePort, keys, ports, setVersusMode } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ setCS, gameMode, cpuDifficulty, characterSelections, player, changeGamemode, playerType, bg1, ui, palettes, pPal, clearScreen, versusMode, tagText, pause, hasTag, randomTags, layers, togglePort, keys, ports, setVersusMode } = mainModule);
+  }
+})();
 import {chars} from "../main/characters";
 import {Vec2D} from "../main/util/Vec2D";
 import {gameSettings} from "../settings";
@@ -38,22 +19,7 @@ import { animations } from "../animations";
 import $ from 'jquery';
 /* eslint-disable */
 
-export const marthPic = new Image();
-marthPic.src = "assets/css/marth.png";
-export const puffPic = new Image();
-puffPic.src = "assets/css/puff.png";
-export const foxPic = new Image();
-foxPic.src = "assets/css/fox.png";
-export const falcoPic = new Image();
-falcoPic.src = "assets/css/falco.png";
-export const falconPic = new Image();
-falconPic.src = "assets/css/falcon.png";
-export const handPoint = new Image();
-handPoint.src = "assets/hand/handpoint.png";
-export const handOpen = new Image();
-handOpen.src = "assets/hand/handopen.png";
-export const handGrab = new Image();
-handGrab.src = "assets/hand/handgrab.png";
+import { marthPic, puffPic, foxPic, falcoPic, falconPic, handPoint, handOpen, handGrab } from '../images';
 
 export let choosingTag = -1;
 
@@ -798,7 +764,7 @@ export function drawCSS() {
       ui.fillStyle = "rgb(84, 84, 84)";
       ui.font = "italic 900 45px Arial";
       ui.scale(14 / 8, 1);
-      var text = "P" + (i + 1);
+      text = "P" + (i + 1);
       if (playerType[i] == 1) {
         text = "CP";
       }
@@ -1000,7 +966,7 @@ export function drawCSS() {
           break;
       }
       if (hasTag[i]) {
-        var text = tagText[i];
+        text = tagText[i];
       }
       ui.textAlign = "center";
       ui.fillText(text, 250 + i * 225, 650);

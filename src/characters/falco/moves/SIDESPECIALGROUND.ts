@@ -1,11 +1,21 @@
 
 import SIDESPECIALAIR from "./SIDESPECIALAIR";
 import WAIT from "../../shared/moves/WAIT";
-import {articles} from "physics/article";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes} from "physics/actionStateShortcuts";
-import { player} from "main/main";
-import {drawVfx} from "main/vfx/drawVfx";
+import {articles} from "../../../physics/article";
+import {sounds} from "../../../main/sfx";
+import {turnOffHitboxes} from "../../../physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {drawVfx} from "../../../main/vfx/drawVfx";
 
 import { State } from "../../State";
 

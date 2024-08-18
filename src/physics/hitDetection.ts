@@ -1,8 +1,16 @@
-import {playerType, player, characterSelections, screenShake, gameMode, percentShake} from "main/main";
-
-import {gameSettings} from "settings";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes, actionStates} from "physics/actionStateShortcuts";
+let playerType, player, characterSelections, screenShake, gameMode, percentShake;
+(async () => {
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({playerType, player, characterSelections, screenShake, gameMode, percentShake} = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({playerType, player, characterSelections, screenShake, gameMode, percentShake} = mainModule);
+  }
+})();
+import {gameSettings} from "../settings";
+import {sounds} from "../main/sfx";
+import {turnOffHitboxes, actionStates} from "./actionStateShortcuts";
 import {drawVfx} from "../main/vfx/drawVfx";
 import {Vec2D} from "../main/util/Vec2D";
 import {Segment2D} from "../main/util/Segment2D";

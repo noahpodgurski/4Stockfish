@@ -5,13 +5,23 @@ import DASH from "../../shared/moves/DASH";
 import SMASHTURN from "../../shared/moves/SMASHTURN";
 import TILTTURN from "../../shared/moves/TILTTURN";
 import WALK from "../../shared/moves/WALK";
-import {characterSelections, player} from "main/main";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
 import {randomShout, tiltTurnDashBuffer, checkForSmashTurn, checkForDash, checkForJump, checkForSmashes, checkForTilts,
     checkForSpecials
     , reduceByTraction
     , turnOffHitboxes
-} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
+} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
 
 import { State } from "../../State";
 

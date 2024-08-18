@@ -1,9 +1,19 @@
 
 import FALL from "../../shared/moves/FALL";
-import {player} from "main/main";
-import {Vec2D} from "main/util/Vec2D";
-import {airDrift, fastfall} from "physics/actionStateShortcuts";
-import {activeStage} from "stages/activeStage";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {Vec2D} from "../../../main/util/Vec2D";
+import {airDrift, fastfall} from "../../../physics/actionStateShortcuts";
+import {activeStage} from "../../../stages/activeStage";
 
 import { State } from "../../State";
 

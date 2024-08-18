@@ -1,4 +1,4 @@
-import general from "main/vfx/dVfx/general";
+import general from "../dVfx/general";
 export default (posInQueue) =>{
   general(posInQueue, 0);
 };

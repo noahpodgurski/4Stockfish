@@ -5,9 +5,19 @@ import LANDINGATTACKAIRB from "../../shared/moves/LANDINGATTACKAIRB";
 import JUMPAERIALB from "../../shared/moves/JUMPAERIALB";
 import JUMPAERIALF from "../../shared/moves/JUMPAERIALF";
 import FALL from "../../shared/moves/FALL";
-import {player} from "main/main";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes, airDrift, fastfall, checkForAerials, checkForDoubleJump, checkForIASA} from "physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {turnOffHitboxes, airDrift, fastfall, checkForAerials, checkForDoubleJump, checkForIASA} from "../../../physics/actionStateShortcuts";
 
 import { State } from "../../State";
 

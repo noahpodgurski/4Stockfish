@@ -1,7 +1,17 @@
-import {reduceByTraction, actionStates} from "physics/actionStateShortcuts";
-import {characterSelections,  player} from "main/main";
-import {sounds} from "main/sfx";
-import {drawVfx} from "main/vfx/drawVfx";
+import {reduceByTraction, actionStates} from "../../../physics/actionStateShortcuts";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import { State } from "../../State";
 
 const LANDINGFALLSPECIAL: State = {

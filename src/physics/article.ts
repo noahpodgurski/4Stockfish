@@ -1,15 +1,25 @@
 
-import {player, fg2, playerType, characterSelections, screenShake, percentShake} from "main/main";
-import {rotateVector} from "main/render";
-import {sounds} from "main/sfx";
-import {knockbackSounds, segmentSegmentCollision, getKnockback, getHitstun} from "physics/hitDetection";
+let player, fg2, playerType, characterSelections, screenShake, percentShake;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({player, fg2, playerType, characterSelections, screenShake, percentShake} = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({player, fg2, playerType, characterSelections, screenShake, percentShake} = mainModule);
+  }
+})();
+import {rotateVector} from "../main/render";
+import {sounds} from "../main/sfx";
+import {knockbackSounds, segmentSegmentCollision, getKnockback, getHitstun} from "./hitDetection";
 import {findCollision, PointSweepResult, EdgeSweepResult} from "./environmentalCollision";
 import {moveECB} from "../main/util/ecbTransform";
 import {pickSmallestSweep} from "../main/util/findSmallestWithin";
 import {subtract} from "../main/linAlg";
-import {actionStates} from "physics/actionStateShortcuts";
-import {drawVfx} from "main/vfx/drawVfx";
-import {activeStage} from "stages/activeStage";
+import {actionStates} from "./actionStateShortcuts";
+import {drawVfx} from "../main/vfx/drawVfx";
+import {activeStage} from "../stages/activeStage";
 import {createHitbox} from "../main/util/createHitBox";
 import {Vec2D} from "../main/util/Vec2D";
 import {Segment2D} from "../main/util/Segment2D";
@@ -17,7 +27,7 @@ import {Segment2D} from "../main/util/Segment2D";
 import {drawLaserLine} from "../main/vfx/dVfx/laser";
 import {chromaticAberration} from "../main/vfx/chromaticAberration";
 import {unmakeColour} from "../main/vfx/makeColour";
-import { CollisionDatum } from '../physics/environmentalCollision';
+import { CollisionDatum } from './environmentalCollision';
 
 import {sweepCircleVsSweepCircle, sweepCircleVsAABB} from "./interpolatedCollision";
 import { LabelledSurface } from "../stages/stage";

@@ -3,14 +3,28 @@
 
 import {Vec2D} from "../main/util/Vec2D";
 import {keyMap} from "../settings";
-import {playing, controllerResetCountdowns} from "../main/main";
+let playing, controllerResetCountdowns;
+let replayActive, retrieveReplayInputs;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    const replayModule = await import("../engine/replay");
+    ({ playing, controllerResetCountdowns } = engineModule);
+    ({ replayActive, retrieveReplayInputs } = replayModule);
+  } else {
+    const mainModule = await import('../main/main');
+    const replayModule = await import("../main/replay");
+    ({ playing, controllerResetCountdowns } = mainModule);
+    ({ replayActive, retrieveReplayInputs } = replayModule);
+  }
+})();
 import {buttonState, triggerValue, stickValue, dPadState } from "./gamepad/retrieveGamepadInputs";
 import {gamepadInfoList} from "./gamepad/gamepadInfoList";
 import {scaleToGCTrigger, scaleToMeleeAxes, scaleToUnitAxes, tasRescale, deaden} from "./meleeInputs";
 import $ from 'jquery';
 
 import type {GamepadInfo, StickCardinals} from "./gamepad/gamepadInfo";
-import {replayActive, retrieveReplayInputs} from "../main/replay";
 import { Button, Gamepad } from "./gamepad/gamepad";
 
 export type Input = { a :boolean

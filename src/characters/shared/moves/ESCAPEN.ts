@@ -1,8 +1,18 @@
-import {executeIntangibility, reduceByTraction, playSounds, actionStates} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
-import {characterSelections,  player} from "main/main";
-import {framesData} from 'main/characters';
-import {drawVfx} from "main/vfx/drawVfx";
+import {executeIntangibility, reduceByTraction, playSounds, actionStates} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {framesData} from '../../../main/characters';
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import { State } from "../../State";
 
 const ESCAPEN: State = {

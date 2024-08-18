@@ -16,6 +16,7 @@ import {
   , gameEnd
 } from "./main";
 import {deepObjectMerge} from "./util/deepCopyObject";
+require('potatos')
 import pako from "pako";
 import $ from 'jquery';
 import localforage from 'localforage';
@@ -37,7 +38,7 @@ const replayPlayerData: any = [];
 const replayFrameData: any = [];
 let lastFrametime = performance.now();
 export let gameTickDelay = 0;
-export let replaysOn = localStorage.getItem('replayson') === "true" || false;
+export let replaysOn = process.env.RUN_MODE !== "engine" && localStorage.getItem('replayson') === "true" || false;
 console.log(`replayson: ${replaysOn}`);
 export let playingReplay = false;
 $("#replayson").on("click", () => {

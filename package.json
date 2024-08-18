@@ -12,7 +12,8 @@
     "release": "node bin/release.js",
     "serve": "nodemon app",
     "postinstall": "npm run animations && npm run build",
-    "rebuild": "./node_modules/.bin/electron-rebuild -w uws"
+    "rebuild": "./node_modules/.bin/electron-rebuild -w uws",
+    "engine": "cross-env RUN_MODE=engine npx ts-node src/engine/test.ts"
   },
   "engines": {
     "node": "16.17.0",
@@ -32,6 +33,7 @@
   },
   "homepage": "https://github.com/noahpodgurski/4Stockfish#readme",
   "dependencies": {
+    "canvas": "^2.11.2",
     "howler": "^2.2.4",
     "jquery": "3.7.1",
     "large-map": "^1.0.0",

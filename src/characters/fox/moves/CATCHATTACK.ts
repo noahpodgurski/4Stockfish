@@ -1,7 +1,17 @@
 
 import CATCHWAIT from "../../shared/moves/CATCHWAIT";
-import {player} from "main/main";
-import {turnOffHitboxes} from "physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {turnOffHitboxes} from "../../../physics/actionStateShortcuts";
 
 export default {
   name : "CATCHATTACK",

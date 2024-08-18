@@ -1,5 +1,15 @@
-import {Vec2D} from "main/util/Vec2D";
-import {player} from "main/main";
+import {Vec2D} from "../../../main/util/Vec2D";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 import { State } from "../../State";
 
 const THROWNMARTHBACK: State = {

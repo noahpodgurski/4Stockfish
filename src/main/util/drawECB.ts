@@ -1,4 +1,14 @@
-import {fg2} from "../main";
+let fg2;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../main');
+    ({ fg2 } = mainModule);
+  }
+})();
 import {activeStage} from "../../stages/activeStage";
 import {Vec2D} from "./Vec2D";
 

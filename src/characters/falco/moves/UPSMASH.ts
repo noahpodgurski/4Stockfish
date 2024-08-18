@@ -1,8 +1,18 @@
 
 import WAIT from "../../shared/moves/WAIT";
-import {characterSelections, player} from "main/main";
-import {randomShout, reduceByTraction, turnOffHitboxes} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {randomShout, reduceByTraction, turnOffHitboxes} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
 
 import { State } from "../../State";
 

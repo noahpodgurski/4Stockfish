@@ -1,5 +1,15 @@
-import {bg1,bg2, clearScreen, layers,ui} from "main/main";
-import {twoPi} from "main/render";
+let bg1, bg2, clearScreen, layers, ui;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ bg1, bg2, clearScreen, layers, ui } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ bg1, bg2, clearScreen, layers, ui } = mainModule);
+  }
+})();
+import {twoPi} from "../main/render";
 /* eslint-disable */
 
 export let angB = 0;

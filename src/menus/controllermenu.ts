@@ -3,11 +3,11 @@ import {player, setCookie, changeGamemode, ports, bg1, layers, bg2, ui, fg2, fg1
     , addShine
     , setShine
     , calibrationPlayer
-} from "main/main";
-import {twoPi} from "main/render";
+} from "../main/main";
+import {twoPi} from "../main/render";
 import {updateGamepadSVGColour} from "../input/gamepad/drawGamepad";
 import {setClickObject, setClickObjectNumber, customGamepadInfoIsUsable, ClickObject } from "../input/gamepad/gamepadCalibration";
-import {sounds} from "main/sfx";
+import {sounds} from "../main/sfx";
 /* eslint-disable */
 
 let controllerTimer    = 0;

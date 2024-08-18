@@ -2,11 +2,21 @@ import WAIT from "../../shared/moves/WAIT";
 import DOWNSPECIALGROUNDENDAIR from "./DOWNSPECIALGROUNDENDAIR";
 import DOWNSPECIALGROUNDENDGROUND from "./DOWNSPECIALGROUNDENDGROUND";
 import UPSPECIALTHROW from "./UPSPECIALTHROW";
-import {player} from "main/main";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes, reduceByTraction} from "physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {turnOffHitboxes, reduceByTraction} from "../../../physics/actionStateShortcuts";
 
-import {drawVfx} from "main/vfx/drawVfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
 import { State } from "../../State";
 

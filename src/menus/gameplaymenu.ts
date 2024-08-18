@@ -1,7 +1,7 @@
 import {player, changeGamemode, setCookie, ports, bg1, fg1, clearScreen,bg2, shine,ui, layers, getCookie, setShine,
     addShine
 } from "main/main";
-import {gameSettings} from "settings";
+import {gameSettings} from "../../../settings";
 import {sounds} from "main/sfx";
 import {stickHold, stickHoldEach, increaseStick, resetStick} from "menus/menu";
 /* eslint-disable */

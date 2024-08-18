@@ -1,7 +1,17 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {fg2} from "main/main";
-import {makeColour} from "main/vfx/makeColour";
-import {activeStage} from "stages/activeStage";
+import {vfxQueue} from "../vfxQueue";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {makeColour} from "../makeColour";
+import {activeStage} from "../../../stages/activeStage";
 export default (posInQueue)=> {
   if (vfxQueue[posInQueue].timer % 2) {
     fg2.save();

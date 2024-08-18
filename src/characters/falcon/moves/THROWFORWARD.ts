@@ -1,10 +1,20 @@
 
 import WAIT from "../../shared/moves/WAIT";
 import CATCHCUT from "../../shared/moves/CATCHCUT";
-import {randomShout, turnOffHitboxes, actionStates} from "physics/actionStateShortcuts";
-import {characterSelections, player} from "main/main";
-import {framesData} from 'main/characters';
-import {hitQueue} from 'physics/hitDetection';
+import {randomShout, turnOffHitboxes, actionStates} from "../../../physics/actionStateShortcuts";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {framesData} from '../../../main/characters';
+import {hitQueue} from '../../../physics/hitDetection';
 import { State } from "../../State";
 
 const THROWFORWARD: State = {

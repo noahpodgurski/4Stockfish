@@ -1,9 +1,19 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {drawArrayPathCompress} from "main/render";
-import {fg2} from "main/main";
-import {makeColour} from "main/vfx/makeColour";
-import {activeStage} from "stages/activeStage";
-import vfx from "main/vfx/vfxData/index";
+import {vfxQueue} from "../vfxQueue";
+import {drawArrayPathCompress} from "../../../main/render";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {makeColour} from "../makeColour";
+import {activeStage} from "../../../stages/activeStage";
+import vfx from "../vfxData/index";
 export default (posInQueue) =>{
   if (!(vfxQueue[posInQueue].timer % 2)) {
     drawArrayPathCompress( fg2

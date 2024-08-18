@@ -1,8 +1,18 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {activeStage} from "stages/activeStage";
-import {fg2} from "main/main";
-import {makeColour} from "main/vfx/makeColour";
-import {twoPi} from "main/render";
+import {vfxQueue} from "../vfxQueue";
+import {activeStage} from "../../../stages/activeStage";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {makeColour} from "../makeColour";
+import {twoPi} from "../../../main/render";
 export default (posInQueue) =>{
   if (vfxQueue[posInQueue].randomTail === undefined || vfxQueue[posInQueue].randomTail === null) {
     vfxQueue[posInQueue].randomTail=[Math.random(), Math.random(), Math.random(), Math.random()];

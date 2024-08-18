@@ -1,5 +1,15 @@
 import marth from "./index";
-import {player, palettes, pPal} from "../../../main/main";
+let player, palettes, pPal;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, palettes, pPal } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, palettes, pPal } = mainModule);
+  }
+})();
 import {turnOffHitboxes, reduceByTraction} from "../../../physics/actionStateShortcuts";
 import {sounds} from "../../../main/sfx";
 import {blendColours} from "../../../main/vfx/blendColours";

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /* eslint-disable */
 import {choosingTag, drawCSSInit, cssControls, drawCSS} from '../menus/css';
 import {playerObject, PlayerObjectType} from '../main/player';

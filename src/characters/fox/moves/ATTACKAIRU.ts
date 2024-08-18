@@ -5,9 +5,19 @@ import LANDINGATTACKAIRU from "../../shared/moves/LANDINGATTACKAIRU";
 import JUMPAERIALB from "../../shared/moves/JUMPAERIALB";
 import JUMPAERIALF from "../../shared/moves/JUMPAERIALF";
 import FALL from "../../shared/moves/FALL";
-import {player} from "main/main";
-import {turnOffHitboxes, fastfall, airDrift, checkForAerials, checkForDoubleJump, checkForIASA} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {turnOffHitboxes, fastfall, airDrift, checkForAerials, checkForDoubleJump, checkForIASA} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
 
 export default {
   name : "ATTACKAIRU",

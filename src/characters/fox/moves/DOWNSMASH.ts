@@ -6,14 +6,24 @@ import TILTTURN from "../../shared/moves/TILTTURN";
 import WALK from "../../shared/moves/WALK";
 import WAIT from "../../shared/moves/WAIT";
 import KNEEBEND from "../../shared/moves/KNEEBEND";
-import {player, characterSelections} from "main/main";
-import {sounds} from "main/sfx";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
 import {reduceByTraction, randomShout, turnOffHitboxes, checkForSpecials, checkForTilts, checkForSmashes, checkForJump,
     checkForDash
     , checkForSmashTurn
     , checkForTiltTurn
     , tiltTurnDashBuffer
-} from "physics/actionStateShortcuts";
+} from "../../../physics/actionStateShortcuts";
 
 export default {
   name : "DOWNSMASH",

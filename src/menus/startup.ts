@@ -1,20 +1,30 @@
-import {changeGamemode,ui, layers, bg1, fg1} from "../main/main";
+let changeGamemode, ui, layers, bg1, fg1;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ changeGamemode, ui, layers, bg1, fg1 } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ changeGamemode, ui, layers, bg1, fg1 } = mainModule);
+  }
+})();
 import {drawArrayPathCompress} from "../main/render";
 /* eslint-disable */
 
 export let startUpTimer = 0;
-var hohlogo = new Image();
-hohlogo.src = "assets/hohlogo.png";
-var schmoologo = new Image();
-schmoologo.src = "assets/schmoologo.png";
-let christmasbackdrop = new Image();
-christmasbackdrop.src = "assets/christmas/christmasbackdrop.png";
+// var hohlogo = new Image();
+// hohlogo.src = "assets/hohlogo.png";
+// var schmoologo = new Image();
+// schmoologo.src = "assets/schmoologo.png";
+// let christmasbackdrop = new Image();
+// christmasbackdrop.src = "assets/christmas/christmasbackdrop.png";
 
 export function drawStartUp (){
   startUpTimer++;
   if (startUpTimer == 1){
     fg1.globalAlpha = 0.3;
-    fg1.drawImage(christmasbackdrop,0,0,1200,750);
+    // fg1.drawImage(christmasbackdrop,0,0,1200,750);
     fg1.globalAlpha = 1;
   }
   ui.clearRect(0, 0, layers?.UI?.width ?? 0, layers?.UI?.height ?? 0);
@@ -26,7 +36,7 @@ export function drawStartUp (){
     ui.save();
     drawArrayPathCompress(ui, "rgb(255,255,255)", 1, 300, 650, LOGO, 0.5, 0.5, 0, 0, 0);
     ui.clip();
-    ui.drawImage(schmoologo, 100, Math.round(200 - startUpTimer / 3));
+    // ui.drawImage(schmoologo, 100, Math.round(200 - startUpTimer / 3));
     drawArrayPathCompress(ui, "rgb(0,0,0)", 1, 300, 650, LOGO2, 0.5, 0.5, 0, 0, 0);
     ui.restore();
     if (startUpTimer > 180) {
@@ -38,7 +48,7 @@ export function drawStartUp (){
   } else if (startUpTimer > 200) {
     ui.fillStyle = "white";
     ui.fillText("WITH MUSIC FROM", 600, 290);
-    ui.drawImage(hohlogo, 375, 305);
+    // ui.drawImage(hohlogo, 375, 305);
     if (startUpTimer > 350) {
       ui.fillStyle = "rgba(0,0,0," + Math.min(1, (startUpTimer - 350) / 20) + ")";
     } else {

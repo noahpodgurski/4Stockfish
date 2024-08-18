@@ -1,5 +1,5 @@
-import {vfxQueue,dropFromVfxQueue} from "main/vfx/vfxQueue";
-import {isShowSFX, dVfx} from "main/vfx";
+import {vfxQueue,dropFromVfxQueue} from "./vfxQueue";
+import {isShowSFX, dVfx} from "../vfx";
 
 export function renderVfx (otherFrame=false){
   let altFrame = otherFrame;

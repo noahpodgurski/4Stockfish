@@ -2,7 +2,7 @@ import {Vec2D} from "../util/Vec2D";
 import {randomAnnulusPoint} from "../util/randomAnnulusPoint";
 import {drawStar} from "./drawStar";
 import {drawVfx} from "./drawVfx";
-import {vfx} from "main/vfx";
+import {vfx} from "../vfx";
 
 export function stars(tX, tY, n, minSpread, maxSpread) {
   

@@ -1,8 +1,18 @@
-import {fg2} from "main/main";
-import {makeColour} from "main/vfx/makeColour";
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {activeStage} from "stages/activeStage";
-import {twoPi} from "main/render";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {makeColour} from "../makeColour";
+import {vfxQueue} from "../vfxQueue";
+import {activeStage} from "../../../stages/activeStage";
+import {twoPi} from "../../../main/render";
 export default (posInQueue)=> {
   fg2.strokeStyle = makeColour(255, 255, 255, 0.8 * ((vfxQueue[posInQueue].frames - vfxQueue[posInQueue].timer) / vfxQueue[posInQueue].frames));
   fg2.lineWidth = 10;

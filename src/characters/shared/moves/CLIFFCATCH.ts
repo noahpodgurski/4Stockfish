@@ -1,7 +1,17 @@
-import {playSounds, actionStates, turnOffHitboxes} from "physics/actionStateShortcuts";
-import {characterSelections,  player} from "main/main";
-import {drawVfx} from "main/vfx/drawVfx";
-import {activeStage} from "stages/activeStage";
+import {playSounds, actionStates, turnOffHitboxes} from "../../../physics/actionStateShortcuts";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {drawVfx} from "../../../main/vfx/drawVfx";
+import {activeStage} from "../../../stages/activeStage";
 import {Vec2D} from "../../../main/util/Vec2D";
 import {framesData} from "../../../main/characters";
 import { State } from "../../State";

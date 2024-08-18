@@ -1,10 +1,20 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {makeColour} from "main/vfx/makeColour";
-import {fg2} from "main/main";
-import {drawHexagon} from "main/vfx/drawHexagon";
-import {activeStage} from "stages/activeStage";
-import {stars} from "main/vfx/stars";
-import {vfx} from "main/vfx";
+import {vfxQueue} from "../vfxQueue";
+import {makeColour} from "../makeColour";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {drawHexagon} from "../drawHexagon";
+import {activeStage} from "../../../stages/activeStage";
+import {stars} from "../stars";
+import { vfx } from '../../vfx';
 
 const lightBlue = "rgba(196, 252, 254, 0.82)";
 const white =  "rgba(235, 250, 255, 0.9)";

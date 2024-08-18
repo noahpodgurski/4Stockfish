@@ -1,7 +1,16 @@
-import {bg1,fg1,fg2,bg2, player, changeGamemode, positionPlayersInCSS, setKeyBinding, ports, layers,ui, clearScreen, setCalibrationPlayer, currentPlayers
-} from "main/main";
-import {sounds} from "main/sfx";
-import {twoPi} from "main/render";
+let bg1, fg1, fg2, bg2, player, changeGamemode, positionPlayersInCSS, setKeyBinding, ports, layers, ui, clearScreen, setCalibrationPlayer, currentPlayers;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ bg1, fg1, fg2, bg2, player, changeGamemode, positionPlayersInCSS, setKeyBinding, ports, layers, ui, clearScreen, setCalibrationPlayer, currentPlayers } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ bg1, fg1, fg2, bg2, player, changeGamemode, positionPlayersInCSS, setKeyBinding, ports, layers, ui, clearScreen, setCalibrationPlayer, currentPlayers } = mainModule);
+  }
+})();
+import {sounds} from "../main/sfx";
+import {twoPi} from "../main/render";
 
 import {MusicManager} from "../main/music";
 import {runCalibration} from "../input/gamepad/gamepadCalibration";

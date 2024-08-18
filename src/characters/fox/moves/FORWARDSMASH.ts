@@ -1,8 +1,18 @@
 
 import WAIT from "../../shared/moves/WAIT";
-import {player, characterSelections} from "main/main";
-import {turnOffHitboxes, reduceByTraction, randomShout} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
+import {turnOffHitboxes, reduceByTraction, randomShout} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
 
 export default {
   name : "FORWARDSMASH",

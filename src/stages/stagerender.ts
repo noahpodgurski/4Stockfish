@@ -1,10 +1,23 @@
 import {getTransparency} from "../main/vfx/transparency";
-import {bg1, bg2, fg1, fg2, layers, gameMode} from "../main/main";
+
+let bg1, bg2, fg1, fg2, layers, gameMode;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ bg1, bg2, fg1, fg2, layers, gameMode } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ bg1, bg2, fg1, fg2, layers, gameMode } = mainModule);
+  }
+})();
+
 import {rotateVector, twoPi} from "../main/render";
 import {activeStage} from "../stages/activeStage";
 import {Vec2D} from "../main/util/Vec2D";
 import {euclideanDist} from "../main/linAlg";
 import { Ledge, Stage } from "./stage";
+import { scandypattern, fabric, randall } from "../images";
 
 const bgPos = [[-30, 500, 300, 500, 900, 500, 1230, 450, 358], [-30, 400, 300, 400, 900, 400, 1230, 350, 179]];
 const direction = [[1, -1, 1, -1, 1, -1, 1, -1, 1], [-1, 1, -1, 1, -1, 1, -1, 1, -1]];
@@ -53,16 +66,6 @@ for (let i = 0; i < 5; i++) {
 let ang = 0;
 export let backgroundType = 0;
 
-const scandypattern = new Image();
-scandypattern.src = "assets/christmas/scandypattern.png";
-
-const fabric = new Image();
-fabric.src = "assets/christmas/fabric.png";
-
-const randall = [new Image(),new Image(),new Image()];
-randall[0].src = "assets/stage/randall1.png";
-randall[1].src = "assets/stage/randall2.png";
-randall[2].src = "assets/stage/randall3.png";
 let randallTimer = 0;
 
 export function drawStageInit() {

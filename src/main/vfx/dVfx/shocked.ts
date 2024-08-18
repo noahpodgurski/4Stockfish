@@ -1,7 +1,17 @@
-import {activeStage} from "stages/activeStage";
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {fg2} from "main/main";
-import {twoPi} from "main/render";
+import {activeStage} from "../../../stages/activeStage";
+import {vfxQueue} from "../vfxQueue";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {twoPi} from "../../../main/render";
 import {Vec2D} from "../../util/Vec2D";
 export default (posInQueue) =>{
   const s = activeStage.scale / 4.5;

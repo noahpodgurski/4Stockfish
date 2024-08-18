@@ -1,7 +1,17 @@
-import {Vec2D} from "main/util/Vec2D";
-import {player, characterSelections} from "main/main";
-import {actionStates} from "physics/actionStateShortcuts";
-import {drawVfx} from "main/vfx/drawVfx";
+import {Vec2D} from "../../../main/util/Vec2D";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
+import {actionStates} from "../../../physics/actionStateShortcuts";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import { State } from "../../State";
 
 const THROWNFALCONDIVE: State = {

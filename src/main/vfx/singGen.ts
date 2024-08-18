@@ -1,10 +1,20 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {player,fg2} from "main/main";
-import {Vec2D} from "main/util/Vec2D";
-import {activeStage} from "stages/activeStage";
-import {drawArrayPathNew} from "main/vfx/drawArrayPathNew";
-import {twoPi} from "main/render";
-import vfx from "main/vfx/vfxData/index";
+import {vfxQueue} from "../vfx/vfxQueue";
+let player, fg2;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../engine/main');
+    ({ player, fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../main/main');
+    ({ player, fg2 } = mainModule);
+  }
+})();
+import {Vec2D} from "../../main/util/Vec2D";
+import {activeStage} from "../../stages/activeStage";
+import {drawArrayPathNew} from "../vfx/drawArrayPathNew";
+import {twoPi} from "../render";
+import { vfx } from "../vfx";
 // singGen produces sing vfx according to different parameters
 // rMin: initial note radius
 // rMax: final note radius

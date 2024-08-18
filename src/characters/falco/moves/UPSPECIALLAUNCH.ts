@@ -2,10 +2,20 @@
 import WAIT from "../../shared/moves/WAIT";
 import FALLSPECIAL from "../../shared/moves/FALLSPECIAL";
 import FIREFOXBOUNCE from "./FIREFOXBOUNCE";
-import {turnOffHitboxes, airDrift, fastfall, reduceByTraction} from "physics/actionStateShortcuts";
-import { player} from "main/main";
-import {sounds} from "main/sfx";
-import {drawVfx} from "main/vfx/drawVfx";
+import {turnOffHitboxes, airDrift, fastfall, reduceByTraction} from "../../../physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
 
 import { State } from "../../State";

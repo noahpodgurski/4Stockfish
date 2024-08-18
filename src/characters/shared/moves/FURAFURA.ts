@@ -1,8 +1,18 @@
-import {mashOut, reduceByTraction, actionStates} from "physics/actionStateShortcuts";
+import {mashOut, reduceByTraction, actionStates} from "../../../physics/actionStateShortcuts";
 
-import {characterSelections,  player} from "main/main";
-import {sounds} from "main/sfx";
-import {drawVfx} from "main/vfx/drawVfx";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {actionSounds, framesData} from "../../../main/characters";
 import {Vec2D} from "../../../main/util/Vec2D";
 import { State } from "../../State";

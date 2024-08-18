@@ -3,11 +3,21 @@ import DOWNSPECIALAIR from "../../fox/moves/DOWNSPECIALAIR";
 import KNEEBEND from "../../shared/moves/KNEEBEND";
 import WAIT from "../../shared/moves/WAIT";
 import FALL from "../../shared/moves/FALL";
-import {player} from "main/main";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes, reduceByTraction, checkForJump} from "physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {turnOffHitboxes, reduceByTraction, checkForJump} from "../../../physics/actionStateShortcuts";
 
-import {drawVfx} from "main/vfx/drawVfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
 export default {
   name : "DOWNSPECIALGROUND",

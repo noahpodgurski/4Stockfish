@@ -1,9 +1,19 @@
-import {fg2} from "main/main";
-import {makeColour} from "main/vfx/makeColour";
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {activeStage} from "stages/activeStage";
-import {twoPi} from "main/render";
-import {blendColours} from "main/vfx/blendColours";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {makeColour} from "../makeColour";
+import {vfxQueue} from "../vfxQueue";
+import {activeStage} from "../../../stages/activeStage";
+import {twoPi} from "../../../main/render";
+import {blendColours} from "../blendColours";
 export default (posInQueue) =>{
   //rgb(253,255,161)
   //rgb(198, 57, 5)

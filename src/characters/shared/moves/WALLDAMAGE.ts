@@ -1,11 +1,21 @@
-import {characterSelections, player} from "main/main";
-import {actionStates} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
-import {framesData} from 'main/characters';
-import {drawVfx} from "main/vfx/drawVfx";
-import {getHorizontalDecay, getVerticalDecay} from "physics/hitDetection";
-import {reflect, dotProd} from "main/linAlg";
-import {Vec2D} from "main/util/Vec2D";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {actionStates} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
+import {framesData} from '../../../main/characters';
+import {drawVfx} from "../../../main/vfx/drawVfx";
+import {getHorizontalDecay, getVerticalDecay} from "../../../physics/hitDetection";
+import {reflect, dotProd} from "../../../main/linAlg";
+import {Vec2D} from "../../../main/util/Vec2D";
 
 import { State } from "../../State";
 

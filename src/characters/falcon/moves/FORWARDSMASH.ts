@@ -7,14 +7,24 @@ import TILTTURN from "../../shared/moves/TILTTURN";
 import WALK from "../../shared/moves/WALK";
 import KNEEBEND from "../../shared/moves/KNEEBEND";
 import SQUATWAIT from "../../shared/moves/SQUATWAIT";
-import {player, characterSelections} from "main/main";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
 import {randomShout, tiltTurnDashBuffer, checkForSmashTurn, checkForDash, checkForJump, checkForSmashes, checkForTilts,
     checkForSpecials
     , reduceByTraction
     , turnOffHitboxes
-} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
-import {drawVfx} from "main/vfx/drawVfx";
+} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
 
 import { State } from "../../State";

@@ -1,4 +1,4 @@
-import {getTransparency} from "main/vfx/transparency";
+import {getTransparency} from "./transparency";
 export function makeColour(r, g, b, a) {
   // maybe some hsl too
   if (getTransparency()) {

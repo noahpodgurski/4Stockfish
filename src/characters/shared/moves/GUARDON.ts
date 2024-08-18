@@ -1,6 +1,16 @@
-import {checkForJump, shieldDepletion, playSounds, shieldTilt, reduceByTraction, actionStates, shieldSize} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
-import {characterSelections, player} from "main/main";
+import {checkForJump, shieldDepletion, playSounds, shieldTilt, reduceByTraction, actionStates, shieldSize} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
 import {framesData} from "../../../main/characters";
 import {Vec2D} from "../../../main/util/Vec2D";
 import { State } from "../../State";

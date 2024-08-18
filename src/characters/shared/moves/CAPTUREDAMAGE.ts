@@ -1,7 +1,17 @@
-import {player, characterSelections} from "main/main";
-import {actionStates} from "physics/actionStateShortcuts";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
+import {actionStates} from "../../../physics/actionStateShortcuts";
 
-import {framesData} from 'main/characters';
+import {framesData} from '../../../main/characters';
 import { State } from "../../State";
 
 const CAPTUREDAMAGE: State = {

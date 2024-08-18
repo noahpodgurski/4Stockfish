@@ -81,3 +81,4 @@ import 'physics/physics';
 import 'stages/vs-stages/vs-stages';
 import 'stages/activeStage';
 import 'stages/stagerender';
+import './images';

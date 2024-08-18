@@ -1,4 +1,14 @@
-import {fg2} from 'main/main';
+let fg2;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
 export function drawHexagon(r, tX, tY, width) {
   fg2.save();
   fg2.translate(tX, tY);

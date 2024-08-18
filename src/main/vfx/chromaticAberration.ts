@@ -1,4 +1,4 @@
-import {makeColour} from "main/vfx/makeColour";
+import {makeColour} from "./makeColour";
 
 export function chromaticAberration( ctx, drawFunction, col1, col2, opacity, vec ) {
 

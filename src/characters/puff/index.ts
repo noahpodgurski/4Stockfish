@@ -1,8 +1,8 @@
 import {
   setupActionStates
-} from "physics/actionStateShortcuts";
+} from "../../../physics/actionStateShortcuts";
 import baseActionStates from "../shared/moves";
-import {CHARIDS} from "main/characters";
+import {CHARIDS} from "../../../main/characters";
 import moves from './moves';
 import {actionStates} from "../../physics/actionStateShortcuts";
 

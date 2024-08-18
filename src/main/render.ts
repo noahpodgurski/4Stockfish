@@ -1,24 +1,20 @@
+let player, ui, characterSelections, fg2, versusMode, matchTimer, playerType, palettes, pPal, hasTag, tagText, gameMode, startTimer;
+ (async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ player, characterSelections, fg2, versusMode, ui, matchTimer, playerType, palettes, pPal, hasTag, tagText,  gameMode, startTimer} = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ player, characterSelections, fg2, versusMode, ui, matchTimer, playerType, palettes, pPal, hasTag, tagText,  gameMode, startTimer} = mainModule);
+  }
+})();
 
-import {
-    player,
-    characterSelections,
-    fg2,
-    versusMode,
-    fg2 as ui,
-    matchTimer,
-    playerType,
-    palettes,
-    pPal,
-    hasTag,
-    tagText, 
-	gameMode,
-    startTimer,
-} from "main/main";
-import {gameSettings} from "settings";
-import {makeColour} from "main/vfx/makeColour";
-import {actionStates} from "physics/actionStateShortcuts";
-import {blendColours} from "main/vfx/blendColours";
-import {activeStage} from "stages/activeStage";
+import {gameSettings} from "../settings";
+import {makeColour} from "./vfx/makeColour";
+import {actionStates} from "../physics/actionStateShortcuts";
+import {blendColours} from "./vfx/blendColours";
+import {activeStage} from "../stages/activeStage";
 import {Vec2D} from "./util/Vec2D";
 import {framesData} from "./characters";
 import { animations } from "../animations";
@@ -401,8 +397,6 @@ export function renderPlayer(i) {
 
 } 
 export function renderOverlay(showStock) {
-
-
     // stocks, percent, timer
     ui.strokeStyle = "black";
     if (!versusMode || gameMode == 5) {

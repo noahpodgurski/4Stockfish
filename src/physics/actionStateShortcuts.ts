@@ -1,4 +1,15 @@
-import {characterSelections, player, gameMode, versusMode, playerType} from "../main/main";
+let characterSelections, player, gameMode, versusMode, playerType;
+ (async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ characterSelections, player, gameMode, versusMode, playerType } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ characterSelections, player, gameMode, versusMode, playerType } = mainModule);
+  }
+})();
+
 import FOXMOVES from "../characters/fox/moves/index";
 import PUFFMOVES from "../characters/puff/moves/index";
 import MARTHMOVES from "../characters/marth/moves/index";

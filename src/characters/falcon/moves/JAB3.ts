@@ -7,13 +7,23 @@ import TILTTURN from "../../shared/moves/TILTTURN";
 import WALK from "../../shared/moves/WALK";
 import KNEEBEND from "../../shared/moves/KNEEBEND";
 import SQUATWAIT from "../../shared/moves/SQUATWAIT";
-import {sounds} from "main/sfx";
+import {sounds} from "../../../main/sfx";
 import {tiltTurnDashBuffer, checkForSmashTurn, checkForDash, checkForJump, checkForSmashes, checkForTilts,
     checkForSpecials
     , reduceByTraction
     , turnOffHitboxes
-} from "physics/actionStateShortcuts";
-import {player} from "main/main";
+} from "../../../physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 
 import { State } from "../../State";
 

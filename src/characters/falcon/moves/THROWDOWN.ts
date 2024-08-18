@@ -1,14 +1,24 @@
 
 import WAIT from "../../shared/moves/WAIT";
 import CATCHCUT from "../../shared/moves/CATCHCUT";
-import {framesData} from "main/characters";
-import { characterSelections, player} from "main/main";
-import {sounds} from "main/sfx";
-import {articles} from "physics/article";
-import {randomShout, turnOffHitboxes, actionStates} from "physics/actionStateShortcuts";
+import {framesData} from "../../../main/characters";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {articles} from "../../../physics/article";
+import {randomShout, turnOffHitboxes, actionStates} from "../../../physics/actionStateShortcuts";
 
-import {hitQueue} from 'physics/hitDetection';
-import {drawVfx} from "main/vfx/drawVfx";
+import {hitQueue} from '../../../physics/hitDetection';
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
 import { State } from "../../State";
 

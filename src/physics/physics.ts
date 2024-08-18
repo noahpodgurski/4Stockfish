@@ -1,15 +1,16 @@
 //@flow
 
-import {
-  player,
-  characterSelections,
-  percentShake,
-  playerType,
-  edgeOffset,
-  versusMode,
-  showDebug,
-  gameMode
-} from "../main/main";
+let player, characterSelections, percentShake, playerType, edgeOffset, versusMode, showDebug, gameMode;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../engine/main');
+    ({ player, characterSelections, percentShake, playerType, edgeOffset, versusMode, showDebug, gameMode } = engineModule);
+  } else {
+    const mainModule = await import('../main/main');
+    ({ player, characterSelections, percentShake, playerType, edgeOffset, versusMode, showDebug, gameMode } = mainModule);
+  }
+})();
 import {ecb, framesData, getEcB} from "../main/characters";
 import {sounds} from "../main/sfx";
 import {gameSettings} from "../settings";

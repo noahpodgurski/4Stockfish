@@ -1,10 +1,20 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {activeStage} from "stages/activeStage";
-import {makeColour} from "main/vfx/makeColour";
-import {fg2} from "main/main";
-import {twoPi} from "main/render";
-import {drawArrayPath} from "main/vfx/drawArrayPath";
-import vfx from "main/vfx/vfxData/index";
+import {vfxQueue} from "../vfxQueue";
+import {activeStage} from "../../../stages/activeStage";
+import {makeColour} from "../makeColour";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {twoPi} from "../../../main/render";
+import {drawArrayPath} from "../drawArrayPath";
+import vfx from "../vfxData/index";
 export default (posInQueue) =>{
   fg2.save();
   fg2.translate((vfxQueue[posInQueue].newPos.x * activeStage.scale) + activeStage.offset[0], (vfxQueue[posInQueue].newPos.y * -activeStage.scale) + activeStage.offset[

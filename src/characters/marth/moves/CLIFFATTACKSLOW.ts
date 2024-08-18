@@ -1,5 +1,15 @@
 import marth from "./index";
-import {player, characterSelections} from "../../../main/main";
+let player, characterSelections;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, characterSelections } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, characterSelections } = mainModule);
+  }
+})();
 import {turnOffHitboxes, randomShout} from "../../../physics/actionStateShortcuts";
 import {activeStage} from "../../../stages/activeStage";
 import {Vec2D} from "../../../main/util/Vec2D";

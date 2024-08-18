@@ -1,5 +1,15 @@
 import falcon from "./index";
-import {player} from "../../../main/main";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 import {turnOffHitboxes, fastfall, airDrift} from "../../../physics/actionStateShortcuts";
 import {sounds} from "../../../main/sfx";
 import {Vec2D} from "../../../main/util/Vec2D";
@@ -7,7 +17,7 @@ import {drawVfx} from "../../../main/vfx/drawVfx";
 import FALLSPECIAL from "../../shared/moves/FALLSPECIAL";
 import LANDINGFALLSPECIAL from "../../shared/moves/LANDINGFALLSPECIAL";
 import UPSPECIALTHROW from "./UPSPECIALTHROW";
-import {hitQueue} from 'physics/hitDetection';
+import {hitQueue} from '../../../physics/hitDetection';
 import { State } from "../../State";
 
 const UPSPECIALCATCH: State = {

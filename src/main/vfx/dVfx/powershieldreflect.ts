@@ -1,7 +1,17 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {activeStage} from "stages/activeStage";
-import {fg2} from "main/main";
-import {twoPi} from "main/render";
+import {vfxQueue} from "../vfxQueue";
+import {activeStage} from "../../../stages/activeStage";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {twoPi} from "../../../main/render";
 export default (posInQueue) =>{
   const frame = vfxQueue[posInQueue].timer;
   fg2.save();

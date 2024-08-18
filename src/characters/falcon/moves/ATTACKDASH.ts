@@ -7,13 +7,23 @@ import SMASHTURN from "../../shared/moves/SMASHTURN";
 import TILTTURN from "../../shared/moves/TILTTURN";
 import WALK from "../../shared/moves/WALK";
 import WAIT from "../../shared/moves/WAIT";
-import {player} from "main/main";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 import {turnOffHitboxes, checkForSpecials, checkForTilts, checkForSmashes, checkForJump, checkForDash,
     checkForSmashTurn
     , checkForTiltTurn
     , tiltTurnDashBuffer
-} from "physics/actionStateShortcuts";
-import {sounds} from "main/sfx";
+} from "../../../physics/actionStateShortcuts";
+import {sounds} from "../../../main/sfx";
 
 import { State } from "../../State";
 

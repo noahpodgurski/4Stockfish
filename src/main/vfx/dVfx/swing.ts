@@ -1,8 +1,18 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {player, fg2} from "main/main";
-import {swordSwings} from "main/swordSwings";
-import {activeStage} from "stages/activeStage";
-import {makeColour} from "main/vfx/makeColour";
+import {vfxQueue} from "../vfxQueue";
+let player, fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player, fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player, fg2 } = mainModule);
+  }
+})();
+import {swordSwings} from "../../../main/swordSwings";
+import {activeStage} from "../../../stages/activeStage";
+import {makeColour} from "../makeColour";
 import {Vec2D} from "../../util/Vec2D";
 export default(posInQueue, draw) =>{
   let shouldDraw = draw;

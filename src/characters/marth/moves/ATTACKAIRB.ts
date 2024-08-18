@@ -1,4 +1,14 @@
-import {player} from "../../../main/main";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 import marth from "./index";
 import {turnOffHitboxes, fastfall, airDrift, checkForAerials, checkForDoubleJump} from "../../../physics/actionStateShortcuts";
 import {drawVfx} from "../../../main/vfx/drawVfx";

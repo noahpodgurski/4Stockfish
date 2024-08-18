@@ -2,9 +2,19 @@
 import LANDING from "../../shared/moves/LANDING";
 import LANDINGATTACKAIRD from "../../shared/moves/LANDINGATTACKAIRD";
 import FALL from "../../shared/moves/FALL";
-import {player} from "main/main";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes, airDrift, fastfall, checkForAerials, checkForDoubleJump, checkForIASA} from "physics/actionStateShortcuts";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {turnOffHitboxes, airDrift, fastfall, checkForAerials, checkForDoubleJump, checkForIASA} from "../../../physics/actionStateShortcuts";
 export default {
   name : "ATTACKAIRD",
   canPassThrough : false,

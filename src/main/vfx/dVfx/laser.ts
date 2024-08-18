@@ -1,12 +1,22 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {fg2} from "main/main";
-import {Vec2D} from "main/util/Vec2D";
-import {makeColour} from "main/vfx/makeColour";
-import {activeStage} from "stages/activeStage";
-import {lines} from "main/vfx/lines";
-import {chromaticAberration} from "main/vfx/chromaticAberration";
+import {vfxQueue} from "../vfxQueue";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {Vec2D} from "../../../main/util/Vec2D";
+import {makeColour} from "../makeColour";
+import {activeStage} from "../../../stages/activeStage";
+import {lines} from "../lines";
+import {chromaticAberration} from "../chromaticAberration";
 
-import {twoPi} from "main/render";
+import {twoPi} from "../../../main/render";
 export default (posInQueue)=> {
   if (vfxQueue[posInQueue].timer === 1) {
     const n = 8 + Math.floor(6*Math.random());

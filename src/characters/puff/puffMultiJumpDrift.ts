@@ -1,4 +1,14 @@
-import {player} from "../../main/main";
+let player;
+(async () => {
+  ;
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 export function puffMultiJumpDrift(p, input) {
   let tempMax;
   if (Math.abs(input[p][0].lsX) < 0.3) {

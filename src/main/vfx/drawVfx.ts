@@ -1,8 +1,7 @@
-
-import {deepCopyObject} from "main/util/deepCopy";
-import {vfx} from "main/vfx";
-import {activeStage} from "stages/activeStage";
-import {addToVfxQueue} from "main/vfx/vfxQueue";
+import {deepCopyObject} from "../util/deepCopy";
+import {vfx} from "../vfx";
+import {activeStage} from "../../stages/activeStage";
+import {addToVfxQueue} from "./vfxQueue";
 import {Vec2D} from "../util/Vec2D";
 
 export function drawVfx(vfxConfig) {

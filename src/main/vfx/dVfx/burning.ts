@@ -1,9 +1,19 @@
-import {vfxQueue} from "main/vfx/vfxQueue";
-import {drawArrayPath} from "main/vfx/drawArrayPath";
-import {fg2} from "main/main";
-import {activeStage} from "stages/activeStage";
-import {drawVfx} from "main/vfx/drawVfx";
-import vfx from "main/vfx/vfxData/index";
+import {vfxQueue} from "../vfxQueue";
+import {drawArrayPath} from "../drawArrayPath";
+let fg2;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ fg2 } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ fg2 } = mainModule);
+  }
+})();
+import {activeStage} from "../../../stages/activeStage";
+import {drawVfx} from "../drawVfx";
+import vfx from "../vfxData/index";
 import {Vec2D} from "../../util/Vec2D";
 export default (posInQueue) => {
   if (vfxQueue[posInQueue].timer === 1) {

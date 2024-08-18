@@ -1,8 +1,18 @@
 //@ts-nocheck
 
-import {checkForSpecials, checkForAerials, checkForDoubleJump, fastfall, airDrift, actionStates, turnOffHitboxes} from "physics/actionStateShortcuts";
-import {characterSelections, player} from "main/main";
-import {framesData} from 'main/characters';
+import {checkForSpecials, checkForAerials, checkForDoubleJump, fastfall, airDrift, actionStates, turnOffHitboxes} from "../../../physics/actionStateShortcuts";
+let characterSelections, player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ characterSelections, player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ characterSelections, player } = mainModule);
+  }
+})();
+import {framesData} from '../../../main/characters';
 import { State } from "../../State";
 
 const FALL: State = {

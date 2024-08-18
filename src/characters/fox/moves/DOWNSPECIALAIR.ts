@@ -4,12 +4,22 @@ import JUMPAERIALB from "../../shared/moves/JUMPAERIALB";
 import JUMPAERIALF from "../../shared/moves/JUMPAERIALF";
 import WAIT from "../../shared/moves/WAIT";
 import FALL from "../../shared/moves/FALL";
-import {player} from "main/main";
-import {sounds} from "main/sfx";
-import {turnOffHitboxes} from "physics/actionStateShortcuts";
-import {drawVfx} from "main/vfx/drawVfx";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
+import {sounds} from "../../../main/sfx";
+import {turnOffHitboxes} from "../../../physics/actionStateShortcuts";
+import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
-import {gameSettings} from "settings";
+import {gameSettings} from "../../../settings";
 
 export default {
   name : "DOWNSPECIALAIR",

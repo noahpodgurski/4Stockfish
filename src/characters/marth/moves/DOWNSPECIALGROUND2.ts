@@ -1,6 +1,16 @@
 import marth from "./index";
 import {reduceByTraction, turnOffHitboxes} from "../../../physics/actionStateShortcuts";
-import {player} from "../../../main/main";
+let player;
+(async () => {
+  
+  if (process.env.RUN_MODE === 'engine') {
+    const engineModule = await import('../../../engine/main');
+    ({ player } = engineModule);
+  } else {
+    const mainModule = await import('../../../main/main');
+    ({ player } = mainModule);
+  }
+})();
 import {sounds} from "../../../main/sfx";
 import {drawVfx} from "../../../main/vfx/drawVfx";
 import {Vec2D} from "../../../main/util/Vec2D";
