@@ -3,8 +3,10 @@ plugins {
 }
 
 // Release signing: CI decodes MELEE_KEYSTORE_BASE64 into this file, and
-// tools/build_android.sh requires one to exist before building.
-def releaseKeystore = rootProject.file('melee-release.keystore')
+// tools/build_android.sh requires one to exist before building. A fork PR has
+// no secrets, so the script points MELEE_KEYSTORE_FILE at a throwaway key.
+def releaseKeystore = System.getenv('MELEE_KEYSTORE_FILE') ?
+    file(System.getenv('MELEE_KEYSTORE_FILE')) : rootProject.file('melee-release.keystore')
 
 android {
     namespace 'dev.melee.game'

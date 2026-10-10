@@ -80,6 +80,20 @@ elif [[ -f "${ANDROID_DIR}/release-signing.env" ]]; then
     # Local path: passwords sit next to the (gitignored) keystore.
     set -a; source "${ANDROID_DIR}/release-signing.env"; set +a
 fi
+if [[ ! -f "${KEYSTORE}" && "${MELEE_THROWAWAY_KEY:-}" == 1 ]]; then
+    # Fork PRs get no repository secrets. Sign with a key made for this build
+    # so the APK still builds; it lives in the build tree, never in the place
+    # of the release keystore, and cannot update an installed release.
+    KEYSTORE="${BUILD_DIR}/throwaway.keystore"
+    rm -f "${KEYSTORE}"
+    MELEE_KEYSTORE_PASSWORD=throwaway MELEE_KEY_PASSWORD=throwaway MELEE_KEY_ALIAS=throwaway
+    keytool -genkeypair -noprompt -keystore "${KEYSTORE}" -storetype PKCS12 \
+        -alias "${MELEE_KEY_ALIAS}" -keyalg RSA -keysize 2048 -validity 30 \
+        -storepass "${MELEE_KEYSTORE_PASSWORD}" -keypass "${MELEE_KEY_PASSWORD}" \
+        -dname "CN=Melee throwaway build key" > /dev/null
+    export MELEE_KEYSTORE_FILE="$(realpath "${KEYSTORE}")"
+    echo "warning: no release key; signing with a throwaway key" >&2
+fi
 if [[ ! -f "${KEYSTORE}" ]]; then
     echo "error: no signing key; set MELEE_KEYSTORE_BASE64 or create ${KEYSTORE}" >&2
     exit 1

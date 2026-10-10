@@ -164,6 +164,10 @@ the GCC cross compiler with the NDK sysroot. nod has no Android prebuilt, so
 aurora builds it from Rust source (`rustup target add aarch64-linux-android`).
 A signed release build needs `MELEE_KEYSTORE_BASE64`, `MELEE_KEYSTORE_PASSWORD`,
 `MELEE_KEY_ALIAS` and `MELEE_KEY_PASSWORD`.
+For disposable local builds without a release key, set `MELEE_THROWAWAY_KEY=1`.
+The generated key lives under `BUILD_DIR` (relative paths are supported); these
+APKs cannot update release-signed installations. CI enables this fallback only
+for non-tag builds without signing secrets.
 
 **Running it on a device.** The app reads the disc from a path passed as an
 intent extra, e.g.

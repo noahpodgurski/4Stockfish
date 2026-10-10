@@ -209,6 +209,9 @@ jobs:
           MELEE_KEYSTORE_PASSWORD: ${{ secrets.MELEE_KEYSTORE_PASSWORD }}
           MELEE_KEY_ALIAS: ${{ secrets.MELEE_KEY_ALIAS }}
           MELEE_KEY_PASSWORD: ${{ secrets.MELEE_KEY_PASSWORD }}
+          # Fork PRs get no secrets: build with a throwaway key instead of
+          # failing. A tag build still requires the real one.
+          MELEE_THROWAWAY_KEY: ${{ secrets.MELEE_KEYSTORE_BASE64 == '' && github.ref_type != 'tag' && '1' || '' }}
         run: |
           export ANDROID_NDK_HOME="${ANDROID_HOME}/ndk/26.3.11579264"
           tools/build_android.sh
