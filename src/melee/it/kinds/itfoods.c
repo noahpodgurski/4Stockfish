@@ -36,11 +36,13 @@ ItemStateTable it_803F5DB0[] = {
 void it_8028F9D8(Item_GObj* arg0, Vec3* arg1, f32 arg8)
 {
     Item* temp_r30 = GET_ITEM(arg0);
-    DiscVec4* temp_r6 = DP(DiscVec4, temp_r30->xC4_article_data->x4_specialAttributes);
+    itFoodsAttributes* attrs = DP(itFoodsAttributes, temp_r30->xC4_article_data->x4_specialAttributes);
+    itFoodEntry* entry = &attrs->entries[temp_r30->xDD4_itemVar.foods.x0];
     f32 var_2;
     temp_r30->pos.x =
-        arg1->x + (arg8 * temp_r6[temp_r30->xDD4_itemVar.foods.x0].w);
-    var_2 = temp_r6[temp_r30->xDD4_itemVar.foods.x0 + 1].x;
+        arg1->x +
+        (arg8 * entry->offset.x);
+    var_2 = entry->offset.y;
     temp_r30->pos.y = var_2 + arg1->y;
     temp_r30->pos.z = arg1->z;
     HSD_JObjSetTranslate(arg0->hsd_obj, &temp_r30->pos);
@@ -65,7 +67,7 @@ HSD_GObj* it_8028FAF4(Item_GObj* arg0, Vec3* arg1)
     spawn.x3C_damage = 0;
     spawn.x0_parent_gobj = NULL;
     spawn.x4_parent_gobj2 = NULL;
-    spawn.x44_flag.b0 = true;
+    spawn.x44_flag.x0.b0 = true;
     spawn.x40 = 0.0F;
     gobj = Item_80268B18(&spawn);
     if (gobj != NULL) {
@@ -77,7 +79,7 @@ HSD_GObj* it_8028FAF4(Item_GObj* arg0, Vec3* arg1)
 static inline u32 getRandMax(Article* article)
 {
     itFoodsAttributes* attr = DP(itFoodsAttributes, article->x4_specialAttributes);
-    return attr->x0;
+    return attr->count;
 }
 
 void itFoods_Logic18_Spawned(HSD_GObj* gobj)
@@ -87,10 +89,10 @@ void itFoods_Logic18_Spawned(HSD_GObj* gobj)
     s32 rand = HSD_Randi(getRandMax(ip->xC4_article_data));
     s32 temp;
 
-    ip->xDD4_itemVar.foods.heal_amount = attr[rand].x8;
+    ip->xDD4_itemVar.foods.heal_amount = attr->entries[rand].heal_amount;
     ip->xDD4_itemVar.foods.x0 = rand;
     temp = rand;
-    it_80273318(gobj, DP(HSD_Joint, attr[temp].x4));
+    it_80273318(gobj, DP(HSD_Joint, attr->entries[temp].joint));
     it_8028FC5C(gobj);
 }
 

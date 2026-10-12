@@ -14,12 +14,6 @@
 #include <melee/lb/lbvector.h>
 #include <sysdolphin/baselib/random.h>
 
-typedef struct DISC_STRUCT itHammerData {
-    u32 x0;
-    u32 x4;
-    f32 x8;
-} itHammerData;
-DISC_ASSERT_SIZE(itHammerData, 0xC);
 
 /* 293FF4 */ static bool itHammer_UnkMotion0_Anim(HSD_GObj* gobj);
 /* 293FFC */ static void itHammer_UnkMotion0_Phys(HSD_GObj* gobj);

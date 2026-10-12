@@ -3,6 +3,7 @@
 
 #include <melee/gr/forward.h>
 
+
 /* 3E8FCC */ extern StageData grTMewtwo_StageData;
 
 #endif

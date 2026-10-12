@@ -8,8 +8,10 @@
 #include <placeholder.h>
 
 #include <dolphin/mtx.h>
+#include <melee/ft/ftcpuattack.h>
 #include <melee/ft/inlines.h> // IWYU pragma: export
 #include <melee/ft/types.h>
+#include <melee/sfx/crowdsfx.h>
 #include <sysdolphin/baselib/objalloc.h>
 
 /* PlCo.dat tables: all disc data. */
@@ -182,8 +184,8 @@ DISC_ASSERT_SIZE(struct Fighter_ShakeTable_t, 0x8);
 /// Grab-mash shake table
 /* 4D652C */ extern struct Fighter_ShakeTable_t* Fighter_GrabMashShake;
 
+/* 4D6530 */ extern struct ftDamageShifts* Fighter_804D6530; ///< model shifts by ground state
 /* Arrays of pointer slots on disc are DiscU32[]: read DP(T, arr[i].v). */
-/* 4D6530 */ extern DiscU32* Fighter_804D6530; ///< DiscVec2*[]
 /* 4D6534 */ extern DiscU32* Fighter_804D6534; ///< void*[]
 /* 4D6538 */ extern struct Fighter_804D653C_t* Fighter_804D6538;
 /* 4D653C */ extern struct Fighter_804D653C_t* Fighter_804D653C;
@@ -193,6 +195,14 @@ typedef struct DISC_STRUCT Fighter_804D6540_x0_t {
     u8 x2;
     u8 x3;
 } Fighter_804D6540_x0_t;
+/// Item throw parameters, one per item throw motion state.
+typedef struct DISC_STRUCT ftCo_ItemThrowAttrs {
+    float velocity_mul;
+    float angle;
+    float x8;
+} ftCo_ItemThrowAttrs;
+DISC_ASSERT_SIZE(ftCo_ItemThrowAttrs, 0xC);
+
 typedef struct DISC_STRUCT Fighter_804D6540_t {
     DISC_PTR(struct Fighter_804D6540_x0_t) x0;
     int x4;
@@ -202,7 +212,50 @@ DISC_ASSERT_SIZE(struct Fighter_804D6540_t, 0x8);
 /* 4D6544 */ extern DiscU32* ftPartsTable;     ///< FighterPartsTable*[kind]
 /* 4D6548 */ extern DiscF32* Fighter_804D6548;
 /* 4D654C */ extern DiscF32 (*Fighter_804D654C)[5];
-/* 4D6550 */ extern DiscF32* Fighter_804D6550; ///< f32[msid][3] item throw attrs
+/* 4D6550 */ extern ftCo_ItemThrowAttrs* Fighter_804D6550;
 /* 4D6554 */ extern ftCommonData* p_ftCommonData;
+
+/// The @c ftLoadCommonData root of @c PlCo.dat: the tables every fighter
+/// shares, copied into the globals of the same types.
+/// Model shifts while taking damage, one list per ground state.
+struct DISC_STRUCT ftDamageShifts {
+    /* +0 */ DISC_PTR(DiscVec2) shifts DAT_COUNT(count);
+    /* +4 */ s32 count;
+};
+DISC_ASSERT_SIZE(struct ftDamageShifts, 0x8);
+
+/* Read through fighter.c's DiscU32 view; the slots are 32-bit on disc. */
+struct DISC_STRUCT ftLoadCommonData {
+    /* +00 */ DISC_PTR(ftCommonData) common;
+    /* +04 */ DISC_PTR(ftCo_ItemThrowAttrs) item_throw;
+    /// One row per swing type (#fn_800CCEC4)
+    /* +08 */ DISC_PTR(DiscF32[5]) x8 DAT_COUNT(6);
+    /// Staling, one per entry of the stale move queue (#ft_80089118)
+    /* +0C */ DISC_PTR(DiscF32) xC DAT_COUNT(9);
+    /* +10 */ DISC_PTR(DiscU32) parts_table DAT_COUNT(Ft_Kind_Max + 1);
+    /* +14 */ DISC_PTR(DiscU32) x14 DAT_COUNT(Ft_Kind_Max + 1);
+    /// Color animations for IDs below #FtColAnim_SpycloakStart.
+    /* +18 */ DISC_PTR(struct Fighter_804D653C_t)
+        x18 DAT_COUNT(FtColAnim_SpycloakStart);
+    /// Spycloak animations, IDs 0x7B through 0x80 (#ft_800C0098).
+    /* +1C */ DISC_PTR(struct Fighter_804D653C_t) x1C DAT_COUNT(6);
+    /* +20 */ DISC_PTR(void) x20;
+    /// By #Fighter::dmg's @c x18F8
+    /* +24 */ DISC_PTR(struct ftDamageShifts) x24 DAT_COUNT(3);
+    /* +28 */ DISC_PTR(struct Fighter_ShakeTable_t) grab_mash_shake;
+    /* +2C */ DISC_PTR(struct Fighter_ShakeTable_t) smash_charge_shake;
+    /* +30 */ DISC_PTR(struct Fighter_804D6524_t) x30;
+    /* +34 */ DISC_PTR(struct Fighter_804D6520_t) x34;
+    /* +38 */ DISC_PTR(struct Fighter_804D651C_t) x38;
+    /* +3C */ DISC_PTR(struct Fighter_804D6518_t) x3C;
+    /* +40 */ DISC_PTR(HSD_Joint) x40;
+    /* +44 */ DISC_PTR(void) x44;
+    /* +48 */ DISC_PTR(u8) x48;
+    /* +4C */ DISC_PTR(u8) x4C;
+    /* +50 */ DISC_PTR(HSD_Joint) x50;
+    /* +54 */ DISC_PTR(CrowdConfig) crowd_config;
+    /* +58 */ DISC_PTR(struct Fighter_804D64FC_t) x58;
+};
+DISC_ASSERT_SIZE(struct ftLoadCommonData, 0x5C);
 
 #endif

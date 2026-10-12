@@ -32,15 +32,9 @@
 /* 0958FC */ static void ftCo_80095D5C(Fighter* fp, Vec3* arg1);
 /* 095A9C */ static void ftCo_80095EFC(Fighter_GObj* gobj);
 
-/* Disc table: one entry per throw motion state from ftCo_MS_LightThrowF. */
-typedef struct DISC_STRUCT ftCo_ItemThrowAttrs {
-    float velocity_mul;
-    float angle;
-    float x8;
-} ftCo_ItemThrowAttrs;
-DISC_ASSERT_SIZE(ftCo_ItemThrowAttrs, 0xC);
-#define ITEM_THROW_ATTRS(msid)                                                 \
-    (&((ftCo_ItemThrowAttrs*) Fighter_804D6550)[(msid) - ftCo_MS_LightThrowF])
+/* Fighter_804D6550 has one entry per throw motion state from
+ * ftCo_MS_LightThrowF. */
+#define ITEM_THROW_ATTRS(msid) (&Fighter_804D6550[(msid) - ftCo_MS_LightThrowF])
 
 typedef struct ftCo_ItemThrowCmd {
     /* +0:0  */ u32 pad : 20;
@@ -107,32 +101,22 @@ bool ftCo_80094EA4(HSD_GObj* gobj)
                 var_f31 < p_ftCommonData->xD8)
             {
                 msid = ftCo_MS_HeavyThrowLw4;
-            } else {
-                if (ABS(stick_x) >= p_ftCommonData->x98) {
-                    if (ABS(stick_angle) <= p_ftCommonData->x20_radians) {
-                        msid = stick_x * fp->facing_dir >= 0
-                                   ? ftCo_MS_HeavyThrowF
-                                   : ftCo_MS_HeavyThrowB;
-                    } else {
-                        goto block_32;
-                    }
-                } else {
-                block_32:
-                    if (stick_y >=
-                            p_ftCommonData->attackhi3_stick_threshold_y &&
-                        stick_angle > p_ftCommonData->x20_radians)
-                    {
-                        msid = ftCo_MS_HeavyThrowHi;
-                    } else {
-                        if (stick_y <= p_ftCommonData->xB0 &&
-                            (stick_angle < -p_ftCommonData->x20_radians))
-                        {
-                            msid = ftCo_MS_HeavyThrowLw;
-                        } else if (ret != 0) {
-                            msid = ftCo_MS_HeavyThrowF;
-                        }
-                    }
-                }
+            } else if (ABS(stick_x) >= p_ftCommonData->x98 &&
+                       ABS(stick_angle) <= p_ftCommonData->x20_radians)
+            {
+                msid = stick_x * fp->facing_dir >= 0 ? ftCo_MS_HeavyThrowF
+                                                     : ftCo_MS_HeavyThrowB;
+            } else if (stick_y >=
+                           p_ftCommonData->attackhi3_stick_threshold_y &&
+                       stick_angle > p_ftCommonData->x20_radians)
+            {
+                msid = ftCo_MS_HeavyThrowHi;
+            } else if (stick_y <= p_ftCommonData->xB0 &&
+                       stick_angle < -p_ftCommonData->x20_radians)
+            {
+                msid = ftCo_MS_HeavyThrowLw;
+            } else if (ret != 0) {
+                msid = ftCo_MS_HeavyThrowF;
             }
         }
     }
@@ -327,7 +311,7 @@ void ftCo_800957F4(Fighter_GObj* gobj, int msid)
 
     fp->cmd_vars[0] = 0;
     fp->cmd_vars[1] = 0;
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
 
     fp->mv.co.itemthrow4.anim_spd = anim_spd = getAnimSpeed(gobj, msid);
     ftCo_80095700(gobj, msid);
@@ -348,7 +332,7 @@ void ftCo_800958FC(HSD_GObj* gobj, FtMotionId msid)
     fp = GET_FIGHTER(gobj);
     fp->cmd_vars[0] = 0;
     fp->cmd_vars[1] = 0;
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
 
     base_throw_speed = getAnimSpeed(gobj, msid);
     temp_r4 = GET_FIGHTER(gobj);
@@ -381,89 +365,46 @@ void ftCo_800958FC(HSD_GObj* gobj, FtMotionId msid)
 void ftCo_80095A30(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    float var_f1_2;
-    float var_f1_3;
-    int var_r0;
-    int var_r0_2;
-    int var_r0_3;
-    int var_r29;
-    float var_f1;
-
+    int msid;
     PAD_STACK(0x8);
 
-    var_f1 = fp->input.lstick[0].x;
-    if (var_f1 < 0.0f) {
-        var_f1 = -var_f1;
-    }
-    if (var_f1 >= p_ftCommonData->dash_smash_stick_threshold &&
+    if (ABS(fp->input.lstick[0].x) >=
+            p_ftCommonData->dash_smash_stick_threshold &&
         fp->active_sticky.lstick.x <
             p_ftCommonData->dash_smash_window + p_ftCommonData->x44)
     {
-        if (fp->input.lstick[0].x * fp->facing_dir >= 0.0f) {
-            var_r0 = 0x6C;
-        } else {
-            var_r0 = 0x6D;
-        }
-        var_r29 = var_r0;
+        msid = fp->input.lstick[0].x * fp->facing_dir >= 0.0f
+                   ? ftCo_MS_LightThrowF4
+                   : ftCo_MS_LightThrowB4;
+    } else if (fp->input.lstick[0].y >= p_ftCommonData->xCC &&
+               fp->active_sticky.lstick.y <
+                   p_ftCommonData->xD0 + fp->co_attrs.jump_startup_time)
+    {
+        msid = ftCo_MS_LightThrowHi4;
+    } else if (fp->input.lstick[0].y <= p_ftCommonData->xD4 &&
+               fp->active_sticky.lstick.y < p_ftCommonData->xD8)
+    {
+        msid = ftCo_MS_LightThrowLw4;
+    } else if (ABS(fp->input.lstick[0].x) >= p_ftCommonData->x98 &&
+               ABS(ftCo_GetLStickAngle(fp)) <= p_ftCommonData->x20_radians)
+    {
+        msid = fp->input.lstick[0].x * fp->facing_dir >= 0.0f
+                   ? ftCo_MS_LightThrowF
+                   : ftCo_MS_LightThrowB;
+    } else if (fp->input.lstick[0].y >=
+                   p_ftCommonData->attackhi3_stick_threshold_y &&
+               ftCo_GetLStickAngle(fp) > p_ftCommonData->x20_radians)
+    {
+        msid = ftCo_MS_LightThrowHi;
+    } else if (fp->input.lstick[0].y <= p_ftCommonData->xB0 &&
+               ftCo_GetLStickAngle(fp) < -p_ftCommonData->x20_radians)
+    {
+        msid = ftCo_MS_LightThrowLw;
     } else {
-        if (fp->input.lstick[0].y >= p_ftCommonData->xCC &&
-            fp->active_sticky.lstick.y <
-                p_ftCommonData->xD0 + fp->co_attrs.jump_startup_time)
-        {
-            var_r29 = 0x6E;
-        } else {
-            if (fp->input.lstick[0].y <= p_ftCommonData->xD4 &&
-                fp->active_sticky.lstick.y < p_ftCommonData->xD8)
-            {
-                var_r29 = 0x6F;
-            } else {
-                var_f1_2 = fp->input.lstick[0].x;
-                if (var_f1_2 < 0.0f) {
-                    var_f1_2 = -var_f1_2;
-                }
-                if (var_f1_2 >= p_ftCommonData->x98) {
-                    if (ftCo_GetLStickAngle(fp) < 0.0f) {
-                        var_f1_3 = -ftCo_GetLStickAngle(fp);
-                    } else {
-                        var_f1_3 = ftCo_GetLStickAngle(fp);
-                    }
-                    if (var_f1_3 <= p_ftCommonData->x20_radians) {
-                        if (fp->input.lstick[0].x * fp->facing_dir >= 0.0f) {
-                            var_r0_2 = 0x5E;
-                        } else {
-                            var_r0_2 = 0x5F;
-                        }
-                        var_r29 = var_r0_2;
-                    } else {
-                        goto block_25;
-                    }
-                } else {
-                block_25:
-                    if (fp->input.lstick[0].y >=
-                            p_ftCommonData->attackhi3_stick_threshold_y &&
-                        ftCo_GetLStickAngle(fp) > p_ftCommonData->x20_radians)
-                    {
-                        var_r29 = 0x60;
-                    } else {
-                        if (fp->input.lstick[0].y <= p_ftCommonData->xB0 &&
-                            ftCo_GetLStickAngle(fp) <
-                                -p_ftCommonData->x20_radians)
-                        {
-                            var_r29 = 0x61;
-                        } else {
-                            if (it_8026B30C(fp->item_gobj) == 0) {
-                                var_r0_3 = 0x5E;
-                            } else {
-                                var_r0_3 = 0x63;
-                            }
-                            var_r29 = var_r0_3;
-                        }
-                    }
-                }
-            }
-        }
+        msid = it_8026B30C(fp->item_gobj) == 0 ? ftCo_MS_LightThrowF
+                                               : ftCo_MS_LightThrowDrop;
     }
-    ftCo_800957F4(gobj, var_r29);
+    ftCo_800957F4(gobj, msid);
 }
 
 void ftCo_80095D5C(Fighter* fp, Vec3* arg1)
@@ -507,6 +448,10 @@ void ftCo_ItemThrow_Anim(Fighter_GObj* gobj)
     }
 }
 
+struct ftCo_80095EFC_scale {
+    /* +0 */ float value;
+};
+
 void ftCo_80095EFC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -523,9 +468,7 @@ void ftCo_80095EFC(Fighter_GObj* gobj)
                 u32 cmd_var1 = fp->cmd_vars[1];
                 ftCo_DatAttrs* co_attrs = &fp->co_attrs;
                 // Aggregate storage preserves MWCC register allocation.
-                struct {
-                    /* +0 */ float value;
-                } scale;
+                struct ftCo_80095EFC_scale scale;
                 scale.value = 1;
                 if (cmd_var1 != 0) {
                     scale.value = 0.01f * (cmd_var1 & 0x3FFFFF);

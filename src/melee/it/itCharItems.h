@@ -9,6 +9,8 @@
 #include <melee/lb/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
+
 #include <dolphin/mtx.h>
 #include <melee/ft/types.h>
 #include <melee/gm/types.h>
@@ -274,14 +276,14 @@ typedef struct {
 typedef struct DISC_STRUCT FoxLaserAttr {
     /* +0 */ float lifetime; // [35]
     /* +4 */ float scale;    // [3]
-    /* +8 */ float x8;
-    /* +C */ float xC;
-    /* +10 */ float x10;
-    /* +14 */ float x14;
-    /* +18 */ float x18;
-    /* +1C */ float x1C;
-    /* +20 */ float x20;
-    /* +24 */ float x24; // [1]
+    /* +8 */ float x8;       // [0]
+    /* +C */ float xC;       // [0]
+    /* +10 */ float x10;     // [0]
+    /* +14 */ float x14;     // [0]
+    /* +18 */ float x18;     // [0]
+    /* +1C */ float x1C;     // [0]
+    /* +20 */ float x20;     // [0]
+    /* +24 */ float x24;     // [1]
 } FoxLaserAttr;
 DISC_ASSERT_SIZE(FoxLaserAttr, 0x28);
 
@@ -575,7 +577,7 @@ DISC_ASSERT_SIZE(itPeachToadSporeAttributes, 0x10);
 typedef struct DISC_STRUCT itPeachTurnipAttributes {
     f32 x0_lifetime;
     s32 x4_length; // length of x8, should be 8 for the number of turnip types
-    struct DISC_STRUCT {
+    struct DISC_STRUCT itPeachTurnipAttributes_x8 {
         s32 x0_odds;
         s32 x4_damage;
     } x8[8];
@@ -882,14 +884,14 @@ typedef struct DISC_STRUCT itGamewatchchefAttributes {
     /* +4 */ f32 x4;
     /* +8 */ f32 x8;
     /* +C */ f32 xC;
-    /* +10 */ itGamewatchchefAttrEntry entries[1];
+    /* +10 */ itGamewatchchefAttrEntry entries[5];
 } itGamewatchchefAttributes;
-DISC_ASSERT_SIZE(itGamewatchchefAttributes, 0x24);
+DISC_ASSERT_SIZE(itGamewatchchefAttributes, 0x74);
 
-typedef struct DISC_STRUCT itGamewatchparachuteAttributes {
+typedef struct DISC_STRUCT itGamewatchAttributes {
     /* +0 */ DISC_PTR(void) x0;
-} itGamewatchparachuteAttributes;
-DISC_ASSERT_SIZE(itGamewatchparachuteAttributes, 0x4);
+} itGamewatchAttributes;
+DISC_ASSERT_SIZE(itGamewatchAttributes, 0x4);
 
 typedef struct itHinoarashi_ItemVars {
     /* xDD4 */ u8 _0[0x60 - 0x0];
@@ -931,10 +933,9 @@ typedef struct DISC_STRUCT itToolsAttributes {
     /* +04 */ f32 x4;
     /* +08 */ f32 x8;
     /* +0C */ s32 xC;
-    /* +10 */ itToolsMotionAttrs motions[1];
+    /* +10 */ itToolsMotionAttrs motions[] DAT_EXTENT;
 } itToolsAttributes;
-DISC_ASSERT_SIZE(itToolsAttributes, 0x2C);
-
+DISC_ASSERT_SIZE(itToolsAttributes, 0x10);
 typedef struct itNessYoyo_ItemVars {
     /* +0  ip+DD4 */ s32 x0;
     /* +4  ip+DD8 */ f32 x4;

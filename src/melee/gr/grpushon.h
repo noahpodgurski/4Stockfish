@@ -27,9 +27,33 @@
 /* 2190D0 */ void grPushOn_802190D0(HSD_GObj*);
 /* 219204 */ void grPushOn_80219204(int arg0, int* out1, int* out2);
 /* 219230 */ int grPushOn_80219230(int);
-/* 2192A4 */ s32 fn_802192A4(void*, HSD_GObj*, DynamicsDesc**);
-/* 219458 */ DynamicsDesc* grPushOn_80219458(enum_t);
+/* 2192A4 */ s32 fn_802192A4(void*, HSD_GObj*, lbColl_80008D30_arg1**);
+/* 219458 */ lbColl_80008D30_arg1* grPushOn_80219458(enum_t);
 /* 219528 */ bool grPushOn_80219528(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E7B10 */ extern StageData grPushOn_StageData;
+
+struct DISC_STRUCT grPushOn_Entry {
+    s32 x0;
+    s16 x4;
+    s16 x6;
+};
+
+struct DISC_STRUCT grPushOn_Lookup {
+    s32 key;
+    s32 value;
+};
+
+struct DISC_STRUCT grPushon_YakumonoParam {
+    DISC_PTR(void) x0;
+    DISC_PTR(lbColl_80008D30_arg1) x4;
+    DISC_PTR(lbColl_80008D30_arg1) x8;
+    DISC_PTR(lbColl_80008D30_arg1) xC;
+    DISC_PTR(lbColl_80008D30_arg1) x10;
+    DISC_PTR(lbColl_80008D30_arg1) x14;
+    bool x18;
+    struct grPushOn_Entry x1c[0x1E];
+    struct grPushOn_Lookup x10c[0x21];
+};
+DISC_ASSERT_SIZE(struct grPushon_YakumonoParam, 0x10C + 0x21 * 8);
 
 #endif

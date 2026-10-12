@@ -62,8 +62,8 @@
 /* 1DC260 */ static void grZebes_801DC260(void);
 /* 1DC408 */ static void grZebes_801DC408(Ground_GObj*);
 /* 1DC744 */ static void grZebes_801DC744(s32, u8);
-/* 1DC9DC */ static void grZebes_801DC9DC(HSD_GObj* gobj);
-/* 1DCCB8 */ static DynamicsDesc* grZebes_801DCCB8(enum_t arg);
+/* 1DC9DC */ static void grZebes_801DC9DC(HSD_GObj* arg);
+/* 1DCCB8 */ static lbColl_80008D30_arg1* grZebes_801DCCB8(enum_t arg);
 /* 1DCCC0 */ static bool grZebes_801DCCC0(Vec3* arg, int arg0, HSD_JObj* jobj);
 
 typedef struct grZe_ColorEntry {
@@ -73,52 +73,8 @@ typedef struct grZe_ColorEntry {
     f32 b;
 } grZe_ColorEntry;
 
-typedef struct DISC_STRUCT grZe_AcidLevelEntry {
-    /* +0 */ s16 x0_base;
-    /* +2 */ s16 x2_delay_min;
-    /* +4 */ s16 x4_delay_max;
-    /* +6 */ s16 x6_level;
-} grZe_AcidLevelEntry;
 DISC_ASSERT_SIZE(grZe_AcidLevelEntry, 8);
 
-typedef struct DISC_STRUCT grZe_YakumonoParam {
-    /* 0x00 */ f32 x00;
-    /* 0x04 */ f32 x04;
-    /* 0x08 */ f32 x08;
-    /* 0x0C */ f32 x0C;
-    /* 0x10 */ s32 x10;
-    /* 0x14 */ u8 pad_14[0x2C - 0x14];
-    /* 0x2C */ DISC_PTR(DynamicsDesc) x2C_bury_dynamics;
-    /* 0x30 */ f32 x30;
-    /* 0x34 */ f32 x34;
-    /* 0x38 */ f32 x38;
-    /* 0x3C */ f32 x3C;
-    /* 0x40 */ f32 x40;
-    /* 0x44 */ f32 x44;
-    /* 0x48 */ f32 x48;
-    /* 0x4C */ f32 x4C;
-    /* 0x50 */ f32 x50;
-    /* 0x54 */ f32 x54;
-    /* 0x58 */ f32 x58;
-    /* 0x5C */ f32 x5C;
-    /* 0x60 */ f32 x60;
-    /* 0x64 */ f32 x64;
-    /* 0x68 */ f32 x68;
-    /* 0x6C */ f32 x6C;
-    /* 0x70 */ f32 x70;
-    /* 0x74 */ f32 x74;
-    /* 0x78 */ f32 x78;
-    /* 0x7C */ f32 x7C;
-    /* 0x80 */ f32 x80;
-    /* 0x84 */ f32 x84;
-    /* 0x88 */ f32 x88;
-    /* 0x8C */ f32 x8C;
-    /* 0x90 */ f32 x90;
-    /* 0x94 */ f32 x94;
-    /* 0x98 */ f32 x98;
-    /* 0x9C */ f32 x9C;
-    /* 0xA0 */ grZe_AcidLevelEntry xA0_entries[30];
-} grZe_YakumonoParam;
 DISC_ASSERT_SIZE(grZe_YakumonoParam, 0xA0 + 30 * 8);
 
 /* 4D6990 */ static grZe_YakumonoParam* yakumono_param;
@@ -2313,7 +2269,7 @@ void grZebes_801DC744(s32 arg0, u8 arg1)
     }
 }
 
-void grZebes_801DC9DC(HSD_GObj* arg0)
+static void grZebes_801DC9DC(HSD_GObj* arg0)
 {
     int i;
     PAD_STACK(0x30);
@@ -2387,7 +2343,7 @@ bool grZebes_801DCBFC(Ground_GObj* gobj, HSD_GObj* fobj, void* arg)
     return false;
 }
 
-DynamicsDesc* grZebes_801DCCB8(enum_t arg)
+lbColl_80008D30_arg1* grZebes_801DCCB8(enum_t arg)
 {
     return NULL;
 }

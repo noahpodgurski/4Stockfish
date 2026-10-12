@@ -25,7 +25,7 @@ static inline FighterPartsTable* get_parts_tbl(int kind) {
 #include <sysdolphin/baselib/util.h>
 
 /// .bss
-struct {
+struct ft_jobj_scale_t {
     Mtx mtx;
     u8 has_z_scale : 1;
     char unk_31[7];
@@ -360,14 +360,14 @@ void ftParts_80074194(Fighter* fighter, FighterBone* bone, HSD_JObj* jobj,
 
     bone->joint = jobj;
 
-    bone->flags_b1 = true;
-    bone->flags_b7 = jobj_flags & JOBJ_LIGHTING ? true : false;
-    bone->flags2_b0 = jobj_flags & JOBJ_TEXGEN ? true : false;
-    bone->flags2_b1 = jobj_flags & JOBJ_SPECULAR ? true : false;
-    bone->flags2_b2 = jobj_flags & JOBJ_UNK_B18 ? true : false;
-    bone->flags2_b3 = jobj_flags & JOBJ_UNK_B20 ? true : false;
-    bone->flags2_b4 = jobj_flags & JOBJ_UNK_B19 ? true : false;
-    bone->xC = tree_depth;
+    bone->x8.x0.flags_b1 = true;
+    bone->x8.x0.flags_b7 = jobj_flags & JOBJ_LIGHTING ? true : false;
+    bone->x8.x0.flags2_b0 = jobj_flags & JOBJ_TEXGEN ? true : false;
+    bone->x8.x0.flags2_b1 = jobj_flags & JOBJ_SPECULAR ? true : false;
+    bone->x8.x0.flags2_b2 = jobj_flags & JOBJ_UNK_B18 ? true : false;
+    bone->x8.x0.flags2_b3 = jobj_flags & JOBJ_UNK_B20 ? true : false;
+    bone->x8.x0.flags2_b4 = jobj_flags & JOBJ_UNK_B19 ? true : false;
+    bone->xC_u.x0.xC = tree_depth;
 
     while (true) {
         if (dobj == NULL) {
@@ -392,11 +392,11 @@ void ftParts_80074194(Fighter* fighter, FighterBone* bone, HSD_JObj* jobj,
                          fighter->player_idx);
     }
     if (*dobj_index != 0) {
-        bone->xD = *dobj_index - 1;
+        bone->xC_u.x0.xD = *dobj_index - 1;
     } else {
-        bone->xD = 0;
+        bone->xC_u.x0.xD = 0;
     }
-    bone->flags2_b6 = dobj_count != 0 ? true : false;
+    bone->x8.x0.flags2_b6 = dobj_count != 0 ? true : false;
 }
 
 void ftParts_SetupParts(Fighter_GObj* fighter_obj)
@@ -689,9 +689,9 @@ static void ftParts_SetInitialFlag(Fighter* fp, Fighter_Part part, int b4)
         return;
     }
     if (b4) {
-        fp->parts[idx].flags_b4 = true;
+        fp->parts[idx].x8.x0.flags_b4 = true;
     } else {
-        fp->parts[idx].flags_b3 = true;
+        fp->parts[idx].x8.x0.flags_b3 = true;
     }
 }
 
@@ -710,7 +710,7 @@ void ftParts_80074E58(Fighter* fp)
      * lb_8000B1CC and gets an arbitrary matrix. Clear the whole block; a NULL
      * joint is the benign case every reader already handles. */
     memzero(fp->parts, MAX_FT_PARTS * sizeof(*fp->parts));
-    fp->parts[0].flags_b3 = true;
+    fp->parts[0].x8.x0.flags_b3 = true;
     ftParts_SetInitialFlag(fp, FtPart_TransN, 0);
     ftParts_SetInitialFlag(fp, FtPart_XRotN, 0);
     ftParts_SetInitialFlag(fp, FtPart_YRotN, 0);
@@ -950,7 +950,7 @@ void ftParts_800753D4(Fighter* arg0, struct Fighter_804D6540_x0_t* arg1,
     ftParts_80075304(arg1->x2, arg0->parts[arg1->x1].joint, temp_r30);
     ftParts_80075304(arg1->x2, arg0->parts[arg1->x1].x4_jobj2, temp_r31);
 
-    tree_depth = arg0->parts[arg1->x1].xC;
+    tree_depth = arg0->parts[arg1->x1].xC_u.x0.xC;
     if (arg1->x2 == 0 || arg1->x2 == 1) {
         tree_depth++;
     }
@@ -959,7 +959,7 @@ void ftParts_800753D4(Fighter* arg0, struct Fighter_804D6540_x0_t* arg1,
                      tree_depth);
 
     arg0->parts[arg1->x0].x4_jobj2 = temp_r31;
-    arg0->parts[arg1->x0].flags_b2 = true;
+    arg0->parts[arg1->x0].x8.x0.flags_b2 = true;
 }
 
 void ftParts_800755E8(Fighter* fp, struct Fighter_804D6540_x0_t* arg1)
@@ -969,8 +969,8 @@ void ftParts_800755E8(Fighter* fp, struct Fighter_804D6540_x0_t* arg1)
     HSD_JObjRemove(bone->x4_jobj2);
     bone->joint = NULL;
     bone->x4_jobj2 = NULL;
-    bone->flags_b1 = false;
-    bone->flags_b2 = false;
+    bone->x8.x0.flags_b1 = false;
+    bone->x8.x0.flags_b2 = false;
 }
 
 void ftParts_80075650(Fighter_GObj* arg0, HSD_JObj* jobj, DObjList* arg2)

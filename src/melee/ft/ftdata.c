@@ -1182,7 +1182,7 @@ HSD_GObjEvent ftKindCalcIndiviParamTable[Ft_Kind_Max] = {
 /// Standard Character .dat File Names
 struct StringPair {
     char* a;
-    char* b;
+    char* b DAT_BIND(fighter_kind, _index);
 };
 
 struct StringPair ftData_803C1F40[Ft_Kind_Max] = {
@@ -1342,7 +1342,7 @@ ftData_UnkModelStruct ftData_UnkIntBoolFunc0 = {
     },
 };
 
-struct {
+struct ftdata_ftData_UnkCallbackPairs0_t {
     HSD_GObjEvent x0;
     void (*x4)(Fighter_GObj*, int, float frame);
 } ftData_UnkCallbackPairs0[Ft_Kind_Max] = {
@@ -1599,14 +1599,16 @@ void ftData_80085820(FighterKind kind, int costume_id)
         if (ftData_803C2360[kind][costume_id].matanim_joint_name != NULL) {
             lbArchive_80017040(
                 &temp_r5->x14_archive,
-                ftData_803C2360[kind][costume_id].dat_filename, temp_r5,
-                ftData_803C2360[kind][costume_id].joint_name, &temp_r5->x4,
-                ftData_803C2360[kind][costume_id].matanim_joint_name, NULL);
+                ftData_803C2360[kind][costume_id].dat_filename,
+                &temp_r5->joint, ftData_803C2360[kind][costume_id].joint_name,
+                &temp_r5->x4,
+                ftData_803C2360[kind][costume_id].matanim_joint_name, 0);
         } else {
             lbArchive_80017040(
                 &temp_r5->x14_archive,
-                ftData_803C2360[kind][costume_id].dat_filename, temp_r5,
-                ftData_803C2360[kind][costume_id].joint_name, NULL);
+                ftData_803C2360[kind][costume_id].dat_filename,
+                &temp_r5->joint, ftData_803C2360[kind][costume_id].joint_name,
+                0, ftData_803C2360[kind][costume_id].matanim_joint_name);
             CostumeListsForeachCharacter[kind].costume_list[costume_id].x4 =
                 NULL;
         }
@@ -1621,14 +1623,16 @@ void ftData_800858E4(FighterKind kind, int costume_id)
         if (ftData_803C2360[kind][costume_id].matanim_joint_name != NULL) {
             lbArchive_80017040(
                 &temp_r5->x14_archive,
-                ftData_803C2360[kind][costume_id].dat_filename, temp_r5,
-                ftData_803C2360[kind][costume_id].joint_name, &temp_r5->x4,
-                ftData_803C2360[kind][costume_id].matanim_joint_name, NULL);
+                ftData_803C2360[kind][costume_id].dat_filename,
+                &temp_r5->joint, ftData_803C2360[kind][costume_id].joint_name,
+                &temp_r5->x4,
+                ftData_803C2360[kind][costume_id].matanim_joint_name, 0);
         } else {
             lbArchive_80017040(
                 &temp_r5->x14_archive,
-                ftData_803C2360[kind][costume_id].dat_filename, temp_r5,
-                ftData_803C2360[kind][costume_id].joint_name, NULL);
+                ftData_803C2360[kind][costume_id].dat_filename,
+                &temp_r5->joint, ftData_803C2360[kind][costume_id].joint_name,
+                0, ftData_803C2360[kind][costume_id].matanim_joint_name);
             CostumeListsForeachCharacter[kind].costume_list[costume_id].x4 =
                 NULL;
         }

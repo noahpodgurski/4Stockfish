@@ -113,10 +113,10 @@ union ftPp_MotionVars {
             HSD_GObj* x4;
         }* x8;
     } specials;
-    struct {
+    struct ftPp_MotionVars_unk_80123954 {
         /* fp+2340 */ int x0;
     } unk_80123954;
-    struct {
+    struct ftPp_MotionVars_speciallw {
         /* fp+2340 */ int x0;
         /* fp+2344:0 */ u8 x4_b0 : 1;
     } speciallw;

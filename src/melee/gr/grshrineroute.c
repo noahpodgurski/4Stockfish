@@ -28,19 +28,6 @@
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/random.h>
 
-struct DISC_STRUCT grShrineRoute_YakumonoParam {
-    int x0;
-    int x4;
-    int x8;
-    int xC;
-    DISC_PTR(DynamicsDesc) x10;
-    f32 x14;
-    f32 x18;
-    f32 x1C;
-    f32 x20;
-    int x24;
-    grZakoGenerator_SpawnDesc spawn_desc;
-};
 
 struct grSh_Route_LightConfig {
     /* 0x00 */ GXColor color;
@@ -96,12 +83,12 @@ struct grSh_Route_LightConfig {
                                           mpLib_GroundEnum ground_kind,
                                           float delta_y);
 /* 20AE08 */ static s32 grShrineRoute_8020AE08(HSD_GObj*, HSD_GObj*,
-                                               DynamicsDesc**);
+                                               lbColl_80008D30_arg1**);
 /* 20AF38 */ static void grShrineRoute_8020AF38(HSD_GObj*, s32);
 /* 20B020 */ static void grShrineRoute_8020B020(HSD_GObj* gobj, int r4,
                                                 bool hide);
 /* 20B0AC */ static void grShrineRoute_8020B0AC(void);
-/* 20B104 */ static DynamicsDesc* grShrineRoute_OnTouchLine(enum_t);
+/* 20B104 */ static lbColl_80008D30_arg1* grShrineRoute_OnTouchLine(enum_t);
 /* 20B10C */ static bool grShrineRoute_OnCheckShadowRender(Vec3*, int arg,
                                                            HSD_JObj* jobj);
 
@@ -200,7 +187,7 @@ void grShrineRoute_OnLoad(void)
 void grShrineRoute_OnStart(void)
 {
     int val;
-    grZakoGenerator_801CAE04(&yakumono_param->spawn_desc);
+    grZakoGenerator_801CAE04(yakumono_param->spawn_descs);
     val = yakumono_param->x24;
     if (val != 0) {
         val = HSD_Randi(yakumono_param->x24);
@@ -287,14 +274,11 @@ void fn_80208A38(HSD_GObj* gobj)
     HSD_JObj* ejobj;
     int i;
     float unused1;
-    PAD_STACK(16);
+    PAD_STACK(8);
 
-    flags[0] = 0;
-    flags[1] = 0;
-    flags[2] = 0;
-    flags[3] = 0;
-    flags[4] = 0;
-    flags[5] = 0;
+    for (i = 0; i < 6; i++) {
+        flags[i] = 0;
+    }
     {
         int idx = HSD_Randi(6);
         flag[idx] = 1;
@@ -327,7 +311,7 @@ void grShrineRoute_80208D14(Ground_GObj* gobj)
     Ground* gp = gobj->user_data;
     Vec3 center;
     int i;
-    PAD_STACK(12);
+    PAD_STACK(4);
 
     mpLib_80058560();
     grAnime_801C8138(gobj, gp->map_id, 0);
@@ -371,9 +355,9 @@ void grShrineRoute_80208D14(Ground_GObj* gobj)
             }
         }
     } else {
-        gp->u.shrineroute.platforms[0].jobj = NULL;
-        gp->u.shrineroute.platforms[1].jobj = NULL;
-        gp->u.shrineroute.platforms[2].jobj = NULL;
+        for (i = 0; i < 3; i++) {
+            gp->u.shrineroute.platforms[i].jobj = NULL;
+        }
     }
 
     Ground_801C10B8(gobj, fn_80208A38);
@@ -471,11 +455,15 @@ void grShrineRoute_80208F70(Ground_GObj* gobj)
                             Ground_801C2D24(result, &sp88);
                             HSD_JObjSetTranslate(ejobj, &sp88);
                         }
-                        grMaterial_801C9604((HSD_GObj*) gobj,
-                                            yakumono_param->x0, 0);
+                        grMaterial_801C9604(
+                            (HSD_GObj*) gobj,
+                            DP(union ColorOverlay_x8_t, yakumono_param->x0), 0);
                         temp = Ground_GetMapGObj(2);
                         if (temp != NULL) {
-                            grMaterial_801C9604(temp, yakumono_param->x0, 0);
+                            grMaterial_801C9604(
+                                temp,
+                                DP(union ColorOverlay_x8_t, yakumono_param->x0),
+                                0);
                         }
                         if (result != 0xBD) {
                             HSD_JObj* j =
@@ -560,8 +548,9 @@ void grShrineRoute_80208F70(Ground_GObj* gobj)
             grAnime_801C7A04((HSD_GObj*) gobj, 0, 7U, 0.0f);
             grLib_801C9908(gobj->hsd_obj);
             if (gp->u.shrineroute.xD4 != NULL) {
-                grMaterial_801C9604(gp->u.shrineroute.xD4,
-                                    yakumono_param->x4, 0);
+                grMaterial_801C9604(
+                    gp->u.shrineroute.xD4,
+                    DP(union ColorOverlay_x8_t, yakumono_param->x4), 0);
             }
         }
         break;
@@ -614,8 +603,9 @@ void grShrineRoute_80208F70(Ground_GObj* gobj)
             mpJointListAdd(7);
             grShrineRoute_8020B0AC();
             if (gp->u.shrineroute.xD4 != NULL) {
-                grMaterial_801C9604(gp->u.shrineroute.xD4,
-                                    yakumono_param->x8, 0);
+                grMaterial_801C9604(
+                    gp->u.shrineroute.xD4,
+                    DP(union ColorOverlay_x8_t, yakumono_param->x8), 0);
             }
             stage_info.x6DC = 0;
             gp->u.shrineroute.xC4 = 4;
@@ -634,11 +624,15 @@ void grShrineRoute_80208F70(Ground_GObj* gobj)
                 Ground_801C4A08(gp->u.shrineroute.xD4);
                 gp->u.shrineroute.xD4 = NULL;
             }
-            grMaterial_801C9604((HSD_GObj*) gobj, yakumono_param->xC, 0);
+            grMaterial_801C9604(
+                (HSD_GObj*) gobj,
+                DP(union ColorOverlay_x8_t, yakumono_param->xC), 0);
             {
                 HSD_GObj* gr2 = Ground_GetMapGObj(2);
                 if (gr2 != NULL) {
-                    grMaterial_801C9604(gr2, yakumono_param->xC, 0);
+                    grMaterial_801C9604(
+                        gr2, DP(union ColorOverlay_x8_t, yakumono_param->xC),
+                        0);
                 }
             }
         }
@@ -1464,11 +1458,11 @@ void onJointCollision(void* user_data, int joint_id, CollData* coll,
     }
 }
 
-/* `out` is &desc of a DynamicsDesc* in ftColl_8007BAC0; ftCo_800C08A0
- * dereferences it, so the disc slot must be relocated, not stored as a
- * 32-bit half of a host pointer. */
+/* `out` is &desc of a lbColl_80008D30_arg1* in ftColl_8007BAC0;
+ * ftCo_800C08A0 dereferences it, so the disc slot must be relocated, not
+ * stored as a 32-bit half of a host pointer. */
 s32 grShrineRoute_8020AE08(HSD_GObj* gobj, HSD_GObj* player_gobj,
-                           DynamicsDesc** out)
+                           lbColl_80008D30_arg1** out)
 {
     static Vec3 const lo_init = { -285.93, -226.1f, 0.0f };
     static Vec3 const hi_init = { -161.56, -226.1f, 0.0f };
@@ -1500,7 +1494,7 @@ s32 grShrineRoute_8020AE08(HSD_GObj* gobj, HSD_GObj* player_gobj,
 
     if (pos.y < lo.y) {
         if (lo.x < pos.x && pos.x < hi.x) {
-            *out = DP(DynamicsDesc, yakumono_param->x10);
+            *out = DP(lbColl_80008D30_arg1, yakumono_param->x10);
             return 1;
         }
     }
@@ -1579,7 +1573,7 @@ void grShrineRoute_8020B0AC(void)
     }
 }
 
-DynamicsDesc* grShrineRoute_OnTouchLine(enum_t arg)
+lbColl_80008D30_arg1* grShrineRoute_OnTouchLine(enum_t arg)
 {
     return NULL;
 }

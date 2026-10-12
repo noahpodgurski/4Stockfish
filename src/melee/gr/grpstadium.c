@@ -48,31 +48,7 @@ static const char* grStadium_pc_pending;
 #endif
 #include "pc/pc.h"
 
-static struct DISC_STRUCT grPStadium_YakumonoParam {
-    int x0;
-    int x4;
-    int x8;
-    int xC;
-    int x10;
-    int x14;
-    int x18;
-    u8 r, g, b;
-    u32 x20;
-    u32 x24;
-    u32 x28;
-    u32 x2C;
-    u32 x30;
-    u32 x34;
-    u32 x38;
-    u32 x3C;
-    u32 x40;
-    u32 x44;
-    s16 x48;
-    s16 x4A;
-    s16 x4C;
-    s16 x4E;
-    s16 x50;
-}* yakumono_param;
+static struct grPStadium_YakumonoParam* yakumono_param;
 
 GrJoint grPs_803E1248[] = {
     { 1, 3, 0 }, { 2, 3, 0 }, { 3, 4, 0 },
@@ -269,8 +245,8 @@ void grStadium_801D1290(Ground_GObj* gobj)
 
     grAnime_801C8138(gobj, gp->map_id, 0);
     grAnime_801C77FC(gobj, 0, 7);
-    gp->u.display.xD0 = HSD_ArchiveGetPublicAddress(
-        grDatFiles_801C6330(1)->unk0,
+    gp->u.display.xD0 = HSD_ArchiveGetPublicAs(
+        HSD_ImageDesc, grDatFiles_801C6330(1)->unk0,
         "GrdPStadiumBG_OVDummy_mat6962_GrdPStadiumDummy_0_image_desc");
     if (gp->u.display.xD0 == NULL) {
         OSReport("no such image desc!\n");
@@ -1210,7 +1186,7 @@ HSD_GObj* grStadium_801D2BEC(void)
     archive = grDatFiles_GetArchive();
     HSD_SisLib_803A611C(1, gobj, 9, 0xD, 0, 1, 0, 1);
     HSD_SisLib_804D1124[1] =
-        HSD_ArchiveGetPublicAddress(archive->unk0, "SIS_GrPStadiumData");
+        HSD_ArchiveGetPublicAs(SIS, archive->unk0, "SIS_GrPStadiumData");
     text->win_static_p =
         HSD_SisLib_803A5ACC(1, 0, 0.0F, 0.0F, 0.0F, 250.0F, 160.0F);
     text->win_dynamic_p = HSD_SisLib_803A6754(1, 0);
@@ -1723,16 +1699,18 @@ static inline u8 grStadium_ScaleColor(u8 value)
     return scaled;
 }
 
+union grStadium_801D3BBC_colors {
+    StadiumColor entries[5];
+    struct grStadium_801D3BBC_colors_s {
+        StadiumColor head;
+        StadiumAlphaPresets presets;
+    } s;
+};
+
 void grStadium_801D3BBC(Ground_GObj* arg0)
 {
     UNUSED u64 pad;
-    union {
-        StadiumColor entries[5];
-        struct {
-            StadiumColor head;
-            StadiumAlphaPresets presets;
-        } s;
-    } colors;
+    union grStadium_801D3BBC_colors colors;
     HSD_Text* dynamic_text;
     HSD_GObj* player_gobj;
     HSD_GObj* current_player_gobj;
@@ -2331,7 +2309,7 @@ void fn_801D5074(Ground_GObj* gobj, intptr_t arg1)
     grDisplay_801C5DB0(gobj, arg1);
 }
 
-DynamicsDesc* grStadium_OnTouchLine(enum_t unused)
+lbColl_80008D30_arg1* grStadium_OnTouchLine(enum_t unused)
 {
     return NULL;
 }

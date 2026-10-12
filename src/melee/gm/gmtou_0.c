@@ -2242,6 +2242,35 @@ void fn_80194D84(s32* state, u32 buttons, u32 trigger)
     }
 }
 
+#ifdef MUST_MATCH
+#pragma pack(push, 1)
+#endif
+typedef struct TmData_80194F30 {
+    u8 pad_x0[0x2E];
+    u8 x2E;
+    u8 pad_x2F[0x37 - 0x2F];
+    struct TmData_80194F30_x37 {
+        u8 x0;
+        u8 x1;
+        u8 x2;
+        u8 x3;
+        u8 x4;
+        u8 x5;
+        u8 x6;
+        u8 x7;
+        u8 x8;
+        u16 x9;
+        u16 xB;
+        u8 xD;
+        u8 xE;
+        u8 xF;
+        u8 pad_X10[0x12 - 0x10];
+    } x37[64];
+} TmData_80194F30;
+#ifdef MUST_MATCH
+#pragma pack(pop)
+#endif
+
 /// Handles tournament settings menu input (entrant configuration).
 void fn_80194F30(s32* state_ptr, u32 buttons, u32 trigger)
 {

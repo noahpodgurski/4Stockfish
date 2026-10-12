@@ -117,7 +117,7 @@ bool ftWobble_Check(Fighter_GObj* gobj)
     if (nana != NULL) {
         Fighter* nfp = GET_FIGHTER(nana);
         if (!nfp->x221F_b1 && !nfp->x2219_b5 &&
-            nfp->x2070.x2071_b0_3 != WOBBLE_STATE_KIND_KO)
+            nfp->x2070.x0.x2071_b0_3 != WOBBLE_STATE_KIND_KO)
         {
             if (nfp->ground_or_air == GA_Ground) {
                 ftCo_800DA698(nana, false);

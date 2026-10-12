@@ -12,6 +12,7 @@
 #include <melee/ef/efasync.h>
 #include <melee/ef/eflib.h>
 #include <melee/ft/ftdemo.h>
+#include <melee/ft/ftlib.h>
 #include <melee/gr/ground.h>
 #include <melee/gr/stage.h>
 #include <melee/it/item.h>
@@ -96,7 +97,6 @@ void fn_80179854(void)
     }
 }
 
-extern s32 ftLib_IsFramesRemaining(HSD_GObj*);
 
 static inline int get_big_loser(int slot, MatchEnd* match_end)
 {

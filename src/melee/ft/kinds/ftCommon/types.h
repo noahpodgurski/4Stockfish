@@ -65,7 +65,7 @@ struct DISC_STRUCT ftHurtboxInit {
 DISC_ASSERT_SIZE(struct ftHurtboxInit, 0x28);
 
 union ftCommon_MotionVars {
-    struct {
+    struct ftCommon_MotionVars_common {
         /* fp+2340 */ int x0;
         /* fp+2344 */ Vec3 x4;
         /* fp+2350 */ u32 x10;
@@ -80,7 +80,7 @@ union ftCommon_MotionVars {
         /* fp+238C */ Vec3 x4C;
         /* fp+2398 */ Vec3 x58;
     } common;
-    struct {
+    struct ftCommon_MotionVars_walk {
         /* fp+2340 */ float x0;
         /* fp+2344 */ FtMotionId msid;
         /* fp+2348 */ float slow_anim_frame;
@@ -91,7 +91,7 @@ union ftCommon_MotionVars {
         /* fp+235C */ float fast_anim_rate;
         /* fp+2360 */ float accel_mul;
     } walk;
-    struct {
+    struct ftCommon_MotionVars_turn {
         /* fp+2340 */ bool has_turned;
         /* fp+2344 */ float facing_after;
         /* fp+2348 */ float x8;
@@ -102,66 +102,66 @@ union ftCommon_MotionVars {
         /* fp+235C */ HSD_Pad x1C;
 
     } turn;
-    struct {
+    struct ftCommon_MotionVars_turnrun {
         /* fp+2340 */ u8 pad_x0[12];
         /* fp+234C */ float accel_mul;
         /* fp+2350 */ u8 pad_x10[4];
         /* fp+2354 */ int x14;
     } turnrun;
-    struct {
+    struct ftCommon_MotionVars_dash {
         /* fp+2340 */ float x0;
         /* fp+2344 */ int x4;
     } dash;
-    struct {
+    struct ftCommon_MotionVars_run {
         /* fp+2340 */ float x0;
         /* fp+2344 */ float x4;
     } run;
-    struct {
+    struct ftCommon_MotionVars_runbrake {
         /* fp+2340 */ bool x0;
         /* fp+2344 */ float frames;
     } runbrake;
-    struct {
+    struct ftCommon_MotionVars_kneebend {
         /* fp+2340 */ int is_short_hop;
         /* fp+2344 */ ftCo_JumpInput jump_input;
     } kneebend;
-    struct {
+    struct ftCommon_MotionVars_jump {
         /* fp+2340 */ int x0;
         /* fp+2344 */ bool x4;
         /* fp+2348 */ float jump_mul;
     } jump;
-    struct {
+    struct ftCommon_MotionVars_jumpaerial {
         /* fp+2340 */ int x0;
         /* fp+2344 */ float init_h_vel;
     } jumpaerial;
-    struct {
+    struct ftCommon_MotionVars_fall {
         /* fp+2340 */ FtMotionId smid;
         /* fp+2344 */ float x4;
     } fall;
-    struct {
+    struct ftCommon_MotionVars_fallaerial {
         /* fp+2340 */ FtMotionId smid;
         /* fp+2344 */ float x4;
     } fallaerial;
-    struct {
+    struct ftCommon_MotionVars_squat {
         /* fp+2340 */ int x0;
         /* fp+2344 */ float x4;
     } squat;
-    struct {
+    struct ftCommon_MotionVars_landing {
         /* fp+2340 */ bool allow_interrupt;
     } landing;
-    struct {
+    struct ftCommon_MotionVars_attack1 {
         /* fp+2340 */ bool x0;
     } attack1;
-    struct {
+    struct ftCommon_MotionVars_attack100 {
         /* fp+2340 */ bool x0;
         /* fp+2344 */ bool x4;
     } attack100;
-    struct {
+    struct ftCommon_MotionVars_attackdash {
         /* fp+2340 */ int x0;
     } attackdash;
-    struct {
+    struct ftCommon_MotionVars_attacklw3 {
         /* fp+2340 */ bool x0;
     } attacklw3;
-    struct {
+    struct ftCommon_MotionVars_damage {
         /* fp+2340 */ float x0;
         /* fp+2344 */ int x4;
         /* fp+2348 */ int x8;
@@ -173,15 +173,15 @@ union ftCommon_MotionVars {
         /* fp+235A */ u8 x1A;
         /* fp+235B */ u8 x1B;
     } damage;
-    struct {
+    struct ftCommon_MotionVars_damageice {
         /* fp+2340 */ u8 wall_hit_dir;
         /* fp+2344 */ float rot_speed;
         /* fp+2348 */ ftCollisionBox ice_coll;
     } damageice;
-    struct {
+    struct ftCommon_MotionVars_damageicejump {
         /* fp+2340 */ float escape_timer;
     } damageicejump;
-    struct {
+    struct ftCommon_MotionVars_guard {
         /* fp+2340 */ float x0;
         /* fp+2344 */ float x4;
         /* fp+2348 */ float x8;
@@ -195,26 +195,18 @@ union ftCommon_MotionVars {
         /* fp+2368 */ u32 x28;
         /* fp+236C */ float x2C;
     } guard;
-    struct {
+    struct ftCommon_MotionVars_itemget {
         /* fp+2340 */ bool x0; // itemget action is heavy type?
     } itemget;
-    struct {
-        /* self_vel_y/self_vel_x are the same words as `throw`'s
-         * @c xC.y / @c xC.z (ftCo_Throw.c writes one view and reads the
-         * other), so they must stay at fp+2350 / fp+2354. GameCube kept the
-         * thrower gobj at fp+234C, where a 4-byte pointer only overlapped
-         * @c throw::xC.x ; an 8-byte one would eat both velocities and
-         * anywhere else in the union is written by the damage view that runs
-         * between the store and the read, so it lives in
-         * Fighter::throw_thrower instead. */
-        /* fp+2340 */ u32 x0;
+    struct ftCommon_MotionVars_fighterthrow {
+        /* fp+2340 */ UNK_T x0;
         /* fp+2344 */ int x4;
         /* fp+2348 */ int x8;
         /* fp+234C */ u8 pad_xC[4];
         /* fp+2350 */ float self_vel_y;
         /* fp+2354 */ float self_vel_x;
     } fighterthrow;
-    struct {
+    struct ftCommon_MotionVars_itemthrow {
         /* fp+2340 */ float facing_dir;
         /* fp+2344 */ float x4;
         /* fp+2348 */ int x8;
@@ -225,12 +217,12 @@ union ftCommon_MotionVars {
         /* fp+235C */ u32 x1C;
         /* fp+2360 */ int x20;
     } itemthrow;
-    struct {
+    struct ftCommon_MotionVars_itemthrow4 {
         /* fp+2340 */ int unk_timer;
         /* fp+2344 */ float anim_spd;
         /* fp+2348 */ Vec3 x8;
     } itemthrow4;
-    struct {
+    struct ftCommon_MotionVars_fallspecial {
         /* fp+2340 */ int x0;
         /* fp+2344 */ float x4;
         /* fp+2348 */ float mobility;
@@ -239,42 +231,42 @@ union ftCommon_MotionVars {
         /* fp+2354 */ float landing_lag;
         /* fp+2358 */ bool allow_interrupt;
     } fallspecial;
-    struct {
+    struct ftCommon_MotionVars_lift {
         /* fp+2340 */ bool x0;
         /* fp+2344 */ float x4;
         /* fp+2348 */ bool x8;
     } lift;
-    struct {
+    struct ftCommon_MotionVars_downwait {
         /* fp+2340 */ float x0;
     } downwait;
-    struct {
+    struct ftCommon_MotionVars_downspot {
         /* fp+2340 */ u8 pad_x0[4];
         /* fp+2344 */ u8 x4;
     } downspot;
-    struct {
+    struct ftCommon_MotionVars_catch_ {
         /* fp+2340 */ float x0;
     } catch_;
-    struct {
+    struct ftCommon_MotionVars_escape {
         /* fp+2340 */ bool x0;
         /* fp+2344 */ bool x4;
     } escape;
-    struct {
+    struct ftCommon_MotionVars_escapeair {
         /* fp+2340 */ int timer;
         /* fp+2344 */ Vec3 self_vel;
     } escapeair;
-    struct {
+    struct ftCommon_MotionVars_rebound {
         /* fp+2340 */ float x0;
         /* fp+2344 */ float anim_speed;
     } rebound;
-    struct {
+    struct ftCommon_MotionVars_downreflect {
         /* fp+2340 */ u8 pad_x0[4];
         /* fp+2344 */ u8 x4;
     } downreflect;
-    struct {
+    struct ftCommon_MotionVars_pass {
         /* fp+2340 */ bool x0;
         /* fp+2344 */ float x4;
     } pass;
-    struct {
+    struct ftCommon_MotionVars_cliff {
         /**
          * Used to check against opponent's #Fighter::213C while they're
          * occupying a ledge within grab range
@@ -283,29 +275,25 @@ union ftCommon_MotionVars {
         /* fp+2344 */ float x4;
         /* fp+2348 */ bool x8;
     } cliff;
-    struct {
+    struct ftCommon_MotionVars_cliffjump {
         /* fp+2340 */ bool x0;
     } cliffjump;
-    struct {
+    struct ftCommon_MotionVars_cargoturn {
         /* fp+2340 */ bool x0;
     } cargoturn;
-    struct {
+    struct ftCommon_MotionVars_cargokneebend {
         /* fp+2340 */ int x0;
         /* fp+2344 */ int x4;
         /* fp+2348 */ float x8;
     } cargokneebend;
-    struct {
+    struct ftCommon_MotionVars_shouldered {
         /* fp+2340 */ float x0;
         /* fp+2344 */ int x4;
     } shouldered;
-    struct {
+    struct ftCommon_MotionVars_downdamage {
         /* fp+2340 */ float x0;
     } downdamage;
-    struct {
-        /* x4..scale are written through the `walk`, `common` and `ca.specialhi`
-         * views (ftCo_YoshiEgg.c, ftkirbyyoshiegg.c) and read back here, so
-         * they must keep their GameCube offsets. `x0` is write-only, so park
-         * the 8-byte pointer past `scale` instead of at fp+2340. */
+    struct ftCommon_MotionVars_yoshiegg {
         /* fp+2340 */ u8 pad_x0[4];
         /* fp+2344 */ bool x4;
         /* fp+2348 */ float x8;
@@ -316,14 +304,14 @@ union ftCommon_MotionVars {
         /* fp+2364 */ Vec3 scale;
         Fighter_GObj* x0; ///< write-only; moved off fp+2340 (see above)
     } yoshiegg;
-    struct {
+    struct ftCommon_MotionVars_capturekoopa {
         /* fp+2340 */ bool x0;
         /* fp+2344 */ u32 x4;
         /* fp+2348 */ float x8;
         /* fp+234C */ float xC;
         /* fp+2350 */ float x10;
     } capturekoopa;
-    struct {
+    struct ftCommon_MotionVars_capturekirby {
         /* fp+2340 */ Vec2 pos_offset;
         /* fp+2348 */ Vec2 x8;
         /* fp+2350 */ Vec2 x10;
@@ -334,20 +322,16 @@ union ftCommon_MotionVars {
         /* fp+2368 */ u32 x28;
         /* fp+236C */ Vec3 scale;
     } capturekirby;
-    struct {
-        /* x4/x8 are also read as `ca.specialhi.vel.x` / `.vel.y`
-         * (ftCo_ThrownKirby.c:171,278), so every member must keep its
-         * GameCube offset. `thrower_gobj` is write-only, so park the 8-byte
-         * pointer past `coll_box` instead of at fp+2340. */
+    struct ftCommon_MotionVars_thrownkirby {
         /* fp+2340 */ u8 pad_x0[4];
         /* fp+2344 */ float x4;
         /* fp+2348 */ float x8;
         /* fp+234C */ float xC;
         /* fp+2350 */ float x10;
         /* fp+2354 */ bool x14;
-        union {
+        union ftCommon_MotionVars_thrownkirby_x18 {
             u8 x18;
-            struct {
+            struct ftCommon_MotionVars_thrownkirby_x18_x0 {
                 /* fp+2358:0 */ u8 x18_b0 : 1;
                 /* fp+2358:1 */ u8 x18_b1 : 1;
                 /* fp+2358:2 */ u8 x18_b2 : 1;
@@ -356,62 +340,62 @@ union ftCommon_MotionVars {
                 /* fp+2358:5 */ u8 x18_b5 : 1;
                 /* fp+2358:6 */ u8 x18_b6 : 1;
                 /* fp+2358:7 */ u8 x18_b7 : 1;
-            };
-        };
+            } x0;
+        } x18_u;
         /* fp+235C */ Vec3 scale;
         /* fp+2368 */ ftCollisionBox coll_box;
         Fighter_GObj* thrower_gobj; ///< write-only; moved off fp+2340
     } thrownkirby;
-    struct {
+    struct ftCommon_MotionVars_bury {
         /* fp+2340 */ int x0;
         /* fp+2344 */ ftCollisionBox coll_box;
         /* fp+235C */ float x1C;
         /* fp+2360 */ enum_t x20;
         /* fp+2364 */ Vec3 translate;
     } bury;
-    struct {
+    struct ftCommon_MotionVars_buryjump {
         /* fp+2340 */ float x0;
     } buryjump;
-    struct {
+    struct ftCommon_MotionVars_passivewall {
         /* fp+2340 */ int timer;
         /* fp+2344 */ int x4;
         /* fp+2348 */ bool x8;
         /* fp+234C */ int vel_y_exponent;
     } passivewall;
-    struct {
+    struct ftCommon_MotionVars_aircatchhit {
         /* fp+2340 */ int x0;
         /* fp+2344 */ float x4;
     } aircatchhit;
-    struct {
+    struct ftCommon_MotionVars_aircatch {
         /* fp+2340 */ float x0;
     } aircatch;
-    struct {
+    struct ftCommon_MotionVars_warpstar {
         /* fp+2340 */ Vec3 cur_pos;
         /* fp+234C */ Vec3 self_vel;
         /* fp+2358 */ float facing_dir;
         /* fp+235C */ int x1C;
         /* fp+2360 */ ftCollisionBox ecb;
     } warpstar;
-    struct {
+    struct ftCommon_MotionVars_hammerkneebend {
         /* fp+2340 */ int x0;
         /* fp+2344 */ int x4;
         /* fp+2348 */ float x8;
     } hammerkneebend;
-    struct {
-        /* fp+2340 */ u32 x0;
+    struct ftCommon_MotionVars_hammerlanding {
+        /* fp+2340 */ UNK_T x0;
         /* fp+2344 */ float x4;
     } hammerlanding;
-    struct {
+    struct ftCommon_MotionVars_captureleadead {
         /* fp+2340 */ Item_GObj* x0;
     } captureleadead;
-    struct {
+    struct ftCommon_MotionVars_capturedamage {
         /* fp+2340 */ int x0;
         /* fp+2344 */ float x4;
         /* fp+2348 */ u8 pad_x8[0x18 - 0x8];
         /* fp+2358 */ HSD_JObj* x18;
     } capturedamage;
-    struct {
-        /* fp+2340 */ s32 timer; ///< frame timer; `bool` truncated it to 0/1
+    struct ftCommon_MotionVars_entry {
+        /* fp+2340 */ int timer;
         /* fp+2344 */ float x4;
         /* fp+2348 */ Vec3 x8;
         /* fp+2354 */ Vec3 x14;
@@ -420,50 +404,44 @@ union ftCommon_MotionVars {
         /* fp+2368 */ float x28;
         /* fp+236C */ ftCollisionBox x2C;
     } entry;
-    struct {
+    struct ftCommon_MotionVars_capturelikelike {
         /* fp+2340 */ Item_GObj* x0;
         /* fp+2344 */ int x4;
     } capturelikelike;
-    struct {
-        /* GameCube had these three words at fp+2340..2348, which 8-byte
-         * function pointers cannot reproduce. The Kinoko states hold the
-         * `walk` view's anim frames and the `common` view's saved velocities
-         * at the same time, so place these after both (`common` is the
-         * largest, ending at 0x68) instead of letting them overlap. */
-        u8 pad_0[0x68];
-        HSD_GObjEvent x0;
-        HSD_GObjEvent x4;
-        int x8;
+    struct ftCommon_MotionVars_mushroom {
+        /* fp+2340 */ HSD_GObjEvent x0;
+        /* fp+2344 */ HSD_GObjEvent x4;
+        /* fp+2348 */ int x8;
     } mushroom;
-    struct {
+    struct ftCommon_MotionVars_barrel {
         /* fp+2340 */ int x0;
         /* fp+2344 */ int x4;
         /* fp+2348 */ Item_GObj* x8;
     } barrel;
-    struct {
+    struct ftCommon_MotionVars_unk_800D2890 {
+        /* fp+2340 */ HSD_GObjEvent x0;
+    } unk_800D2890;
+    struct ftCommon_MotionVars_unk_800D331C {
         /* fp+2340 */ u8 pad_x0[0x6c - 0x40];
         /* fp+236C */ int x6C;
         /* fp+2370 */ int x70;
     } unk_800D331C;
-    struct {
+    struct ftCommon_MotionVars_unk_800D34E0 {
         /* fp+2340 */ u8 pad_x0[0x6c - 0x40];
         /* fp+236C */ int x6C;
         /* fp+2370 */ int x70;
     } unk_800D34E0;
-    struct {
-        /* x40/x74 are plain 4-byte words on disc+GameCube (a frame counter
-         * shared with #unk_deadleft); typing them `void*` widened them and
-         * shifted x6C/x70 out of alignment with #unk_800D331C. */
+    struct ftCommon_MotionVars_unk_800D3680 {
         /* fp+2340 */ int x40;
         /* fp+2344 */ u8 pad_x44[0x6c - 0x44];
         /* fp+236C */ int x6C;
         /* fp+2370 */ int x70;
         /* fp+2374 */ int x74;
     } unk_800D3680;
-    struct {
+    struct ftCommon_MotionVars_unk_deadleft {
         /* fp+2340 */ int x40;
     } unk_deadleft;
-    struct {
+    struct ftCommon_MotionVars_unk_deadup {
         /* fp+2340 */ int x40;
         /* fp+2344 */ int x44;
         /* fp+2348 */ u8 pad_x48[0x4C - 0x48];
@@ -472,27 +450,27 @@ union ftCommon_MotionVars {
         /* fp+235C */ Vec3 x5C;
         /* fp+2368 */ int x68;
     } unk_deadup;
-    struct {
+    struct ftCommon_MotionVars_thrown {
         /* fp+2340 */ bool unk_bool;
         /* fp+2344 */ float anim_timer;
         /* fp+2348 */ u32 x8;
         /* fp+234C */ u8 xC;
     } thrown;
-    struct {
+    struct ftCommon_MotionVars_parasol_open {
         /* fp+2340 */ FtMotionId prev_msid;
     } parasol_open;
-    struct {
+    struct ftCommon_MotionVars_swing {
         /* fp+2340 */ int x0;
         /* fp+2344 */ int x4;
         /* fp+2344 */ float x8;
     } swing;
-    struct {
+    struct ftCommon_MotionVars_throw_ {
         /* fp+2340 */ int x0;
         /* fp+2344 */ int x4;
         /* fp+2348 */ int x8;
         /* fp+234C */ Vec xC;
     } throw_;
-    struct {
+    struct ftCommon_MotionVars_capturewait {
         /* fp+2340 */ float x0;
         /* fp+2344 */ float x4;
         /* fp+2348 */ int x8;

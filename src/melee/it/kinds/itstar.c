@@ -11,17 +11,6 @@
 #include <melee/it/types.h>
 #include <sysdolphin/baselib/random.h>
 
-/* ponytail: on-disc view of the fields the decomp reads through
- * itStar_ItemVars (a runtime union member, so it cannot be DISC_STRUCT). */
-typedef struct DISC_STRUCT {
-    float x0;
-    float x4;
-    float x8;
-    float xC;
-    float xvel;
-    float yvel;
-} itStarAttributes;
-DISC_ASSERT_SIZE(itStarAttributes, 0x18);
 
 ItemStateTable it_803F57A0[] = {
     {

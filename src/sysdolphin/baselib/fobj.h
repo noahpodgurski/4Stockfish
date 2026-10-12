@@ -5,6 +5,8 @@
 
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
+
 #include <dolphin/mtx.h>
 #include <sysdolphin/baselib/objalloc.h>
 
@@ -28,6 +30,10 @@
 
 #define TYPE_ROBJ 1
 #define TYPE_JOBJ 12
+
+/// An animation track's keyframe stream: opcodes and packed values, read by
+/// HSD_FObjInterpretAnim.
+typedef u8 HSD_FObjData DAT_BLOB;
 
 struct HSD_FObj {
     struct HSD_FObj* next;
@@ -58,7 +64,7 @@ typedef struct DISC_STRUCT _HSD_FObjDesc {
     u8 frac_value;
     u8 frac_slope;
     u8 dummy0;
-    DISC_PTR(u8) ad; /* packed big-endian keyframe stream */
+    DISC_PTR(HSD_FObjData) ad DAT_COUNT(length);
 } HSD_FObjDesc;
 DISC_ASSERT_SIZE(HSD_FObjDesc, 0x14);
 

@@ -67,13 +67,13 @@ struct HSD_SynthSFXNode {
     /* 26 */ u8 volume_update_pending;
     /* 27 */ u8 x27;
     /* 28 */ float unk28;
-    /* 2C */ struct {
+    /* 2C */ struct HSD_SynthSFXNode_user_vol {
         /* 2C */ float volume;
         /* 30 */ int x4;
-        union {
+        union HSD_SynthSFXNode_user_vol_x8 {
             /* 34 */ u8 x8;
             /* 34 */ float x8_float;
-        };
+        } x8_u;
     } user_vol[USERVOL_NUM];
     /* 44 */ float x44;
     /* 48 */ float x48;
@@ -82,7 +82,7 @@ struct HSD_SynthSFXNode {
 
 static AXVPB* voicelist[0x100 / 4];
 static struct foo* hsd_SynthSFXDataHash[0x80 / 4]; ///< entries by (id & 0x1F)
-static struct {
+static struct HSD_Synth_804C2A60_t {
     /* 00 */ int entrynum;
     /* 04 */ int bankID;
     /* 08 */ void (*x8)(int, int);
@@ -94,7 +94,7 @@ static int hsd_SynthSFXBank[0x80 / 4];
 static int hsd_SynthSFXBankHead[0x84 / 4];
 static struct HSD_SynthSFXNode hsd_SynthSFXNodes[0x40];
 
-static struct {
+static struct voicelist_1784_t {
     float x1784;
     float x1788;
     int x178C;
@@ -108,7 +108,7 @@ static u8 lbl_804C4524[0x1C];
 
 /* HPS block headers, DVD-loaded verbatim (big-endian). Words 3.. hold the
  * per-channel AXPBADPCMLOOP blocks. */
-static struct DISC_STRUCT {
+static struct DISC_STRUCT pstHakoHeader_t {
     /* 00 */ s32 x0;
     /* 04 */ s32 x4;
     /* 08 */ s32 x8;

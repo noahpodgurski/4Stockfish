@@ -8,12 +8,6 @@
 #include <melee/mp/mplib.h>
 #include <sysdolphin/baselib/gobjproc.h>
 
-struct DISC_STRUCT grTFox_YakumonoParam {
-    DISC_PTR(DynamicsDesc) unk0;
-    DISC_PTR(DynamicsDesc) unk4;
-    DISC_PTR(DynamicsDesc) unk8;
-    DISC_PTR(DynamicsDesc) unkC;
-};
 
 static void grTFox_80220B80(s32);
 static void grTFox_80220B84(void);
@@ -33,7 +27,7 @@ static void stageGObj1_OnInit(Ground_GObj*);
 static bool grTFox_80220E30(Ground_GObj*);
 static void stageGObj1_GObjProc(Ground_GObj*);
 static void grTFox_80220E58(Ground_GObj*);
-static DynamicsDesc* grTFox_80220E5C(enum_t);
+static lbColl_80008D30_arg1* grTFox_80220E5C(enum_t);
 static bool grTFox_80220F08(Vec3*, int, HSD_JObj*);
 
 static struct grTFox_YakumonoParam* yakumono_param;
@@ -146,23 +140,23 @@ static void stageGObj1_GObjProc(Ground_GObj* gobj)
 
 void grTFox_80220E58(Ground_GObj* gobj) {}
 
-DynamicsDesc* grTFox_80220E5C(enum_t arg0)
+lbColl_80008D30_arg1* grTFox_80220E5C(enum_t arg0)
 {
     if (arg0 != -1) {
         enum_t i = mpJointFromLine(arg0);
         if (i != -1 && i == 1) {
             i = mpLineGetKind(arg0);
             if (i == CollLine_Floor) {
-                return DP(DynamicsDesc, yakumono_param->unk0);
+                return DP(lbColl_80008D30_arg1, yakumono_param->unk0);
             }
             if (i == CollLine_Ceiling) {
-                return DP(DynamicsDesc, yakumono_param->unk4);
+                return DP(lbColl_80008D30_arg1, yakumono_param->unk4);
             }
             if (i == CollLine_RightWall) {
-                return DP(DynamicsDesc, yakumono_param->unk8);
+                return DP(lbColl_80008D30_arg1, yakumono_param->unk8);
             }
             if (i == CollLine_LeftWall) {
-                return DP(DynamicsDesc, yakumono_param->unkC);
+                return DP(lbColl_80008D30_arg1, yakumono_param->unkC);
             }
             return NULL;
         }

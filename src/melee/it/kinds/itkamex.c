@@ -30,12 +30,13 @@ ItemStateTable it_803F7B48[] = { {
 void it_802CA49C(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itPokemonAttributes* sa = DP(itPokemonAttributes, ip->xC4_article_data->x4_specialAttributes);
+    itKamexAttributes* sa =
+        (&DP(union ItemSpecialAttributes, (ip)->xC4_article_data->x4_specialAttributes)->kamex);
     PAD_STACK(16);
 
     it_80279C48(gobj);
     ip->xDD4_itemVar.pokemon.timer = -1;
-    ip->xDBC_itcmd_var4.flags.x0 = false;
+    ip->xDBC.xDBC_itcmd_var4.flags.x0 = false;
     ip->xDD4_itemVar.pokemon.x64 = 0;
     ip->xDD4_itemVar.pokemon.x68 = 0.0f;
     ip->xDD4_itemVar.pokemon.x6C = 0.0f;
@@ -95,7 +96,7 @@ bool it_802CA654(Item_GObj* gobj)
 void it_802CA6A0(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itKamexAttributes* attrs = DP(itKamexAttributes, ip->xC4_article_data->x4_specialAttributes);
+    itKamexAttributes* attrs = (&DP(union ItemSpecialAttributes, (ip)->xC4_article_data->x4_specialAttributes)->kamex);
 
     if (ip->xDD4_itemVar.pokemon.timer == -1) {
         ip->xDD4_itemVar.pokemon.timer = attrs->timer;
@@ -154,10 +155,10 @@ bool itKamex_UnkMotion1_Coll(Item_GObj* gobj)
 void it_802CA8DC(Item_GObj* gobj)
 {
     Item* ip = gobj->user_data;
-    if (ip->xDBC_itcmd_var4.flags.x0) {
+    if (ip->xDBC.xDBC_itcmd_var4.flags.x0) {
         it_802CAB10(gobj);
         ip->x40_vel.x = ip->xDD4_itemVar.pokemon.x68 * -ip->facing_dir;
-        ip->xDBC_itcmd_var4.flags.x0 = false;
+        ip->xDBC.xDBC_itcmd_var4.flags.x0 = false;
     }
 }
 
@@ -220,7 +221,7 @@ void it_802CAB10(Item_GObj* gobj)
 {
     SpawnItem spawn;
     Item* ip = GET_ITEM(gobj);
-    itKamexAttributes* attrs = DP(itKamexAttributes, ip->xC4_article_data->x4_specialAttributes);
+    itKamexAttributes* attrs = (&DP(union ItemSpecialAttributes, (ip)->xC4_article_data->x4_specialAttributes)->kamex);
 
     spawn.prev_pos = ip->pos;
     spawn.prev_pos.x += attrs->x8 * ip->facing_dir;
@@ -240,7 +241,7 @@ void it_802CAB10(Item_GObj* gobj)
     ip->xDD4_itemVar.pokemon.x64 ^= 1;
     spawn.x0_parent_gobj = ip->owner;
     spawn.x4_parent_gobj2 = (HSD_GObj*) gobj;
-    spawn.x44_flag.b0 = true;
+    spawn.x44_flag.x0.b0 = true;
     spawn.x40 = 0;
     if (Item_80268B18(&spawn) != NULL) {
         if (ip->facing_dir == 1.0f) {
@@ -258,7 +259,7 @@ void it_2725_Logic31_Spawned(Item_GObj* gobj)
     HSD_JObj* jobj;
     Vec3 scale;
     Item* ip = gobj->user_data;
-    itKamexAttributes* sa = DP(itKamexAttributes, ip->xC4_article_data->x4_specialAttributes);
+    itKamexAttributes* sa = (&DP(union ItemSpecialAttributes, (ip)->xC4_article_data->x4_specialAttributes)->kamex);
 
     jobj = gobj->hsd_obj;
     ip->xD44_lifeTimer = sa->x0;

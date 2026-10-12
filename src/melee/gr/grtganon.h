@@ -21,8 +21,15 @@
 /* 224934 */ void grTGanon_80224934(Ground_GObj*);
 /* 224988 */ bool grTGanon_80224988(Ground_GObj*);
 /* 2249B0 */ void grTGanon_802249B0(Ground_GObj*);
-/* 2249B4 */ DynamicsDesc* grTGanon_802249B4(enum_t);
+/* 2249B4 */ lbColl_80008D30_arg1* grTGanon_802249B4(enum_t);
 /* 224A4C */ bool grTGanon_80224A4C(Vec3*, int, HSD_JObj*);
 /* 3E98DC */ extern StageData grTGn_StageData;
+
+struct DISC_STRUCT grTGn_YakumonoParam {
+    DISC_PTR(lbColl_80008D30_arg1) x0;
+    DISC_PTR(lbColl_80008D30_arg1) x4;
+    DISC_PTR(lbColl_80008D30_arg1) x8;
+};
+typedef struct grTGn_YakumonoParam grTGn_YakumonoParam;
 
 #endif

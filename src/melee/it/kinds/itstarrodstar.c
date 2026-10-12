@@ -23,17 +23,6 @@ ItemStateTable it_803F6530[] = { { 0, itStarrodstar_UnkMotion0_Anim,
                                    itStarrodstar_UnkMotion0_Phys,
                                    itStarrodstar_UnkMotion0_Coll } };
 
-typedef struct DISC_STRUCT StarRodStarAttrs {
-    float x0;
-    float x4;
-    float x8;
-    float xC;
-    float x10;
-    int x14;
-    int x18;
-    float x1C;
-} StarRodStarAttrs;
-DISC_ASSERT_SIZE(StarRodStarAttrs, 0x20);
 
 void it_802988E4(Fighter_GObj* gobj, Vec* vec, int arg2, float arg3)
 {
@@ -70,7 +59,7 @@ void it_802989C8(Item_GObj* ig, Fighter_GObj* fg)
         it_80272460(hit, attrs->x14, ig);
     }
     ip->xDD4_itemVar.starrodstar.x4 = attrs->x1C * ip->facing_dir;
-    ip->xDCE_flag.b7 = 0;
+    ip->xDCE_flag.x0.b7 = 0;
 }
 
 bool itStarrodstar_UnkMotion0_Anim(Item_GObj* gobj)

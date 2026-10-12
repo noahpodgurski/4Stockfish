@@ -68,7 +68,7 @@ typedef struct DISC_STRUCT YorsterParams {
 } YorsterParams;
 
 typedef struct grYt_804D6A20_t {
-    YorsterParams* x0;
+    grYorster_YakumonoParam* x0;
     u8 pad_04[4];
 } grYt_804D6A20_t;
 grYt_804D6A20_t grYt_804D6A20;
@@ -423,7 +423,7 @@ void grYorster_8020266C(HSD_GObj* gobj)
     }
 }
 
-DynamicsDesc* grYorster_80202B5C(enum_t unused)
+lbColl_80008D30_arg1* grYorster_80202B5C(enum_t unused)
 {
     return NULL;
 }

@@ -1,6 +1,5 @@
 #include "sislib.h"
 
-#include <printf.h> // IWYU pragma: keep
 #include <stdio.h>
 #include <string.h>
 #ifdef TARGET_PC
@@ -592,8 +591,9 @@ void HSD_SisLib_803A62A0(s32 font_idx, char* archive_name, char* symbol_name)
         OSPanic(__FILE__, 0x24A, "");
     }
     {
-        SIS* sis = HSD_ArchiveGetPublicAddress(HSD_SisLib_804D1110[font_idx],
-                                               symbol_name);
+    SIS* sis = HSD_ArchiveGetPublicAs(SIS,
+                                      HSD_SisLib_804D1110[font_idx],
+                                      symbol_name);
 #ifdef TARGET_PC
         /* The NTSC-U disc suffixes its English trophy tables "_E" next to
          * the Japanese ones; a PAL archive carries the single table under
@@ -605,7 +605,9 @@ void HSD_SisLib_803A62A0(s32 font_idx, char* archive_name, char* symbol_name)
                 if (len - 2 < sizeof plain) {
                     memcpy(plain, symbol_name, len - 2);
                     plain[len - 2] = '\0';
-                    sis = HSD_ArchiveGetPublicAddress(HSD_SisLib_804D1110[font_idx], plain);
+                sis = HSD_ArchiveGetPublicAs(SIS,
+                                             HSD_SisLib_804D1110[font_idx],
+                                             plain);
                 }
             }
         }

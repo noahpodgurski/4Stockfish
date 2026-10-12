@@ -3,6 +3,8 @@
 
 #include <sysdolphin/baselib/forward.h>
 
+#include <melee/sc/types.h>
+
 /* 25BC20 */ TextKerning* mnCharSel_8025BC20(TextKerning* arg0, u32 arg1);
 /* 25BD30 */ void mnCharSel_8025BD30(void);
 /* 25C020 */ void mnCharSel_8025C020(int);
@@ -28,5 +30,26 @@
 /* 26688C */ void mnCharSel_Scene_OnEnter(void*);
 /* 2669F4 */ void mnCharSel_Scene_OnFrame(void);
 /* 266D70 */ void mnCharSel_Scene_OnExit(void*);
+
+typedef struct DISC_STRUCT MnSelectChrModels {
+    /* 0x0 */ StaticModelDesc background;
+    /* 0x10 */ StaticModelDesc hand;
+    /* 0x20 */ StaticModelDesc token;
+    /* 0x30 */ StaticModelDesc menu;
+    /* 0x40 */ StaticModelDesc press_start;
+    /* 0x50 */ StaticModelDesc debug_camera;
+    /* 0x60 */ StaticModelDesc regend_menu;
+    /* 0x70 */ StaticModelDesc regend_options;
+    /* 0x80 */ StaticModelDesc door;
+} MnSelectChrModels;
+
+struct DISC_STRUCT MnSelectChrDataTable {
+    /* 0x00 */ DISC_PTR(HSD_CObjDesc) cam;
+    /* 0x04 */ DISC_PTR(HSD_LightDesc) light0;
+    /* 0x08 */ DISC_PTR(HSD_LightDesc) light1;
+    /* 0x0C */ DISC_PTR(HSD_FogDesc) fog;
+    /* 0x10 */ MnSelectChrModels models;
+};
+DISC_ASSERT_SIZE(struct MnSelectChrDataTable, 0xA0);
 
 #endif

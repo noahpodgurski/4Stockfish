@@ -164,6 +164,7 @@ void it_802B7160(Fighter_GObj* gobj, itSamusGrapple_HitboxData* data)
     u32 hit_group;
     HitCapsule* hitbox;
     u32 damage_arg;
+    struct samus_grapple_hitbox_flags* hitbox_flags;
     PAD_STACK(8);
 
     fp = GET_FIGHTER(gobj);
@@ -219,7 +220,7 @@ void it_802B7160(Fighter_GObj* gobj, itSamusGrapple_HitboxData* data)
     hitbox->x42_b0 = 0;
     hitbox->x42_b4 = 0;
     hitbox->x41_b7 = 0;
-    hitbox->hit_grabbed_victim_only = data->x134_4;
+    hitbox->x134.hit_grabbed_victim_only = data->x134_4;
     hitbox->x42_b1 = 1;
     hitbox->x42_b2 = 0;
     hitbox->x43_b2 = 0;
@@ -466,7 +467,7 @@ Item_GObj* it_802B7C18(Fighter_GObj* owner, Vec3* pos, f32 facing_dir)
     spawn.vel.x = spawn.vel.y = spawn.vel.z = 0.0f;
     spawn.x0_parent_gobj = owner;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.b0 = 1;
+    spawn.x44_flag.x0.b0 = 1;
 
     item_gobj = Item_80268B18(&spawn);
     if (item_gobj != NULL) {
@@ -1685,7 +1686,7 @@ void it_802BABB8(Item_GObj* gobj)
     PAD_STACK(24);
     Item_80268E5C(gobj, 8, ITEM_ANIM_UPDATE);
     it_802A2428(gobj);
-    fp->mv.ss.grapple.x4 = (f32) (s32) da->xD0;
+    fp->mv.ss.grapple.x4 = (f32) da->xD0;
 }
 
 void it_802BAC3C(Fighter_GObj* gobj)

@@ -3,7 +3,7 @@
 
 #include <m2c_macros.h> // IWYU pragma: export
 
-/// A label in a jump table
+/// label in jump table
 typedef void (*jmp_t)(void);
 
 /// A jump table
@@ -28,35 +28,35 @@ typedef jmp_t jtbl_t[];
 #define U32_TO_F32 4503599627370496.0
 #define S32_TO_F32 4503601774854144.0
 
-#define PAD_STACK(bytes)                                                      \
-    do {                                                                      \
-        UNUSED unsigned char _[(bytes)];                                      \
+#define PAD_STACK(bytes) \
+    do { \
+        UNUSED unsigned char _[(bytes)]; \
     } while (0)
 
 /// @warning Creates fake @c .rodata entries!
-#define FORCE_PAD_STACK(bytes)                                                \
-    do {                                                                      \
-        UNUSED unsigned char _[(bytes)] = { 0 };                              \
+#define FORCE_PAD_STACK(bytes) \
+    do { \
+        UNUSED unsigned char _[(bytes)] = { 0 }; \
     } while (0)
 
-#define FORCE_PAD_STACK_4                                                     \
-    do {                                                                      \
-        UNUSED u32 _0 = 0;                                                    \
+#define FORCE_PAD_STACK_4 \
+    do { \
+        UNUSED u32 _0 = 0; \
     } while (0)
 
-#define FORCE_PAD_STACK_8                                                     \
-    do {                                                                      \
-        UNUSED u64 _0 = 0;                                                    \
+#define FORCE_PAD_STACK_8 \
+    do { \
+        UNUSED u64 _0 = 0; \
     } while (0)
 
-#define FORCE_PAD_STACK_16                                                    \
-    do {                                                                      \
-        UNUSED u64 _0 = 0, _1 = 0;                                            \
+#define FORCE_PAD_STACK_16 \
+    do { \
+        UNUSED u64 _0 = 0, _1 = 0; \
     } while (0)
 
-#define FORCE_PAD_STACK_32                                                    \
-    do {                                                                      \
-        UNUSED u64 _0 = 0, _1 = 0, _2 = 0, _3 = 0;                            \
+#define FORCE_PAD_STACK_32 \
+    do { \
+        UNUSED u64 _0 = 0, _1 = 0, _2 = 0, _3 = 0; \
     } while (0)
 
 #endif

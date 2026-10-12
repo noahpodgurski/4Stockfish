@@ -195,7 +195,7 @@ HSD_GObj* it_802A83E0(f32 facing_dir, Fighter_GObj* arg1, Vec3* arg2,
     spawn.vel.x = spawn.vel.y = spawn.vel.z = 0.0f;
     spawn.x0_parent_gobj = arg1;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.b0 = true;
+    spawn.x44_flag.x0.b0 = true;
     spawn.x40 = 0;
     gobj = Item_80268B18(&spawn);
 
@@ -715,7 +715,7 @@ bool itLinkarrow_UnkMotion4_Anim(Item_GObj* gobj)
             it_802756D0(gobj);
         }
         it_8026BB44(gobj);
-        ip->xDCF_flag.b2 = 1;
+        ip->xDCF_flag.x0.b2 = 1;
         ip->xDD4_itemVar.linkarrow.xF0 += 1;
         if (ip->xDD4_itemVar.linkarrow.xF0 > 0x12C) {
             return true;
@@ -825,12 +825,12 @@ bool itLinkArrow_Logic98_HitShield(Item_GObj* gobj)
                             sinf(ip->xDD4_itemVar.linkarrow.xD8) +
                         ip->xDD4_itemVar.linkarrow.xCC;
             ip->pos.z = 0.0f;
-            goto end;
+        } else {
+            return true;
         }
+    } else {
         return true;
     }
-    return true;
-end:
     return false;
 }
 

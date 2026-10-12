@@ -926,6 +926,13 @@ void Camera_80029CF8(CameraBounds* bounds, CameraTransformState* transform)
     transform->target_position.z = transform->target_interest.z + cam_dist;
 }
 
+struct CameraStaticData {
+    CameraModeCallbacks callbacks;
+    HSD_WObjDesc interest;
+    HSD_WObjDesc eyepos;
+    HSD_CameraDescPerspective desc;
+};
+
 void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
 {
     f32 viewport_x_scale;
@@ -936,11 +943,7 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
     f32 input_x;
     f32 input_y;
     f32 depth_ratio;
-    /* The decomp reaches cm_803BCB64 by walking past the adjacent statics
-     * from cm_803BCB18; refer to it directly. */
-    struct {
-        HSD_CameraDescPerspective desc;
-    }* data = (void*) &cm_803BCB64;
+    struct CameraStaticData* data = (struct CameraStaticData*) &cm_803BCB18;
 
     input_x = game_camera.quake_offset.x * game_camera.quake_scale;
     input_y = game_camera.quake_offset.y * game_camera.quake_scale;

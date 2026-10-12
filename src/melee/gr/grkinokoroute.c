@@ -30,10 +30,7 @@
 #include <sysdolphin/baselib/psstructs.h>
 #include <sysdolphin/baselib/random.h>
 
-static struct DISC_STRUCT {
-    int x0;
-    grZakoGenerator_SpawnDesc x4;
-}* yakumono_param;
+static struct grKinokoRoute_YakumonoParam* yakumono_param;
 
 typedef struct grNKr_Depths {
     s16 x[51];
@@ -41,10 +38,10 @@ typedef struct grNKr_Depths {
 
 typedef union grNKr_Flags {
     u8 flags;
-    struct {
+    struct grNKr_Flags_x0 {
         u8 b7 : 1;
         u8 b0123456 : 7;
-    };
+    } x0;
 } grNKr_Flags;
 
 static const Vec3 grNKr_803B82E8 = { 0.0f, 0.0f, 0.0f };
@@ -131,7 +128,7 @@ void grKinokoRoute_80207490(void)
 void grKinokoRoute_802074D8(void)
 {
     int val;
-    grZakoGenerator_801CAE04(&yakumono_param->x4);
+    grZakoGenerator_801CAE04(yakumono_param->spawn_descs);
     val = yakumono_param->x0;
     if (val != 0) {
         val = HSD_Randi(yakumono_param->x0);
@@ -241,13 +238,15 @@ bool grKinokoRoute_802078E8(Ground_GObj* arg)
     return false;
 }
 
+union grKinokoRoute_802078F0_cursor {
+    Ground* gp;
+    struct grKinokoRoute_GroundVars_Entry* entry;
+};
+
 void grKinokoRoute_802078F0(Ground_GObj* gobj)
 {
     s32 i;
-    union {
-        Ground* gp;
-        struct grKinokoRoute_GroundVars_Entry* entry;
-    } cursor;
+    union grKinokoRoute_802078F0_cursor cursor;
     Vec3 pos;
     HSD_GObj* fighter;
     f32 scale;
@@ -566,28 +565,33 @@ bool grKinokoRoute_80208480(int arg)
     return 0;
 }
 
+struct grKinokoRoute_802084B4_gp {
+    char pad[0xDD8];
+    HSD_JObj* jobj;
+};
+
 void grKinokoRoute_802084B4(HSD_GObj* gobj)
 {
     HSD_GObj* gobj2;
     Vec3 sp_vec;
-    HSD_JObj* jobj = GET_ITEM(gobj)->xDD4_itemVar.yaku.x4;
+    struct grKinokoRoute_802084B4_gp* gp = gobj->user_data;
 
-    HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
+    HSD_JObjSetFlagsAll(gp->jobj, JOBJ_HIDDEN);
 
     gobj2 = Ground_GetMapGObj(3);
     if (gobj2 != NULL) {
-        Ground* gp2 = gobj2->user_data;
+        Ground* gp2 = GET_GROUND(gobj2);
         if (gp2 != NULL) {
             gp2->u.kinokoroute2.flags_0 = 1;
         }
     }
 
-    lb_8000B1CC(jobj, NULL, &sp_vec);
+    lb_8000B1CC(gp->jobj, NULL, &sp_vec);
     efSync_Spawn(0x442, gobj, &sp_vec);
     Camera_RequestQuake(QuakeKind_Small, NULL);
     Ground_801C5414(0x136, 0xBA);
     grMaterial_801C8CDC(gobj);
-    PAD_STACK(20);
+    PAD_STACK(16);
 }
 
 void grKinokoRoute_80208564(HSD_GObj* gobj)
@@ -642,7 +646,7 @@ void grKinokoRoute_802086EC(Vec3* arg0, f32 arg8)
     }
 }
 
-DynamicsDesc* grKinokoRoute_80208754(enum_t arg)
+lbColl_80008D30_arg1* grKinokoRoute_80208754(enum_t arg)
 {
     return NULL;
 }

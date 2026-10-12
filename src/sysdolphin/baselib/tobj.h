@@ -5,6 +5,8 @@
 
 #include <sysdolphin/baselib/forward.h> // IWYU pragma: export
 
+#include <dat_macros.h>
+
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXEnum.h>
 #include <dolphin/mtx.h>
@@ -191,7 +193,7 @@ typedef struct _HSD_Tlut {
 } HSD_Tlut;
 
 typedef struct DISC_STRUCT _HSD_TlutDesc {
-    DISC_PTR(void) lut; /* raw GX palette data */
+    DISC_PTR(u16) lut DAT_COUNT((n_entries + 15) & ~15);
     GXTlutFmt fmt;
     u32 tlut_name;
     u16 n_entries;
@@ -207,9 +209,13 @@ typedef struct DISC_STRUCT _HSD_TexLODDesc {
 } HSD_TexLODDesc;
 DISC_ASSERT_SIZE(HSD_TexLODDesc, 0x10);
 
+/// Texels, laid out in the tiles of a #GXTexFmt.
+typedef u8 HSD_ImageData DAT_BLOB;
+
 /* Also allocated at runtime (HSD_ImageDescAlloc); layout stays disc-native. */
 struct DISC_STRUCT HSD_ImageDesc {
-    DISC_PTR(void) image_ptr; /* raw GX texture data */
+    DISC_PTR(HSD_ImageData) image_ptr DAT_COUNT(
+        GXGetTexBufferSize(width, height, format, mipmap, maxLOD + 1));
     u16 width;
     u16 height;
     GXTexFmt format;
@@ -262,8 +268,8 @@ typedef struct DISC_STRUCT _HSD_TexAnim {
     DISC_PTR(struct _HSD_TexAnim) next;
     GXTexMapID id;
     DISC_PTR(HSD_AObjDesc) aobjdesc;
-    DISC_PTR(DiscU32) imagetbl; /* DISC_PTR(HSD_ImageDesc)[n_imagetbl] */
-    DISC_PTR(DiscU32) tluttbl;  /* DISC_PTR(HSD_TlutDesc)[n_tluttbl] */
+    DISC_PTR(DiscU32) imagetbl DAT_COUNT(n_imagetbl);
+    DISC_PTR(DiscU32) tluttbl DAT_COUNT(n_tluttbl);
     u16 n_imagetbl;
     u16 n_tluttbl;
 } HSD_TexAnim;

@@ -5,6 +5,8 @@
 
 #include <placeholder.h>
 
+#include <melee/sc/types.h>
+
 /* 2599EC */ int mnStageSel_802599EC(void);
 /* 259C28 */ void mnStageSel_80259C28(void);
 /* 259D84 */ void fn_80259D84(HSD_GObj*);
@@ -19,5 +21,29 @@
 /* 25BB5C */ void mnStageSel_Scene_OnExit(UNK_T);
 /* 25BBD4 */ int mnSelStageRandom(void);
 /* 25BC08 */ int mnStageSel_8025BC08(int);
+
+typedef struct DISC_STRUCT MnSelectStageModels {
+    /* +00 */ StaticModelDesc icon_large;
+    /* +10 */ StaticModelDesc icon_random;
+    /* +20 */ StaticModelDesc icon_special;
+    /* +30 */ StaticModelDesc stage_name;
+    /* +40 */ StaticModelDesc icon_stacked;
+    /* +50 */ StaticModelDesc menu_border;
+    /* +60 */ StaticModelDesc stage_preview;
+    /* +70 */ StaticModelDesc icon_hover;
+    /* +80 */ StaticModelDesc cursor;
+    /* +90 */ StaticModelDesc layout;
+    /* +A0 */ StaticModelDesc background;
+    /* +B0 */ StaticModelDesc now_loading;
+} MnSelectStageModels;
+DISC_ASSERT_SIZE(MnSelectStageModels, 0xC0);
+
+typedef struct DISC_STRUCT MnSelectStageDataTable {
+    /* 0x00 */ DISC_PTR(HSD_CObjDesc) cam;
+    /* 0x04 */ DISC_PTR(HSD_LightDesc) light0;
+    /* 0x08 */ DISC_PTR(HSD_LightDesc) light1;
+    /* 0x0C */ DISC_PTR(HSD_FogDesc) fog;
+    /* 0x10 */ MnSelectStageModels models;
+} MnSelectStageDataTable;
 
 #endif

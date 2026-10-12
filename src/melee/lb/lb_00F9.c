@@ -42,7 +42,7 @@ struct lb_Collider {
     /* +24 */ int bone_idx;
 };
 
-const struct {
+const struct lb_803B7280_t {
     Vec3 v0;
     Vec3 v1;
     Vec3 v2;
@@ -993,7 +993,7 @@ void lb_800115F4(void)
     lb_804D63B4 = 0;
 }
 
-void lb_80011710(DynamicsDesc* arg0, DynamicsDesc* arg1)
+void lb_80011710(DynamicsTemplate* arg0, DynamicsDesc* arg1)
 {
     struct lb_00F9_UnkDesc1Inner* data0;
     struct DynamicsData* data1;
@@ -1003,8 +1003,8 @@ void lb_80011710(DynamicsDesc* arg0, DynamicsDesc* arg1)
     arg1->pos.y = arg0->pos.y;
     arg1->pos.z = arg0->pos.z;
     data1 = DP(struct DynamicsData, arg1->data);
-    /* On disc `data` points at a flat lb_00F9_UnkDesc1Inner[count]. */
-    data0 = DP(struct lb_00F9_UnkDesc1Inner, arg0->data);
+    /* On disc `params` points at flat lb_00F9_UnkDesc1Inner[count]. */
+    data0 = DP(struct lb_00F9_UnkDesc1Inner, arg0->params);
     for (data1 = DP(struct DynamicsData, arg1->data), i = 0;
          i < (int) arg0->count; data1 = data1->next, i++)
     {

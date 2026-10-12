@@ -20,22 +20,6 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/random.h>
 
-typedef struct DISC_STRUCT itGShell_Attrs {
-    float x0;
-    float x4;
-    float x8;
-    float xC;
-    float x10;
-    float x14;
-    char pad18[0x1C - 0x18];
-    float x1C;
-    float x20;
-    float x24;
-    float x28;
-    float x2C;
-    float x30;
-    DiscVec3 x34;
-} itGShell_Attrs;
 DISC_ASSERT_SIZE(itGShell_Attrs, 64);
 
 ItemStateTable it_803F5BA8[] = {
@@ -272,7 +256,7 @@ void it_8028C018(Item_GObj* gobj)
 bool itGshell_UnkMotion1_Anim(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    if (ip->xDD4_itemVar.gshell.xDEC_b3 && ip->xDD0_flag.b0 != 1) {
+    if (ip->xDD4_itemVar.gshell.xDEC_b3 && ip->xDD0_flag.x0.b0 != 1) {
         if (ip->xDD4_itemVar.gshell.xDE4 <= 0.0f) {
             it_80274CAC(gobj);
             ip->jumped_on = it_8028CF68;
@@ -422,7 +406,7 @@ bool itGshell_UnkMotion6_Anim(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
     if (ip->xDD4_itemVar.gshell.xDD8 <= 0.0f) {
-        if (!ip->xDCD_flag.b5) {
+        if (!ip->xDCD_flag.x0.b5) {
             it_80275444(gobj);
         }
     } else {

@@ -5,18 +5,11 @@
 
 #include <melee/it/forward.h>
 
+#include <melee/it/itemattrs.h> // IWYU pragma: export
 #include <melee/it/kinds/types.h>
 
 /* Mr. Saturn's article special attributes, read in place from ItCo.dat
  * through Article::x4_specialAttributes. */
-typedef struct DISC_STRUCT itDoseiAttributes {
-    f32 unk0;
-    s32 unk4;
-    f32 unk8;
-    s32 unkC;
-    s32 unk10;
-    s32 unk14;
-} itDoseiAttributes;
 DISC_ASSERT_SIZE(itDoseiAttributes, 0x18);
 
 /* 281164 */ void itDosei_Logic7_Spawned(Item_GObj*);

@@ -163,22 +163,6 @@ StageData grI2_StageData = {
     ARRAY_SIZE(grI2_803E4A60),
 };
 
-struct DISC_STRUCT grInishie2_YakumonoParam {
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    s16 unk6;
-    s16 unk8;
-    s16 unkA;
-    s16 unkC;
-    s16 unkE;
-    s16 unk10[2];
-    DiscVec3 unk14[2];
-    f32 unk2C;
-    DiscVec3 unk30[2];
-    s16 unk48;
-    s16 unk4A;
-};
 DISC_ASSERT_SIZE(struct grInishie2_YakumonoParam, 0x4C);
 
 static struct grInishie2_YakumonoParam* yakumono_param;
@@ -780,7 +764,7 @@ s32 grInishie2_801FDFB4(s32 arg0)
 
 void grInishie2_801FDFE4(Ground_GObj* gobj) {}
 
-DynamicsDesc* grInishie2_801FDFE8(enum_t arg)
+lbColl_80008D30_arg1* grInishie2_801FDFE8(enum_t arg)
 {
     return NULL;
 }

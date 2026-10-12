@@ -4,8 +4,6 @@
 
 #include <melee/ft/forward.h>
 
-#include <math.h>
-
 #include "forward.h"
 #include <melee/ft/fighter.h>
 #include <melee/ft/ft_081B.h>
@@ -42,10 +40,6 @@ Fighter_CostumeStrings ftSb_Init_CostumeStrings[] = {
     { ftSb_Init_803D39D4, ftSb_Init_803D39E0, ftSb_Init_803D39F8 },
 };
 
-typedef struct DISC_STRUCT _ftSandbagAttributes {
-    u32 x0_pair[2];
-} ftSandbagAttributes;
-DISC_ASSERT_SIZE(ftSandbagAttributes, 0x8);
 
 void ftSb_Init_OnDeath(HSD_GObj* arg0) {}
 

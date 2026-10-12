@@ -70,7 +70,7 @@
                                      mpLib_GroundEnum ground_kind,
                                      float delta_y);
 /* 1FCB10 */ static void grInishie1_801FCB10(HSD_GObj*);
-/* 1FCBB0 */ static DynamicsDesc* grInishie1_801FCBB0(enum_t);
+/* 1FCBB0 */ static lbColl_80008D30_arg1* grInishie1_801FCBB0(enum_t);
 /* 1FCBB8 */ static bool grInishie1_801FCBB8(Vec3*, int arg, HSD_JObj* jobj);
 
 #ifdef MUST_MATCH
@@ -112,27 +112,6 @@ static inline f32 fabsf_inline(f32 x)
     return (x < 0.0f) ? -x : x;
 }
 
-struct DISC_STRUCT grInishie1_YakumonoParam {
-    f32 unk0;
-    f32 unk4;
-    f32 unk8;
-    f32 unkC;
-    f32 unk10;
-    s16 unk14;
-    s16 unk16;
-    u16 unk18;
-    s16 unk1A;
-    s16 unk1C;
-    s16 unk1E;
-    f32 unk20;
-    f32 unk24;
-    f32 unk28;
-    DiscVec3 unk2C[2];
-    f32 unk44;
-    f32 unk48;
-    f32 unk4C;
-    f32 unk50;
-};
 
 static struct grInishie1_YakumonoParam* yakumono_param;
 
@@ -461,7 +440,7 @@ void grInishie1_801FAD84(HSD_GObj* gobj)
 
     if (gm_8016AE80() != -1 && gm_8016B238() == 0) {
         int item_kind;
-        for (item_kind = It_Common_Start; item_kind < It_Common_End;
+        for (item_kind = It_Kind_Common_Start; item_kind < It_Kind_Common_End;
              item_kind++)
         {
             if (it_8026D324(item_kind) != 0) {
@@ -469,7 +448,7 @@ void grInishie1_801FAD84(HSD_GObj* gobj)
             }
         }
 
-        if (item_kind != It_Common_End) {
+        if (item_kind != It_Kind_Common_End) {
             s32 index1 = HSD_Randi(BLOCK_COUNT);
             s32 index2;
             s32 index1_copy = index1;
@@ -544,7 +523,7 @@ void grInishie1_801FB0AC(HSD_GObj* gobj, u32 ix)
     }
 }
 
-enum {
+enum HATENA_APPEAR {
     HATENA_APPEAR_CHECKLOOP = 0x14
 };
 
@@ -890,7 +869,8 @@ void fn_801FBF6C(Item_GObj* item_gobj, Ground* gp, Vec3* pos, HSD_GObj* arg3,
 
     for (i = 0; i < 19; i++) {
         /* it_802E6AEC (ityaku.c) stores this jobj as xDD4_itemVar.yaku.x4. */
-        if (gp->u.inishie1.block[i].jobj2 == ip->xDD4_itemVar.yaku.x4) {
+        if (gp->u.inishie1.block[i].jobj2 ==
+            ip->xDD4_itemVar.yaku.x4_u.x4) {
             break;
         }
     }
@@ -1179,7 +1159,7 @@ void grInishie1_801FCB10(HSD_GObj* gobj)
     }
 }
 
-DynamicsDesc* grInishie1_801FCBB0(enum_t arg)
+lbColl_80008D30_arg1* grInishie1_801FCBB0(enum_t arg)
 {
     return NULL;
 }

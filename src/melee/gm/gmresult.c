@@ -54,6 +54,8 @@ static void gmresult_sdata2_order(void)
 }
 #endif
 
+/* Retail stores these as big-endian u32 words; char arrays keep the same
+ * bytes on little-endian PC. */
 char lbl_804D3FA0[] = "\x81\x7c";
 char lbl_804D3FA4[] = "\x81\x7b";
 char lbl_804D3FA8[] = "\x81\x7c\x81\x46\x81\x7c";
@@ -1089,7 +1091,7 @@ void fn_80175D34(void)
     }
 }
 
-static const struct {
+static const struct lbl_803B7B18_t {
     u8 lookup[34][2];
     Vec3 translate;
 } lbl_803B7B18 = {
@@ -1756,7 +1758,7 @@ void gm_Scene_Results_OnEnter(void* arg0_)
     MatchEnd* me_iter;
     ResultsData* data_iter;
 
-    PAD_STACK(0x28);
+    PAD_STACK(36);
 
     memzero(&lbl_8046DBE8, sizeof(lbl_8046DBE8));
     lbl_8046DBE8.x1 = 0;
@@ -1771,10 +1773,9 @@ void gm_Scene_Results_OnEnter(void* arg0_)
     } else {
         lbl_8046DBE8.num_pages = 3;
         if (match_end->match_kind == 3) {
-            lbl_8046DBE8.player_data[0].page = 2;
-            lbl_8046DBE8.player_data[1].page = 2;
-            lbl_8046DBE8.player_data[2].page = 2;
-            lbl_8046DBE8.player_data[3].page = 2;
+            for (i = 0; i < 4; i++) {
+                lbl_8046DBE8.player_data[i].page = 2;
+            }
         }
     }
     if (fn_801701B8() == 0) {
@@ -1793,7 +1794,7 @@ void gm_Scene_Results_OnEnter(void* arg0_)
     fn_801771C0(&lbl_8046DBE8);
     if (match_end->player_standings[data->x6].pkind == Gm_PKind_Human) {
         if (!gm_WasMatchCanceled(match_end->outcome) &&
-            match_end->player_standings[data->x6].x3_b6)
+            match_end->player_standings[data->x6].x3_u.x0.x3_b6)
         {
             lb_80014574(data->x6, 3, 0x20, 0);
         }
@@ -1832,7 +1833,7 @@ void gm_Scene_Results_OnEnter(void* arg0_)
             fn_8017A9B4(i);
             data_iter->player_data[0].fighter_gobj =
                 fn_8017A67C(me_iter->player_standings[0].ckind,
-                            me_iter->player_standings[0].x3_b0, i);
+                            me_iter->player_standings[0].x3_u.x0.x3_b0, i);
             data_iter->player_data[0].camera = fn_8017A318(i);
         }
         me_iter = (MatchEnd*) ((MatchPlayerData*) me_iter + 1);

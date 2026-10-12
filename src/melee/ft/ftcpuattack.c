@@ -27,22 +27,6 @@
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/random.h>
 
-/* Lives in PlCo.dat and is read in place, so it stays big-endian: every
- * Fighter_804D64FC attack table is an array of these. Without the disc
- * storage order the level gate, the x1C period and the reach floats all
- * decode as garbage and no attack candidate ever survives the filter. */
-typedef struct DISC_STRUCT ftCo_AttackEntry {
-    /* +00 */ s32 cmd;
-    /* +04 */ s32 x04;
-    /* +08 */ f32 x08;
-    /* +0C */ f32 x0C;
-    /* +10 */ f32 x10;
-    /* +14 */ f32 x14;
-    /* +18 */ f32 weight;
-    /* +1C */ s32 x1C;
-    /* +20 */ s32 x20;
-} ftCo_AttackEntry;
-
 typedef struct ftCo_CollData {
     /* +00 */ u8 pad0[4];
     /* +04 */ Vec3 p;
@@ -1034,8 +1018,8 @@ void ftCo_800B683C(Fighter* fp)
     f32 var_f2;
 
     f32 var_f2_2;
-    mp_UnkStruct0* temp_r3_2;
-    mp_UnkStruct0* temp_r3_3;
+    mpIsland* temp_r3_2;
+    mpIsland* temp_r3_3;
     s32 temp_r0;
     s32 temp_r0_2;
 
@@ -1757,7 +1741,7 @@ bool ftCo_800B8A9C(Fighter* fp)
     Item* item;
     float weapon_reach;
     int result;
-    int var_r0;
+    int var_r0 = 0;
     PAD_STACK(4);
 
     ftCo_CpuTrace(fp, FtCo_Trace_Think, cpu->xF9_b2 && cpu->x44 != NULL);
@@ -1817,7 +1801,10 @@ bool ftCo_800B8A9C(Fighter* fp)
     if (fp->ground_or_air == GA_Air) {
         if (ftCo_800B89CC(fp)) {
             result =
-                ftCo_800B4AB0(fp, target, DP(void, DP(DiscU32, Fighter_804D64FC->x8)[fp->kind].v));
+                ftCo_800B4AB0(
+                    fp, target,
+                    DP(void,
+                       DP(DiscU32, Fighter_804D64FC->x8)[fp->kind].v));
             if (result != 0) {
                 cpu->xA4 = result;
                 return true;
@@ -1839,12 +1826,13 @@ bool ftCo_800B8A9C(Fighter* fp)
                 tmp->xC8++;
             }
         }
-        result = ftCo_800B4AB0(fp, target, DP(void, DP(DiscU32, Fighter_804D64FC->x4)[fp->kind].v));
+        result = ftCo_800B4AB0(
+            fp, target,
+            DP(void, DP(DiscU32, Fighter_804D64FC->x4)[fp->kind].v));
         if (result != 0) {
             cpu->xA4 = result;
             return true;
         }
-        goto done;
     }
     if (fp->item_gobj != NULL &&
         ftCo_800A59E4((Item*) fp->item_gobj->user_data))
@@ -1877,54 +1865,60 @@ bool ftCo_800B8A9C(Fighter* fp)
                 break;
             }
         }
-        result = ftCo_800B52AC(fp, target, DP(void, DP(DiscU32, Fighter_804D64FC->x18)[fp->kind].v),
-                               weapon_reach);
+        result = ftCo_800B52AC(
+            fp, target,
+            DP(void, DP(DiscU32, Fighter_804D64FC->x18)[fp->kind].v),
+            weapon_reach);
         if (result != 0) {
             cpu->xA4 = result;
             return true;
         }
     }
     if (cpu->level > 5 && ftCo_800B9F6C(target)) {
-        result = ftCo_800B4AB0(fp, target, DP(void, DP(DiscU32, Fighter_804D64FC->x10)[fp->kind].v));
+        result = ftCo_800B4AB0(
+            fp, target,
+            DP(void, DP(DiscU32, Fighter_804D64FC->x10)[fp->kind].v));
         if (result != 0) {
             cpu->xA4 = result;
             return true;
         }
     }
+    target3 = *target_pp;
+    if (fp->item_gobj != NULL) {
+        var_r0 = 0;
+    } else if (ftCo_800A3200(target3)) {
+        var_r0 = 0;
+    } else if (ftCo_800A0FB0(
+                   &sp1C, &sp34, &sp38, &sp28, -1, -1, -1,
+                   target3->cur_pos.x, 5.0 + target3->cur_pos.y,
+                   target3->cur_pos.x, target3->cur_pos.y - 1000.0,
+                   0.0f) != 0)
     {
-        target3 = *target_pp;
-        if (fp->item_gobj != NULL) {
-            var_r0 = 0;
-        } else if (ftCo_800A3200(target3)) {
-            var_r0 = 0;
-        } else {
-            if (ftCo_800A0FB0(&sp1C, &sp34, &sp38, &sp28, -1, -1, -1,
-                              target3->cur_pos.x, 5.0 + target3->cur_pos.y,
-                              target3->cur_pos.x, target3->cur_pos.y - 1000.0,
-                              0.0f) != 0)
-            {
-                var_r0 = 0;
-            } else {
-                var_r0 = 1;
-            }
-        }
+        var_r0 = 0;
+    } else {
+        var_r0 = 1;
     }
     if (var_r0 != 0) {
-        result = ftCo_800B4AB0(fp, target, DP(void, DP(DiscU32, Fighter_804D64FC->x1C)[fp->kind].v));
+        result = ftCo_800B4AB0(
+            fp, target,
+            DP(void, DP(DiscU32, Fighter_804D64FC->x1C)[fp->kind].v));
         if (result != 0) {
             cpu->xA4 = result;
             cpu->xF8_b7 = 1;
             return true;
         }
     }
-    result = ftCo_800B4AB0(fp, target, DP(void, DP(DiscU32, Fighter_804D64FC->x4)[fp->kind].v));
+    result = ftCo_800B4AB0(
+        fp, target,
+        DP(void, DP(DiscU32, Fighter_804D64FC->x4)[fp->kind].v));
     if (result != 0) {
         cpu->xA4 = result;
         return true;
     }
     if (cpu->x50 != NULL) {
-        result = ftCo_800B5AB0(fp, cpu->x50,
-                               DP(void, DP(DiscU32, Fighter_804D64FC->x14)[fp->kind].v));
+        result = ftCo_800B5AB0(
+            fp, cpu->x50,
+            DP(void, DP(DiscU32, Fighter_804D64FC->x14)[fp->kind].v));
         if (result != 0) {
             cpu->xA4 = result;
             return true;
@@ -2029,7 +2023,7 @@ void ftCo_800B9340(Fighter* fp)
 {
     struct CpuFighter* temp_r30 = &fp->cpu;
     Fighter* temp_r29 = fp->cpu.x44;
-    mp_UnkStruct0* temp_r3 = mpIsland_8005AC14(&fp->cur_pos, -100.0F);
+    mpIsland* temp_r3 = mpIsland_8005AC14(&fp->cur_pos, -100.0F);
 
     if (temp_r3 == NULL || temp_r29 == NULL ||
         temp_r3 != mpIsland_8005AC14(&temp_r29->cur_pos, -100.0F))
@@ -2043,11 +2037,11 @@ void ftCo_800B9340(Fighter* fp)
         ftCo_800B463C(fp, CpuCmd_ReleaseB);
         ftCo_800B46B8(fp, CpuCmd_WaitFor, 1);
         ftCo_800B463C(fp, CpuCmd_Done);
-    } else if (ABS(temp_r3->x14.x - fp->cur_pos.x) < 10.0) {
+    } else if (ABS(temp_r3->pos1.x - fp->cur_pos.x) < 10.0) {
         ftCo_800B46B8(fp, CpuCmd_SetLstickY, 0);
         ftCo_800B46B8(fp, CpuCmd_SetLstickX, -0x7F);
         ftCo_800B463C(fp, CpuCmd_Done);
-    } else if (ABS(temp_r3->x8.x - fp->cur_pos.x) < 10.0) {
+    } else if (ABS(temp_r3->pos0.x - fp->cur_pos.x) < 10.0) {
         ftCo_800B46B8(fp, CpuCmd_SetLstickY, 0);
         ftCo_800B46B8(fp, CpuCmd_SetLstickX, 0x7F);
         ftCo_800B463C(fp, CpuCmd_Done);

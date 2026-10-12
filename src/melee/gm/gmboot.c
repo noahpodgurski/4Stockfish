@@ -18,23 +18,23 @@
 /* 1BFA3C */ static void memcardOnLoad(GameModeState*);
 
 /// @todo Move to toy header
-enum {
+enum TROPHY {
     TROPHY_PIKMIN = 275,
 };
 
 struct loadData {
     u32 x0;
     u8 x4;
-    u8 mode_id; ///< Copied to ::leaveData::mode_id to set next mode
+    u8 mode_id; ///< Copied to ::BootExitData::mode_id to set next mode
 };
 
-struct leaveData {
+struct BootExitData {
     u32 x0;
     u8 mode_id;
 };
 
 static struct loadData load_data;
-static struct leaveData leave_data;
+static struct BootExitData leave_data;
 
 #ifdef TARGET_PC
 /* MELEE_BOOT_SCENE=<title|vs|classic|training|unranked|direct|ranked>: skip the whole menu walk and
@@ -114,7 +114,7 @@ void bootOnLoad(GameModeState* scene)
 
 void bootOnLeave(GameModeState* data)
 {
-    struct leaveData* scene_data = gm_GetGameModeStateExitData(data);
+    struct BootExitData* scene_data = gm_GetGameModeStateExitData(data);
 
     if (!Toy_803048C0(TROPHY_PIKMIN)) {
         if (!lb_8001C2D8(0, "01",

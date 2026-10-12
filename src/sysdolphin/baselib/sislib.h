@@ -10,7 +10,6 @@
 #include <dolphin/gx/GXStruct.h>
 #include <dolphin/mtx.h>
 #include <sysdolphin/baselib/archive.h>
-#include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/sislib_font.h>
 
 /// How many glyphs the font atlas holds.

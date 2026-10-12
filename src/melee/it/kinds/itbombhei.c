@@ -2,8 +2,6 @@
 
 #include <melee/it/forward.h>
 
-#include <math.h>
-
 #include "inlines.h"
 #include <melee/it/inlines.h>
 #include <melee/it/it_26B1.h>
@@ -91,7 +89,7 @@ static inline void inline_UnkMotion8_Anim(Item_GObj* igp)
 }
 
 #define GET_ATTRS(ip)                                                         \
-    DP(itBombHeiAttributes, ip->xC4_article_data->x4_specialAttributes)
+    (&DP(union ItemSpecialAttributes, (ip)->xC4_article_data->x4_specialAttributes)->bombhei)
 
 ItemStateTable it_803F54D8[] = {
     { -1, itBombhei_UnkMotion0_Anim, itBombhei_UnkMotion0_Phys,
@@ -190,7 +188,8 @@ void itBombhei_Logic6_Spawned(Item_GObj* igp)
 {
     Item* ip = GET_ITEM(igp);
     f32 temp_f2;
-    itBombHeiAttributes* ap = GET_ATTRS(ip);
+    itBombHeiAttributes* ap =
+        GET_ATTRS(ip);
 
     ip->xDD4_itemVar.bombhei.xDDC = 0;
     ip->xDD4_itemVar.bombhei.xDD4 = ap->x10;
@@ -315,7 +314,8 @@ bool itBombhei_UnkMotion1_Coll(Item_GObj* igp)
 void itBombhei_Logic6_PickedUp(Item_GObj* igp)
 {
     Item* ip = GET_ITEM(igp);
-    itBombHeiAttributes* ap = GET_ATTRS(ip);
+    itBombHeiAttributes* ap =
+        GET_ATTRS(ip);
 
     ip->xDC8_word.flags.x19 = 1;
     ip->xDC8_word.flags.x17 = 1;

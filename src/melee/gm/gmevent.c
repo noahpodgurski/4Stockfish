@@ -35,105 +35,6 @@ struct UnkSmallLoadData {
     u8 pad[8];
 };
 
-/// @todo ::PlayerInitData
-typedef struct DISC_STRUCT gm_801BAB40_src {
-    /* 0x00 */ s8 c_kind;
-    /* 0x01 */ u8 slot_type;
-    /* 0x02 */ u8 stocks;
-    /* 0x03 */ u8 color;
-    /* 0x04 */ u8 x5;
-    /* 0x05 */ u8 sub_color;
-    /* 0x06 */ u8 team;
-    /* 0x07 */ u8 xB;
-    /* 0x08 */ u8 flags;
-    /* 0x09 */ u8 xE;
-    /* 0x0A */ u8 cpu_level;
-    /* 0x0B */ u8 pad;
-    /* 0x0C */ u16 x12;
-    /* 0x0E */ u16 hp;
-    /* 0x10 */ f32 x18;
-    /* 0x14 */ f32 x1C;
-    /* 0x18 */ f32 x20;
-} gm_801BAB40_src;
-
-struct gm_event_char_list {
-    u8 c_kind[33];
-};
-
-/// Per-level match init data; shares its first two bytes' bitfield layout
-/// with #StartMeleeRules.
-struct DISC_STRUCT gm_evinit {
-    /* 0x00 */ u32 x0_0 : 3;
-    /* 0x00 */ u32 x0_3 : 3;
-    /* 0x00 */ u32 x0_6 : 1;
-    /* 0x00 */ u32 x0_7 : 1;
-    /* 0x01 */ u32 x1_0 : 1;
-    /* 0x01 */ u32 x1_1 : 1;
-    /* 0x01 */ u32 x1_2 : 1;
-    /* 0x01 */ u32 x1_3 : 1;
-    /* 0x01 */ u32 x1_4 : 1;
-    /* 0x01 */ u32 x1_5 : 3;
-    /* 0x02 */ u8 is_teams;
-    /* 0x03 */ s8 item_freq;
-    /* 0x04 */ s8 sd_penalty;
-    /* 0x05 */ u8 unk5;
-    /* 0x06 */ u16 stkind;
-    /* 0x08 */ u32 time_limit;
-    /* 0x0C */ u8 padC[4];
-    /* 0x10 */ u64 x10;
-    /* 0x18 */ s32 x18;
-    /* 0x1C */ f32 x1C;
-    /* 0x20 */ f32 game_speed;
-    /* 0x24 */ f32 unk24;
-};
-
-/// Per-round stage and opponent table, for levels with multiple rounds.
-struct DISC_STRUCT gm_evstage_table {
-    /* 0x00 */ u8 count;
-    /* 0x01 */ u8 pad1;
-    /* 0x02 */ u16 stage[7];
-    /* 0x10 */ DISC_PTR(struct gm_801BAB40_src) entries[GM_MAX_PLAYERS];
-};
-
-struct DISC_STRUCT gm_evbonus {
-    /* 0x00 */ s8 c_kind;
-    /* 0x01 */ u8 x1;
-    /* 0x02 */ u8 x2;
-    /* 0x03 */ u8 x3;
-    /* 0x04 */ u8 x4;
-    /* 0x05 */ u8 x5;
-    /* 0x06 */ u8 color;
-    /* 0x07 */ u8 pad7;
-    /* 0x08 */ f32 x8;
-    /* 0x0C */ f32 xC;
-    /* 0x10 */ f32 x10;
-    /* 0x14 */ u8 flags;
-    /* 0x15 */ u8 x15;
-    /* 0x16 */ u8 x16;
-    /* 0x17 */ u8 x17;
-};
-
-struct DISC_STRUCT gm_804D6900_x4_t {
-    s32 x0;
-    DISC_PTR(void) x4; ///< entry pointer or scalar, per level kind
-};
-
-struct DISC_STRUCT gm_804D6900_t {
-    /* 0x00 */ u8 kind;
-    /* 0x01 */ u8 flags; ///< top 3 bits: player count
-    /* 0x02 */ u8 pad2[2];
-    /* 0x04 */ DISC_PTR(struct gm_804D6900_x4_t) x4;
-    /* 0x08 */ DISC_PTR(struct gm_evinit) evinit;
-    /* 0x0C */ DISC_PTR(struct gm_evbonus) evbonus;
-    /* 0x10 */ DISC_PTR(struct gm_evstage_table) evstage_table;
-    /* 0x14 */ DISC_PTR(struct gm_801BAB40_src) player_init[5];
-};
-DISC_ASSERT_SIZE(struct gm_801BAB40_src, 0x1C);
-DISC_ASSERT_SIZE(struct gm_evinit, 0x28);
-DISC_ASSERT_SIZE(struct gm_evstage_table, 0x28);
-DISC_ASSERT_SIZE(struct gm_evbonus, 0x18);
-DISC_ASSERT_SIZE(struct gm_804D6900_t, 0x28);
-
 /* gm_804D6900[0] is the in-archive `gm_804D6900_t*[]` level table. */
 #define LV(tbl, i) DP(struct gm_804D6900_t, (tbl)[i].v)
 #define EV_X4(l) DP(struct gm_804D6900_x4_t, (l)->x4)
@@ -430,7 +331,7 @@ void onEnterVs(GameModeState* arg0)
     md->rules.x14 = 0;
     md->rules.x18 = 0;
     md->rules.x20 = EV_INIT(LV(levels, level))->x10;
-    md->rules.x28 = EV_INIT(LV(levels, level))->x18;
+    md->rules.it_kind = EV_INIT(LV(levels, level))->x18;
     md->rules.x30 = EV_INIT(LV(levels, level))->x1C;
     md->rules.game_speed = EV_INIT(LV(levels, level))->game_speed;
     md->rules.on_match_start = fn_801BBFE8;
@@ -1423,40 +1324,39 @@ void gm_801BC9E8(HSD_GObj* gobj)
     }
 }
 
+/// Restores the stock of a defeated player that is not Sheik.
+static inline bool isSeakDefeated(int slot)
+{
+    HSD_GObj* fighter_gobj;
+
+    if (Player_GetStocks(slot) <= 0 &&
+        (fighter_gobj = Player_GetEntity(slot)) != NULL)
+    {
+        if (ftLib_GetKind(fighter_gobj) == Ft_Kind_Seak) {
+            return true;
+        }
+        Player_SetStocks(slot, 1);
+        gm_8016F00C(slot);
+    }
+    return false;
+}
+
 void gm_801BCAF0(HSD_GObj* gobj)
 {
-    HSD_GObj* temp_r3;
     VsSceneController* temp_r3_2;
-    s32 var_r0;
     s32 var_r0_2;
     struct EventData* temp_r30;
-    s32 var_r30;
-    s32 var_r29;
+    s32 i;
+    s32 count;
     PAD_STACK(0x28);
 
-    var_r30 = 1;
-    var_r29 = 0;
-    do {
-        if ((Player_GetStocks(var_r30) <= 0) &&
-            (temp_r3 = Player_GetEntity(var_r30), ((temp_r3 == NULL) == 0)))
-        {
-            if (ftLib_GetKind(temp_r3) == Ft_Kind_Seak) {
-                var_r0 = 1;
-            } else {
-                Player_SetStocks(var_r30, 1);
-                gm_8016F00C(var_r30);
-                goto block_6;
-            }
-        } else {
-        block_6:
-            var_r0 = 0;
+    count = 0;
+    for (i = 1; i < 3; i += 1) {
+        if (isSeakDefeated(i)) {
+            count += 1;
         }
-        if (var_r0 != 0) {
-            var_r29 += 1;
-        }
-        var_r30 += 1;
-    } while (var_r30 < 3);
-    if (var_r29 == 2) {
+    }
+    if (count == 2) {
         gm_801BC4F4(gobj);
         return;
     }
@@ -2378,12 +2278,12 @@ u8 gm_801BEBF8(u8 arg0)
     return EV_PLAYER(entry, 0)->c_kind;
 }
 
-UNK_T gm_801BEC54(void)
+ItemKind* gm_801BEC54(void)
 {
     struct gm_804D6900_t* temp_r3;
     temp_r3 = LV(gm_804D6900[0], gmMainLib_804D3EE0->vs.unk_530.unk_535);
     if (temp_r3 == NULL) {
         return NULL;
     }
-    return EV_X4(temp_r3);
+    return (ItemKind*) EV_X4(temp_r3);
 }

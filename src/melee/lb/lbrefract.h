@@ -32,4 +32,11 @@
 /// @brief Decrement refraction effect user count.
 /* 022BD0 */ void lbRefSetUnuse(void);
 
+/* LbRf.dat "lbRefData", read in place. */
+struct DISC_STRUCT refract_data_t {
+    u8 x0;
+    DISC_PTR(DiscF32) x4;
+};
+DISC_ASSERT_SIZE(struct refract_data_t, 0x8);
+
 #endif

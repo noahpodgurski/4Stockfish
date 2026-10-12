@@ -5,6 +5,8 @@
 
 #include <sysdolphin/baselib/forward.h> // IWYU pragma: export
 
+#include <dat_macros.h>
+
 #include <dolphin/mtx.h>
 #include <sysdolphin/baselib/objalloc.h>
 
@@ -39,7 +41,7 @@ struct DISC_STRUCT HSD_IKHintDesc {
 DISC_ASSERT_SIZE(HSD_IKHintDesc, 0x8);
 
 struct HSD_Exp {
-    union {
+    union HSD_Exp_expr {
         f32 (*func)(void*);
         u8* bytecode;
     } expr;
@@ -63,7 +65,7 @@ DISC_ASSERT_SIZE(HSD_ByteCodeExpDesc, 0x8);
 struct HSD_RObj {
     HSD_RObj* next;
     u32 flags;
-    union {
+    union HSD_RObj_u {
         HSD_JObj* jobj;
         HSD_Exp exp;
         f32 limit;
@@ -75,7 +77,7 @@ struct HSD_RObj {
 struct DISC_STRUCT HSD_RObjDesc {
     DISC_PTR(HSD_RObjDesc) next;
     u32 flags; // 0x04
-    union DISC_STRUCT {
+    union DISC_STRUCT HSD_RObjDesc_u {
         u32 i;
         DISC_PTR(HSD_ExpDesc) exp;
         DISC_PTR(HSD_ByteCodeExpDesc) bcexp;

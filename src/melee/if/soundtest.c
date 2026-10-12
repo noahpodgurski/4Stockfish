@@ -20,18 +20,6 @@
 /* 2FFC6C */ static bool un_802FFC6C(enum soundtest_callback_arg0);
 /* 2FFCC8 */ static bool fn_802FFCC8(enum soundtest_callback_arg0);
 
-/// Symbol table loaded from SmSt.dat
-struct SoundTestLoadData {
-    /* 0x00 */ int x0;
-    /* 0x04 */ char** x4;
-    /* 0x08 */ char** x8;
-    /* 0x0C */ char** xC;
-    /* 0x10 */ int x10;
-    /* 0x14 */ int* x14;
-    /* 0x18 */ int* x18;
-    /* 0x1C */ char** x1C;
-};
-
 /// .sdata
 /* 804D5850 */ static int un_804D5850 = 127;
 /* 804D5854 */ static int un_804D5854 = 127;
@@ -85,11 +73,11 @@ void un_802FF7DC(void)
 {
     lbArchive_LoadSymbols(un_803F9FA4.x160, &un_804D6DA8, un_803F9FA4.x16C, 0);
     un_803F9FA4.entries[1].x18 = un_804D6DA8->x0;
-    un_803F9FA4.entries[1].xC = un_804D6DA8->x4;
-    un_803F9FA4.entries[6].xC = un_804D6DA8->x8;
-    un_803F9FA4.entries[7].xC = un_804D6DA8->xC;
+    un_803F9FA4.entries[1].xC = DP(char*, un_804D6DA8->x4);
+    un_803F9FA4.entries[6].xC = DP(char*, un_804D6DA8->x8);
+    un_803F9FA4.entries[7].xC = DP(char*, un_804D6DA8->xC);
     un_803F9FA4.entries[7].x18 = un_804D6DA8->x10;
-    un_803F9FA4.entries[8].xC = un_804D6DA8->x1C;
+    un_803F9FA4.entries[8].xC = DP(char*, un_804D6DA8->x1C);
 }
 
 bool un_802FF884(char* arg0)
@@ -153,10 +141,10 @@ bool un_802FF9DC(enum soundtest_callback_arg0 arg0)
     s32 total;
 
     for (i = un_804D6DB4 = 0; i < un_804D6DB0; i++) {
-        un_804D6DB4 += un_804D6DA8->x18[i];
+        un_804D6DB4 += DP(DiscS32, un_804D6DA8->x18)[i].v;
     }
     un_803F9FA4.entries[7].x14 = (f32) un_804D6DB4;
-    total = un_804D6DB4 + un_804D6DA8->x18[un_804D6DB0];
+    total = un_804D6DB4 + DP(DiscS32, un_804D6DA8->x18)[un_804D6DB0].v;
     un_803F9FA4.entries[7].x18 = (f32) total;
     return 0;
 }
@@ -165,7 +153,7 @@ bool un_802FFB58(enum soundtest_callback_arg0 arg0)
 {
     if (arg0 == 1) {
         lbAudioAx_80023694();
-        lbAudioAx_80023B24(un_804D6DA8->x14[un_804D6DB4]);
+        lbAudioAx_80023B24(DP(DiscS32, un_804D6DA8->x14)[un_804D6DB4].v);
     } else if (arg0 == 0) {
         lbAudioAx_80023694();
     }

@@ -22,17 +22,6 @@
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/random.h>
 
-struct DISC_STRUCT grPushOn_Entry {
-    s32 x0;
-    s16 x4;
-    s16 x6;
-};
-
-struct DISC_STRUCT grPushOn_Lookup {
-    s32 key;
-    s32 value;
-};
-
 struct grPushOn_LightConfig {
     GXColor color;
     Vec3 pos;
@@ -40,19 +29,6 @@ struct grPushOn_LightConfig {
     f32 ref_dist;
     s32 dist_func;
 };
-
-struct DISC_STRUCT grPushon_YakumonoParam {
-    DISC_PTR(DynamicsDesc) x0;
-    DISC_PTR(DynamicsDesc) x4;
-    DISC_PTR(DynamicsDesc) x8;
-    DISC_PTR(DynamicsDesc) xC;
-    DISC_PTR(DynamicsDesc) x10;
-    DISC_PTR(DynamicsDesc) x14;
-    bool x18;
-    struct grPushOn_Entry x1c[0x1E];
-    struct grPushOn_Lookup x10c[0x21];
-};
-DISC_ASSERT_SIZE(struct grPushon_YakumonoParam, 0x10C + 0x21 * 8);
 
 static struct grPushon_YakumonoParam* yakumono_param;
 
@@ -708,10 +684,10 @@ int grPushOn_80219230(int arg0)
     HSD_ASSERT(861, 0);
 }
 
-/* `result` is &desc of a DynamicsDesc* in ftColl_8007BAC0; ftCo_800C08A0
- * dereferences it, so the disc slot must be relocated, not stored as a
- * 32-bit half of a host pointer. */
-s32 fn_802192A4(void* arg0, HSD_GObj* gobj, DynamicsDesc** result)
+/* `result` is &desc of a lbColl_80008D30_arg1* in ftColl_8007BAC0;
+ * ftCo_800C08A0 dereferences it, so the disc slot must be relocated, not
+ * stored as a 32-bit half of a host pointer. */
+s32 fn_802192A4(void* arg0, HSD_GObj* gobj, lbColl_80008D30_arg1** result)
 {
     Vec3 sp14;
     f32 scale = Ground_801C0498();
@@ -724,14 +700,14 @@ s32 fn_802192A4(void* arg0, HSD_GObj* gobj, DynamicsDesc** result)
             (scale * (-50.0f + grPushOn_803E7CCC[i * 3 + 2]) < sp14.y) &&
             (scale * grPushOn_803E7CCC[i * 3 + 2] > sp14.y))
         {
-            *result = DP(DynamicsDesc, yakumono_param->x0);
+            *result = DP(lbColl_80008D30_arg1, yakumono_param->x0);
             return 1;
         }
     }
     return 0;
 }
 
-DynamicsDesc* grPushOn_80219458(enum_t arg0)
+lbColl_80008D30_arg1* grPushOn_80219458(enum_t arg0)
 {
     s32 joint;
     s32 kind;
@@ -741,21 +717,21 @@ DynamicsDesc* grPushOn_80219458(enum_t arg0)
         if (joint != -1) {
             if (joint == 1) {
                 mpLineGetKind(arg0);
-                return DP(DynamicsDesc, yakumono_param->x4);
+                return DP(lbColl_80008D30_arg1, yakumono_param->x4);
             }
             if (joint == 2) {
                 kind = mpLineGetKind(arg0);
                 if (kind == CollLine_Floor) {
-                    return DP(DynamicsDesc, yakumono_param->x8);
+                    return DP(lbColl_80008D30_arg1, yakumono_param->x8);
                 }
                 if (kind == CollLine_Ceiling) {
-                    return DP(DynamicsDesc, yakumono_param->xC);
+                    return DP(lbColl_80008D30_arg1, yakumono_param->xC);
                 }
                 if (kind == CollLine_RightWall) {
-                    return DP(DynamicsDesc, yakumono_param->x10);
+                    return DP(lbColl_80008D30_arg1, yakumono_param->x10);
                 }
                 if (kind == CollLine_LeftWall) {
-                    return DP(DynamicsDesc, yakumono_param->x14);
+                    return DP(lbColl_80008D30_arg1, yakumono_param->x14);
                 }
                 return NULL;
             }

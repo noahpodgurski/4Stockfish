@@ -5,6 +5,8 @@
 
 #include <sysdolphin/baselib/forward.h> // IWYU pragma: export
 
+#include <dat_macros.h>
+
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/fobj.h>
 #include <sysdolphin/baselib/objalloc.h>

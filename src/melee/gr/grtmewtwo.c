@@ -17,14 +17,14 @@
 /* Read in place out of GrTMw.dat: big-endian, and every slot is a 32-bit
  * disc pointer, not a host pointer. */
 typedef struct DISC_STRUCT grTMewtwo_UnkStruct {
-    DISC_PTR(DynamicsDesc) x0;
-    DISC_PTR(DynamicsDesc) x4;
-    DISC_PTR(DynamicsDesc) xC;
-    DISC_PTR(DynamicsDesc) x8;
-    DISC_PTR(DynamicsDesc) x10;
-    DISC_PTR(DynamicsDesc) x14;
-    DISC_PTR(DynamicsDesc) x1C;
-    DISC_PTR(DynamicsDesc) x18;
+    DISC_PTR(lbColl_80008D30_arg1) x0;
+    DISC_PTR(lbColl_80008D30_arg1) x4;
+    DISC_PTR(lbColl_80008D30_arg1) xC;
+    DISC_PTR(lbColl_80008D30_arg1) x8;
+    DISC_PTR(lbColl_80008D30_arg1) x10;
+    DISC_PTR(lbColl_80008D30_arg1) x14;
+    DISC_PTR(lbColl_80008D30_arg1) x1C;
+    DISC_PTR(lbColl_80008D30_arg1) x18;
 } grTMewtwo_UnkStruct;
 
 /* 2221D8 */ static void grTMewtwo_802221D8(s32 arg0);
@@ -45,7 +45,7 @@ typedef struct DISC_STRUCT grTMewtwo_UnkStruct {
 /* 222488 */ static bool grTMewtwo_80222488(Ground_GObj* gobj);
 /* 222490 */ static void stageGObj1_GObjProc(Ground_GObj* gobj);
 /* 2224B0 */ static void grTMewtwo_802224B0(Ground_GObj* gobj);
-/* 2224B4 */ static DynamicsDesc* grTMewtwo_802224B4(enum_t arg0);
+/* 2224B4 */ static lbColl_80008D30_arg1* grTMewtwo_802224B4(enum_t arg0);
 /* 2225C8 */ static bool grTMewtwo_802225C8(Vec3* arg0, int arg1,
                                             HSD_JObj* arg2);
 /* 4D6B08 */ static grTMewtwo_UnkStruct* yakumono_param;
@@ -180,39 +180,39 @@ static void stageGObj1_GObjProc(Ground_GObj* gobj)
 
 void grTMewtwo_802224B0(Ground_GObj* gobj) {}
 
-static inline DynamicsDesc* inlineA0(int arg0)
+static inline lbColl_80008D30_arg1* inlineA0(int arg0)
 {
     int temp = mpLineGetKind(arg0);
     if (temp == CollLine_Floor) {
-        return DP(DynamicsDesc, yakumono_param->x0);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x0);
     } else if (temp == CollLine_Ceiling) {
-        return DP(DynamicsDesc, yakumono_param->x4);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x4);
     } else if (temp == CollLine_RightWall) {
-        return DP(DynamicsDesc, yakumono_param->x8);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x8);
     } else if (temp == CollLine_LeftWall) {
-        return DP(DynamicsDesc, yakumono_param->xC);
+        return DP(lbColl_80008D30_arg1, yakumono_param->xC);
     } else {
         return NULL;
     }
 }
 
-static inline DynamicsDesc* inlineA1(int arg0)
+static inline lbColl_80008D30_arg1* inlineA1(int arg0)
 {
     int temp = mpLineGetKind(arg0);
     if (temp == CollLine_Floor) {
-        return DP(DynamicsDesc, yakumono_param->x10);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x10);
     } else if (temp == CollLine_Ceiling) {
-        return DP(DynamicsDesc, yakumono_param->x14);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x14);
     } else if (temp == CollLine_RightWall) {
-        return DP(DynamicsDesc, yakumono_param->x18);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x18);
     } else if (temp == CollLine_LeftWall) {
-        return DP(DynamicsDesc, yakumono_param->x1C);
+        return DP(lbColl_80008D30_arg1, yakumono_param->x1C);
     } else {
         return NULL;
     }
 }
 
-DynamicsDesc* grTMewtwo_802224B4(enum_t arg0)
+lbColl_80008D30_arg1* grTMewtwo_802224B4(enum_t arg0)
 {
     if (arg0 != -1) {
         int temp = mpJointFromLine(arg0);

@@ -14,6 +14,7 @@
 #include <melee/lb/lbdvd.h>
 #include <melee/lb/lblanguage.h>
 #include <melee/lb/types.h>
+#include <sysdolphin/baselib/cobj.h> // IWYU pragma: keep
 #include <sysdolphin/baselib/controller.h>
 #include <sysdolphin/baselib/fog.h>
 #include <sysdolphin/baselib/gobj.h>
@@ -75,30 +76,6 @@ static struct StageListInfo {
 };
 ASSERT_SIZE(mnStageSel_803F06D0[0], 0x1C);
 
-/* Read in place from MnSlMap.dat */
-typedef struct DISC_STRUCT MnSelectStageModels {
-    /* +00 */ StaticModelDesc icon_large;
-    /* +10 */ StaticModelDesc icon_random;
-    /* +20 */ StaticModelDesc icon_special;
-    /* +30 */ StaticModelDesc stage_name;
-    /* +40 */ StaticModelDesc icon_stacked;
-    /* +50 */ StaticModelDesc menu_border;
-    /* +60 */ StaticModelDesc stage_preview;
-    /* +70 */ StaticModelDesc icon_hover;
-    /* +80 */ StaticModelDesc cursor;
-    /* +90 */ StaticModelDesc layout;
-    /* +A0 */ StaticModelDesc background;
-    /* +B0 */ StaticModelDesc now_loading;
-} MnSelectStageModels;
-DISC_ASSERT_SIZE(MnSelectStageModels, 0xC0);
-
-typedef struct DISC_STRUCT MnSelectStageDataTable {
-    /* 0x00 */ DISC_PTR(HSD_CObjDesc) cam;
-    /* 0x04 */ DISC_PTR(HSD_LightDesc) light0;
-    /* 0x08 */ DISC_PTR(HSD_LightDesc) light1;
-    /* 0x0C */ DISC_PTR(HSD_FogDesc) fog;
-    /* 0x10 */ MnSelectStageModels models;
-} MnSelectStageDataTable;
 
 static s8 mnStageSel_804D50A0 = -1;
 
@@ -493,13 +470,15 @@ void mnStageSel_80259ED8(int id)
     }
 }
 
+struct StagePreviewUserData {
+    u32 x0;
+    u32 x4;
+};
+
 void fn_8025A090(HSD_GObj* gobj)
 {
     u32 var_r3;
-    struct {
-        u32 x0;
-        u32 x4;
-    }* temp_r30;
+    struct StagePreviewUserData* temp_r30;
     HSD_JObj* jobj;
 
     jobj = GET_JOBJ(gobj);
@@ -592,9 +571,7 @@ void fn_8025A310(HSD_GObj* gobj)
 
 void fn_8025A560(HSD_GObj* gobj)
 {
-    struct StageSelUserData {
-        int x0;
-    }* temp_r30;
+    s32* temp_r30;
     Vec3 sp10;
     HSD_JObj* jobj = GET_JOBJ(gobj);
     temp_r30 = HSD_GObjGetUserData(gobj);
@@ -617,8 +594,8 @@ void fn_8025A560(HSD_GObj* gobj)
         HSD_JObjAnimAll(jobj);
         return;
     }
-    if (++temp_r30->x0 >= 10) {
-        temp_r30->x0 = 0;
+    if (++*temp_r30 >= 10) {
+        *temp_r30 = 0;
         HSD_JObjReqAnimAll(jobj, 0.0F);
         HSD_JObjAnimAll(jobj);
     }
@@ -725,7 +702,7 @@ void mnStageSel_Scene_OnEnter(void* arg0)
     Vec3 spCC;
 
     int i;
-    MnSelectStageDataTable* sss_data_table;
+    struct MnSelectStageDataTable* sss_data_table;
 
     PAD_STACK(0xDC - 0x50);
 
@@ -1031,9 +1008,7 @@ void mnStageSel_Scene_OnEnter(void* arg0)
             {
                 HSD_GObj* g;
                 HSD_JObj* jobj;
-                struct foo {
-                    int x0, x4;
-                }* temp_r3_14;
+                struct StagePreviewUserData* temp_r3_14;
                 g = gobj;
                 jobj = GET_JOBJ(g);
                 temp_r3_14 = HSD_MemAlloc(sizeof(*temp_r3_14));

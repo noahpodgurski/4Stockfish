@@ -19,11 +19,6 @@
 #include <melee/mp/mplib.h>
 #include <sysdolphin/baselib/jobj.h>
 
-typedef struct DISC_STRUCT ArwingLaserAttr {
-    /* +0 */ DISC_PTR(ItemAttr) x0;
-    /* +4 */ f32 x4;
-    /* +8 */ f32 x8;
-} ArwingLaserAttr;
 DISC_ASSERT_SIZE(ArwingLaserAttr, 0xC);
 
 static void itArwinglaser_UnkMotion2_Anim(Item_GObj*);
@@ -169,7 +164,7 @@ Item_GObj* it_802E72E0(Item_GObj* parent, HSD_JObj* bone, s32 type, f32 scale,
     spawn.vel.y = 0.0f;
     spawn.vel.x = 0.0f;
     spawn.x0_parent_gobj = NULL;
-    spawn.x44_flag.b0 = false;
+    spawn.x44_flag.x0.b0 = false;
     spawn.x40 = 0;
     new_gobj = Item_80268B18(&spawn);
     if (new_gobj != NULL) {
@@ -258,7 +253,7 @@ Item_GObj* it_802E7654(Item_GObj* owner, HSD_JObj* bone, Vec3* target,
     spawn.vel.y = 0.0f;
     spawn.vel.x = 0.0f;
     spawn.x0_parent_gobj = NULL;
-    spawn.x44_flag.b0 = false;
+    spawn.x44_flag.x0.b0 = false;
     spawn.x40 = 0;
     sp = &spawn;
     new_gobj = Item_80268B18(sp);

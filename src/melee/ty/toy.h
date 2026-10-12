@@ -22,7 +22,7 @@
 /* 30562C */ void Toy_SetUnlockState(enum_t, bool);
 /* 305918 */ void Toy_80305918(s8, s32, s32);
 /* 305B88 */ s32 Toy_80305B88(void);
-/* 305C44 */ s32 Toy_80305C44(void);
+/* 305C44 */ u32 Toy_80305C44(void);
 /* 305D00 */ float Toy_80305D00(void);
 /* 305DB0 */ float Toy_80305DB0(void);
 /* 305EB4 */ float Toy_80305EB4(void);
@@ -70,7 +70,7 @@
 /* 4A26B8 */ extern Toy26B8 Toy_804A26B8;
 /// GC split artifacts: these ranges live inside #Toy_804A26B8.
 #define Toy_804A284C ((u16*) &Toy_804A26B8.x194)
-#define Toy_804A2AA8 (Toy_804A26B8.anim)
+#define Toy_804A2AA8 (Toy_804A26B8.x3F0_u.anim)
 /* 4D6EAC */ extern TyDspEntry* Toy_sbss_804D6EAC;
 /* 4D6EB0 */ extern TyDspEntry* Toy_sbss_804D6EB0;
 /* 4D6EC8 */ extern HSD_Archive* Toy_sbss_804D6EC8;

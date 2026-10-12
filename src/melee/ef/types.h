@@ -4,6 +4,8 @@
 #include <melee/ef/forward.h> // IWYU pragma: export
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
+
 #include <dolphin/mtx.h>
 #include <dolphin/types.h>
 #include <melee/sc/types.h>
@@ -80,18 +82,17 @@ struct DISC_STRUCT EF_EffectDesc {
 }; /* size = 0x14 */
 DISC_ASSERT_SIZE(struct EF_EffectDesc, 0x14);
 
-/* Header of an "eff*DataTable" symbol: two bank pointers, then the
- * EF_EffectDesc array. EF_DAT_Entry (native) is reused for it in efasync.c
- * only for the pointer slots; this is the disc view. */
+/* Header for an "eff*DataTable" symbol. */
 struct DISC_STRUCT EF_DataTable {
-    /* +0 */ DISC_PTR(void) ptcl_bank;
-    /* +4 */ DISC_PTR(void) tex_bank;
-    /* +8 */ EF_EffectDesc descs[1];
+    /* +0 */ DISC_PTR(void) ptcl_bank DAT_EXTENT;
+    /* +4 */ DISC_PTR(void) tex_bank DAT_EXTENT;
+    /* +8 */ EF_EffectDesc descs[1] DAT_EXTENT;
 };
+DISC_ASSERT_SIZE(struct EF_DataTable, 0x1C);
 
 struct EF_QueuedEffect {
     /* +0 */ EF_QueuedEffect* next;
-    /* +4 */ u8 spawn_kind; // EF_SpawnKind
+    /* +4 */ u8 spawn_kind; ///< ::EF_SpawnKind
     /* +8 */ s32 gfx_id;
     /* +C */ HSD_JObj* jobj;
     /* +10 */ Vec3 params; // parameters depending on spawn_kind
@@ -102,9 +103,10 @@ struct EF_QueuedEffect {
 typedef struct EF_DAT_Entry {
     /* 0x0 */ char* ef_DAT_file;       // ex. "EfCoData.dat"
     /* 0x4 */ char* effDataTable_name; // ex. "effCommonDataTable"
-    /* 0x8 */ void* data;              // loaded data pointer
+    /* 0x8 */ EF_EffectDesc* data;     // loaded data table's effects
 } EF_DAT_Entry;                        /* size = 0xC */
 ASSERT_SIZE(EF_DAT_Entry, 0xC);
+
 
 struct EF_QueuedEffect_ObjAlloc {
     char pad_0[0x24];

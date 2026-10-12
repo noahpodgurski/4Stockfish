@@ -6,6 +6,24 @@
 #include <melee/ft/inlines.h>
 #include <melee/it/kinds/itsscope.h>
 
+typedef struct {
+    u8 pad_1A4C[0x1A4C];
+    f32 x1A4C; // 0x1A4C
+    u8 pad_1A58[0x1A58 - 0x1A50];
+    void* x1A58; // 0x1A58
+    u8 pad_2340[0x2340 - 0x1A5C];
+    f32 x2340; // 0x2340
+    s32 x2344; // 0x2344
+    s32 x2348; // 0x2348
+    u8 x234C;  // 0x234C
+} FighterOverlay;
+
+typedef struct {
+    u8 pad[0x2340];
+    f32 timer; // 0x2340
+    s32 flag;  // 0x2344
+} ItemScopeVars;
+
 FtMotionId fn_800D769C(Fighter* ft, FtMotionId msid)
 {
     if (ft->motion_id >= ftCo_MS_ItemScopeStartEmpty) {
@@ -26,9 +44,13 @@ void ft_800D76B8(Fighter_GObj* gobj)
                                   Ft_MF_None, 0.0F, 1.0F, 0.0F, NULL);
     }
 
-    ftAnim_8006EBA4(gobj);
-    fp->mv.co.itemscope.timer = 0.0F;
-    fp->mv.co.itemscope.flag = 0;
+    {
+        ItemScopeVars* vars = (ItemScopeVars*) fp;
+
+        ftAnim_8006EBA4(gobj);
+        vars->timer = 0.0F;
+        vars->flag = 0;
+    }
 
     ftCommon_8007E79C(fp->gobj, 1);
     fp->take_dmg_cb = (HSD_GObjEvent) fn_800D7938;
@@ -46,10 +68,14 @@ void ft_800D7770(Fighter_GObj* gobj)
                                   Ft_MF_None, 0.0F, 1.0F, 0.0F, NULL);
     }
 
-    ftAnim_8006EBA4(gobj);
-    ftCommon_ClampAirDrift(fp);
-    fp->mv.co.itemscope.timer = 0.0F;
-    fp->mv.co.itemscope.flag = 0;
+    {
+        ItemScopeVars* vars = (ItemScopeVars*) fp;
+
+        ftAnim_8006EBA4(gobj);
+        ftCommon_ClampAirDrift(fp);
+        vars->timer = 0.0F;
+        vars->flag = 0;
+    }
 
     ftCommon_8007E79C(fp->gobj, 1);
     fp->take_dmg_cb = (HSD_GObjEvent) fn_800D7938;
@@ -116,6 +142,13 @@ void fn_800D79B4(HSD_GObj* gobj, void (*cb_ground)(HSD_GObj*),
     Fighter* fp = GET_FIGHTER(gobj);
     int item_val;
     s32 stack_var;
+
+    // Define an overlay struct to force direct offset access (prevents address
+    // caching in r26/r27)
+    ItemScopeVars* fp_ovl = (ItemScopeVars*) fp;
+
+    // Use this specific cast to generate the correct 'lfs' instruction for the
+    // global int
 
     if (fp->item_gobj == NULL) {
         return;

@@ -29,14 +29,7 @@ static u8 mnSoundTest_804D6C44;
 static s32 mnSoundTest_804D6C48;
 static s32 mnSoundTest_804D6C4C;
 
-typedef struct {
-    void* joint;
-    void* animjoint;
-    void* matanim_joint;
-    void* shapeanim_joint;
-} SoundTestModelDesc;
-
-static SoundTestModelDesc mnSoundTest_804A08C8;
+static StaticModelDesc mnSoundTest_804A08C8;
 
 AnimLoopSettings vec_0 = {
     0,
@@ -120,10 +113,6 @@ s32 data_4[] = { 25, 8,  1,  6,  16, 17, 4,  2,  13, 0,  11, 5,  12, 14, 18,
 static char mnSoundTest_803EF4F4[] = "Can't get user_data.\n";
 static char mnSoundTest_803EF50C[] = "mnsoundtest.c";
 static char mnSoundTest_803EF51C[] = "user_data";
-static char mnSoundTest_803EF528[] = "MenMainConTs_Top_joint";
-static char mnSoundTest_803EF540[] = "MenMainConTs_Top_animjoint";
-static char mnSoundTest_803EF55C[] = "MenMainConTs_Top_matanim_joint";
-static char mnSoundTest_803EF57C[] = "MenMainConTs_Top_shapeanim_joint";
 
 void mnSoundTest_8024A790(mnSoundTest_GObj* arg0)
 {
@@ -791,22 +780,26 @@ void mnSoundTest_8024BCA0(int arg0)
     mnSoundTest_GObj* gobj;
     HSD_GObjProc* proc;
     HSD_JObj* category_jobj;
-    SoundTestModelDesc* model_desc;
+    StaticModelDesc* model_desc;
     soundtest_user_data* user_data;
     soundtest_user_data* text_user_data;
     u32 pad2;
-    HSD_Text* text;
     u8 selection;
-
+    HSD_Text* text;
+    void* joint;
+    void* animjoint;
+    void* matanim_joint;
+    void* shapeanim_joint;
     PAD_STACK(0x14);
     model_desc = &mnSoundTest_804A08C8;
     gobj = GObj_Create(6U, 7U, 0x80U);
     mnSoundTest_804D6C40 = gobj;
-    jobj = HSD_JObjLoadJoint(model_desc->joint);
+    jobj = HSD_JObjLoadJoint(DP(HSD_Joint, model_desc->joint));
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4U, 0x80U);
-    HSD_JObjAddAnimAll(jobj, model_desc->animjoint, model_desc->matanim_joint,
-                       model_desc->shapeanim_joint);
+    HSD_JObjAddAnimAll(jobj, DP(HSD_AnimJoint, model_desc->animjoint),
+                       DP(HSD_MatAnimJoint, model_desc->matanim_joint),
+                       DP(HSD_ShapeAnimJoint, model_desc->shapeanim_joint));
     HSD_JObjReqAnimAll(jobj, 0.0f);
     HSD_JObjAnimAll(jobj);
     proc = HSD_GObj_SetupProc(gobj, (void (*)(mnSoundTest_GObj*)) fn_8024BAF0,
@@ -853,6 +846,10 @@ HSD_GObjProc* mnSoundTest_8024BEE0(s32 arg0)
 {
     HSD_GObjProc* proc;
     HSD_Archive* archive;
+    void* joint;
+    void* animjoint;
+    void* matanim_joint;
+    void* shapeanim_joint;
     s32 temp_ret;
 
     mn_804D6BC8.cooldown = 5;
@@ -864,11 +861,16 @@ HSD_GObjProc* mnSoundTest_8024BEE0(s32 arg0)
     mnSoundTest_804D6C4C = temp_ret;
     archive = mn_804D6BB8;
     mnSoundTest_804D6C44 = 1;
-    lbArchive_LoadSections(
-        archive, (&mnSoundTest_804A08C8.joint), mnSoundTest_803EF528,
-        &mnSoundTest_804A08C8.animjoint, mnSoundTest_803EF540,
-        &mnSoundTest_804A08C8.matanim_joint, mnSoundTest_803EF55C,
-        &mnSoundTest_804A08C8.shapeanim_joint, mnSoundTest_803EF57C, 0);
+    lbArchive_LoadSections(archive, &joint, "MenMainConTs_Top_joint",
+                           &animjoint, "MenMainConTs_Top_animjoint",
+                           &matanim_joint,
+                           "MenMainConTs_Top_matanim_joint",
+                           &shapeanim_joint,
+                           "MenMainConTs_Top_shapeanim_joint", 0);
+    DP_SET(mnSoundTest_804A08C8.joint, joint);
+    DP_SET(mnSoundTest_804A08C8.animjoint, animjoint);
+    DP_SET(mnSoundTest_804A08C8.matanim_joint, matanim_joint);
+    DP_SET(mnSoundTest_804A08C8.shapeanim_joint, shapeanim_joint);
     mnSoundTest_8024BCA0(arg0);
     proc = HSD_GObj_SetupProc(GObj_Create(0U, 1U, 0x80U), fn_8024B2B0, 0U);
     proc->flags_3 = (u16) HSD_GObj_804D783C;

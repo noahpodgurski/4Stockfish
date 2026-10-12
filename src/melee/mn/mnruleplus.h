@@ -19,18 +19,15 @@ enum RulePlusOption {
 typedef struct _MenuRulesPlusData {
     MenuKind8 menu_kind;
     u8 hovered_selection;
-    union {
-        struct {
+    union _MenuRulesPlusData_rule_values {
+        struct _MenuRulesPlusData_rule_values_x0 {
             u8 time_limit;
             u8 friendly_fire;
             u8 pause;
             u8 score;
             u8 sd_penalty;
-            /// RULEPLUS_STAGE_SELECT has no value, but the cursor reaches it
-            /// and #values is indexed by the selection, so the slot exists.
-            u8 stage;
-        };
-        u8 values[RULEPLUS_COUNT];
+        } x0;
+        u8 values[5];
     } rule_values;
     MenuState8 state;
     HSD_JObj* xC[10]; ///< layout tree?
@@ -40,7 +37,8 @@ typedef struct _MenuRulesPlusData {
 
 typedef struct mn_803ED1D0_t {
     u16 x0[7]; ///< option jobj mapping?
-    u16 xE[6]; ///< value jobj mapping?
+    u16 pad_E;
+    u16 x10[6]; ///< value jobj mapping?
     float text_start_frames[12];
     AnimLoopSettings x4C;
     AnimLoopSettings x58;

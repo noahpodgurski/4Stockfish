@@ -164,7 +164,7 @@ void ft_800C80A4(Fighter* fp)
     FighterPartsTable* parts = DP(FighterPartsTable, ftPartsTable[fp->kind].v);
     for (i = idx = 0; i < parts->parts_num; idx++, i++) {
         FighterBone* bone = &fp->parts[idx];
-        if (bone->flags_b1) {
+        if (bone->x8.x0.flags_b1) {
             HSD_JObj* jobj = bone->joint;
             HSD_DObj* dobj = HSD_JObjGetDObj(jobj);
             HSD_JObjSetFlags(jobj, JOBJ_LIGHTING | JOBJ_TEXGEN |

@@ -1,4 +1,7 @@
 #include "lbsnap.h"
+#ifdef TARGET_PC
+#include "pc/disc.h"
+#endif
 
 #include <placeholder.h>
 #include <stddef.h>
@@ -54,7 +57,11 @@ DISC_ASSERT_SIZE(LbMcSnapMemSnapIconData, 4);
 struct Unk80433380 {
     /* 0x00 */ struct Unk80433380_0* snap;
     /* 0x04 */ char filename[64];
+#ifdef TARGET_PC
+    /* 0x44 */ DiscU32* icon_data;
+#else
     /* 0x44 */ LbMcSnapMemSnapIconData* icon_data;
+#endif
     /* 0x48 */ struct Unk80433380_48* slot;
     /* 0x4C */ int card_state[2];
     /* 0x54 */ int state_changed[3];
@@ -241,9 +248,13 @@ static inline u16 RGB565_TO_RGB5A3(u16 pixel)
     return result | RGB5A3_MASK_A;
 }
 
-static inline u8* lbSnap_GetMemSnapIconData(void)
+static inline u8* lbSnap_GetMemSnapIconData(int index)
 {
-    return DP(u8, _p(icon_data)[0].ptr);
+#ifdef TARGET_PC
+    return DP(u8, _p(icon_data)[index].v);
+#else
+    return DP(u8, _p(icon_data)[index].ptr);
+#endif
 }
 
 #ifdef MUST_MATCH
@@ -275,7 +286,7 @@ void lbSnap_8001DA5C(const u8* src)
 
     PAD_STACK(24);
 
-    banner = lbSnap_GetMemSnapIconData();
+    banner = lbSnap_GetMemSnapIconData(0);
     for (row = 0, src_row_accum = 0; row < 32; row++, src_row_accum += 204) {
         src_row_base = src_row_accum / 32;
         dst_row = banner + ((row % 4) * 8);
@@ -420,8 +431,8 @@ int lbSnap_8001DF6C(int chan)
         desc->entries[0].file_size = lbSnap_GetSaveDataOffset(_p(snap));
         desc->entries[0].data = _p(snap);
         ret = lb_8001BB48(chan, text, desc->entries, desc, _p(filename),
-                          DP(u8, _p(icon_data)[0].ptr),
-                          DP(u8, _p(icon_data)[1].ptr), 0);
+        lbSnap_GetMemSnapIconData(0),
+        lbSnap_GetMemSnapIconData(1), 0);
     }
     return ret;
 }
@@ -441,8 +452,8 @@ int lbSnap_8001E058(int chan, int index)
         lbSnap_FormatTime(chan, index, text);
         lbSnap_803BACC8.entries[0].data = _p(snap);
         ret = lb_8001BF04(chan, text, lbSnap_803BACC8.entries, _p(filename),
-                          DP(u8, _p(icon_data)[0].ptr),
-                          DP(u8, _p(icon_data)[1].ptr), 0);
+        lbSnap_GetMemSnapIconData(0),
+        lbSnap_GetMemSnapIconData(1), 0);
     }
     return ret;
 }
@@ -463,8 +474,7 @@ void lbSnap_8001E218(void* snap, struct Unk80433380_48* slot)
     _p(slot) = slot;
     _p(slot)->card_result = 8;
     _p(slot)[1].card_result = 8;
-    lbArchive_80016DBC("LbMcSnap.", (void**) &_p(icon_data), "MemSnapIconData",
-                       NULL);
+    lbArchive_80016DBC("LbMcSnap.", &_p(icon_data), "MemSnapIconData", 0);
 }
 
 void lbSnap_8001E27C(void)

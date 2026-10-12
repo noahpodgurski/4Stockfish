@@ -9,6 +9,7 @@
 #include <melee/it/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
 #include <placeholder.h>
 
 #include <dolphin/mtx.h>
@@ -16,18 +17,29 @@
 #include <melee/gm/types.h>
 #include <melee/lb/types.h>
 
-typedef struct {
-    bool x0;
-    bool x4;
+/// The record the attributes of monsters and stage items point to first,
+/// stored just before them.
+typedef struct DISC_STRUCT itSpecialAttrsHead {
+    /* 0x00 */ s32 x0; ///< Damage the item takes before it reacts.
+    /* 0x04 */ f32 x4; ///< Walking speed.
+    /* 0x08 */ f32 x8;
+    /* 0x0C */ f32 xC;
+    /* 0x10 */ s32 x10;
+} itSpecialAttrsHead;
+DISC_ASSERT_SIZE(itSpecialAttrsHead, 0x14);
+
+typedef struct itCapsule_ItemVars {
+    /* ip+DD4 */ bool x0;
+    /* ip+DD8 */ bool x4;
 } itCapsule_ItemVars;
 
-typedef struct DISC_STRUCT {
+typedef struct DISC_STRUCT ItCapsuleAttr {
     s32 x0;  /* it_8026F3D4 drop count (1) */
     s32 x4;  /* HSD_Randi explode bound (8) */
 } ItCapsuleAttr;
 DISC_ASSERT_SIZE(ItCapsuleAttr, 0x8);
 
-typedef struct {
+typedef struct itStar_ItemVars {
     /* ip+DD4 */ float dir;
     /* ip+DD8 */ float x4;
     /* ip+DDC */ float x8;
@@ -36,7 +48,34 @@ typedef struct {
     /* ip+DE8 */ float yvel;
 } itStar_ItemVars;
 
-struct itSword_ItemVars {
+typedef struct DISC_STRUCT itSword_UnkBytes {
+    /*   +0 */ f32 x0;
+    /*   +4 */ f32 x4;
+    /*   +8 */ u8 x8;
+    /*   +9 */ u8 x9;
+    /*   +A */ u8 xA;
+    /*   +B */ u8 xB;
+    /*   +C */ u8 xC;
+    /*   +D */ u8 xD;
+    /*   +E */ u8 xE;
+    /*   +F */ u8 xF;
+    /*  +10 */ u8 x10;
+} itSword_UnkBytes;
+DISC_ASSERT_SIZE(itSword_UnkBytes, 0x14);
+
+typedef struct DISC_STRUCT itSwordAttributes {
+    /*  +0 */ int x0;
+    /*  +4 */ int x4;
+    /*  +8 */ int x8;
+    /*  +C */ float xC;
+    /* +10 */ float x10;
+    /* +14 */ float x14;
+    /* +18 */ int x18;
+    /* +1C */ itSword_UnkBytes x1C;
+} itSwordAttributes;
+DISC_ASSERT_SIZE(itSwordAttributes, 0x30);
+
+typedef struct itSword_ItemVars {
     /* ip+DD4 */ int x0;
     /* ip+DD8 */ int x4;
     /* ip+DDC */ int x8;
@@ -60,7 +99,7 @@ struct itSword_ItemVars {
     /* ip+E24 */ float x50;
     /* ip+E28 */ int x54;
     /* ip+E2C */ float x58;
-};
+} itSword_ItemVars;
 
 typedef struct DISC_STRUCT itBatAttributes {
     int x0;
@@ -145,10 +184,9 @@ typedef struct DISC_STRUCT itWstarAttributes {
     /* +1C */ f32 x1C;
     /* +20 */ f32 x20;
     /* +24 */ s32 x24_count;
-    /* +28 */ itWstarAttrEntry x28_entries[1];
+    /* +28 */ itWstarAttrEntry x28_entries[] DAT_COUNT(x24_count);
 } itWstarAttributes;
-DISC_ASSERT_SIZE(itWstarAttributes, 0x30);
-
+DISC_ASSERT_SIZE(itWstarAttributes, 0x28);
 typedef struct itKyasarin_ItemVars {
     /* +0  ip+DD4 */ char pad_0[0x18];
     /* +18 ip+DEC */ s32 x18;
@@ -261,8 +299,8 @@ typedef struct itDosei_ItemVars {
 
 typedef struct itHeart_ItemVars {
     s32 xDD4_heal;
-    union {
-        struct {
+    union itHeart_ItemVars_xDD8 {
+        struct itHeart_ItemVars_xDD8_x0 {
             s8 b0 : 1;
             u8 b1 : 1;
             u8 b2 : 1;
@@ -271,7 +309,7 @@ typedef struct itHeart_ItemVars {
             u8 b5 : 1;
             u8 b6 : 1;
             u8 b7 : 1;
-        };
+        } x0;
         u32 flags;
     } xDD8;
     s32 xDDC;
@@ -282,8 +320,8 @@ typedef struct itHeart_ItemVars {
 
 typedef struct DISC_STRUCT HeartContainerAttr {
     s32 x0_heal; // [100]
-    union DISC_STRUCT {
-        struct DISC_STRUCT {
+    union DISC_STRUCT HeartContainerAttr_x4 {
+        struct DISC_STRUCT HeartContainerAttr_x4_bits {
             u8 b0 : 1;
             u8 b1 : 1;
             u8 b2 : 1;
@@ -592,13 +630,18 @@ typedef struct itFoods_ItemVars {
     /* +4 ip+DD8 */ u32 heal_amount;
 } itFoods_ItemVars;
 
+typedef struct DISC_STRUCT itFoodEntry {
+    /* +0 */ DISC_PTR(HSD_Joint) joint;
+    /* +4 */ s32 heal_amount;
+    /* +8 */ DiscVec2 offset;
+} itFoodEntry;
+DISC_ASSERT_SIZE(itFoodEntry, 0x10);
+
 typedef struct DISC_STRUCT itFoodsAttributes {
-    s32 x0;
-    DISC_PTR(HSD_Joint) x4;
-    s32 x8;
-    s32 xC;
+    /* +0 */ s32 count;
+    /* +4 */ itFoodEntry entries[] DAT_COUNT(count);
 } itFoodsAttributes;
-DISC_ASSERT_SIZE(itFoodsAttributes, 0x10);
+DISC_ASSERT_SIZE(itFoodsAttributes, 0x4);
 
 typedef struct itWhispyApple_ItemVars {
     s32 xDD4_heal;
@@ -606,7 +649,7 @@ typedef struct itWhispyApple_ItemVars {
 } itWhispyApple_ItemVars;
 
 typedef struct DISC_STRUCT itWhispyAppleAttributes {
-    u8 x0[0x4];
+    DISC_PTR(itSpecialAttrsHead) x0;
     s32 x4;
     s32 x8;
     u8 xC[0x8];
@@ -625,15 +668,20 @@ typedef struct itFreeze_ItemVars {
     /* +20 */ UNK_T x20;
 } itFreeze_ItemVars;
 
-/// @remarks Might be shared?
+typedef struct DISC_STRUCT itFreezeAttributes {
+    /*  +0 */ float x0_float;
+    /*  +4 */ float x4_float;
+    /*  +8 */ float x8;
+    /*  +C */ float xC;
+    /* +10 */ float x10;
+} itFreezeAttributes;
+DISC_ASSERT_SIZE(itFreezeAttributes, 0x14);
+
+/// Attributes for #It_Kind_Unk1.
 typedef struct DISC_STRUCT itUnkAttributes {
-    float x0_float;
-    float x4_float;
-    float x8;
-    float xC;
-    float x10;
+    /* +0 */ float x0_float;
 } itUnkAttributes;
-DISC_ASSERT_SIZE(itUnkAttributes, 0x14);
+DISC_ASSERT_SIZE(itUnkAttributes, 0x4);
 
 typedef struct {
     HSD_JObj* x0;
@@ -647,15 +695,7 @@ typedef struct DISC_STRUCT {
 DISC_ASSERT_SIZE(itMBallAttributes, 0x8);
 
 typedef struct DISC_STRUCT {
-    s32 x, y, z;
-} DiscS32Vec3;
-DISC_ASSERT_SIZE(DiscS32Vec3, 0xC);
-
-typedef struct DISC_STRUCT {
-    union DISC_STRUCT {
-        DISC_PTR(DiscVec3) x0_f32;
-        DISC_PTR(DiscS32Vec3) x0_s32;
-    } x0;
+    /* 0x00 */ DISC_PTR(itSpecialAttrsHead) x0;
     /* 0x04 */ s32 x4;
     /* 0x08 */ s32 x8;
     /* 0x0C */ s32 xC;
@@ -745,7 +785,7 @@ typedef struct itTincle_ItemVars {
 } itTincle_ItemVars;
 
 typedef struct DISC_STRUCT itTincleAttributes {
-    /* 0x00 */ f32 x0;
+    /* 0x00 */ DISC_PTR(itSpecialAttrsHead) x0;
     /* 0x04 */ s32 x4;
     /* 0x08 */ s32 x8;
     /* 0x0C */ f32 xC;
@@ -841,12 +881,6 @@ typedef struct {
 } itRShell_ItemVars;
 ASSERT_SIZE(itRShell_ItemVars, 88);
 
-typedef struct DISC_STRUCT {
-    u8 _pad[0x14];
-    DiscVec3 x14;
-} itRshellAttributes;
-DISC_ASSERT_SIZE(itRshellAttributes, 0x20);
-
 typedef struct {
     unsigned char xDD4_b0 : 1;
     unsigned char xDD4_b1 : 1;
@@ -872,16 +906,43 @@ typedef struct {
 } itZeldaDinFire_ItemVars;
 ASSERT_SIZE(itZeldaDinFire_ItemVars, 36);
 
-typedef struct DISC_STRUCT itPokemonAttributes {
-    f32 x0;
-    s32 timer;
-    s32 max;
-    s32 xC;
-    s32 x10;
-    s32 x14;
-    s32 x18;
-} itPokemonAttributes;
-DISC_ASSERT_SIZE(itPokemonAttributes, 0x1C);
+/// Shared by Raikou, Entei, and Suicune.
+typedef struct DISC_STRUCT itSanseijuuAttributes {
+    /* +0 */ f32 x0;
+    /* +4 */ s32 timer;
+} itSanseijuuAttributes;
+DISC_ASSERT_SIZE(itSanseijuuAttributes, 0x8);
+
+typedef struct DISC_STRUCT itPippiAttributes {
+    /*  +0 */ f32 x0;
+    /*  +4 */ s32 timer;
+    /*  +8 */ s32 max;
+    /*  +C */ s32 xC;
+    /* +10 */ s32 x10;
+    /* +14 */ s32 x14;
+    /* +18 */ s32 x18;
+} itPippiAttributes;
+DISC_ASSERT_SIZE(itPippiAttributes, 0x1C);
+
+typedef struct DISC_STRUCT itTogepyAttributes {
+    /*  +0 */ f32 x0;
+    /*  +4 */ s32 timer;
+    /*  +8 */ s32 max;
+    /*  +C */ s32 xC;
+    /* +10 */ s32 x10;
+    /* +14 */ s32 x14;
+    /* +18 */ s32 x18;
+    /* +1C */ s32 x1C;
+} itTogepyAttributes;
+DISC_ASSERT_SIZE(itTogepyAttributes, 0x20);
+
+typedef struct DISC_STRUCT itMarumineAttributes {
+    /* +0 */ f32 x0;
+    /* +4 */ s32 timer;
+    /* +8 */ s32 max;
+    /* +C */ s32 xC;
+} itMarumineAttributes;
+DISC_ASSERT_SIZE(itMarumineAttributes, 0x10);
 
 typedef struct DISC_STRUCT itKamexAttributes {
     /* +00 */ f32 x0;
@@ -895,6 +956,11 @@ typedef struct DISC_STRUCT itKamexAttributes {
 } itKamexAttributes;
 DISC_ASSERT_SIZE(itKamexAttributes, 0x20);
 
+typedef struct DISC_STRUCT itKamexHydroPumpAttributes {
+    /* +0 */ f32 x0;
+} itKamexHydroPumpAttributes;
+DISC_ASSERT_SIZE(itKamexHydroPumpAttributes, 0x4);
+
 typedef struct {
     s16 x0;
     u8 padding[0xE34 - 0xDD8];
@@ -902,10 +968,10 @@ typedef struct {
     int x64;
     f32 x68;
     f32 x6C;
-    union {
+    union itPokemon_ItemVars_x70 {
         f32 xE44;
         s32 xE44_s32;
-    };
+    } x70;
 } itPokemon_ItemVars;
 
 typedef struct {
@@ -1175,14 +1241,8 @@ typedef struct itKlap_ItemVars {
     /* +28 ip+DFC */ f32 x28;
 } itKlap_ItemVars;
 
-typedef struct DISC_STRUCT itLeadeadAttr_x0 {
-    /* 0x00 */ s32 x0;
-    /* 0x04 */ f32 x4;
-} itLeadeadAttr_x0;
-DISC_ASSERT_SIZE(itLeadeadAttr_x0, 0x8);
-
 typedef struct DISC_STRUCT itLeadeadAttributes {
-    /* 0x00 */ DISC_PTR(itLeadeadAttr_x0) x0;
+    /* 0x00 */ DISC_PTR(itSpecialAttrsHead) x0;
     /* 0x04 */ s32 x4;
     /* 0x08 */ f32 x8;
     /* 0x0C */ f32 xC;
@@ -1192,6 +1252,7 @@ typedef struct DISC_STRUCT itLeadeadAttributes {
     /* 0x1A */ s16 x1A;
     /* 0x1C */ s16 x1C;
     /* 0x1E */ s8 x1E;
+    /* 0x1F */ s8 x1F;
 } itLeadeadAttributes;
 DISC_ASSERT_SIZE(itLeadeadAttributes, 0x20);
 
@@ -1226,8 +1287,8 @@ DISC_ASSERT_SIZE(itMarilAttributes, 0x18);
 
 typedef struct itMaril_ItemVars {
     u8 pad[0x60];
-    union {
-        struct {
+    union itMaril_ItemVars_x60 {
+        struct itMaril_ItemVars_x60_x0 {
             u8 x0 : 1;
             u8 x1 : 1;
             u8 x2 : 1;
@@ -1236,7 +1297,7 @@ typedef struct itMaril_ItemVars {
             u8 x5 : 1;
             u8 x6 : 1;
             u8 x7 : 1;
-        };
+        } x0_s;
         u32 flags;
     } x60;
     f32 x64;
@@ -1382,7 +1443,7 @@ typedef struct DISC_STRUCT itPokemonSpawn_DatAttrs {
     f32 x1C[6];
     f32 x34;
     s32 x38;
-    s32 pokemon_spawn_weights[It_PKind_Terminate - It_PKind_Start];
+    s32 pokemon_spawn_weights[It_PKind_Items_Size];
     u8 _pad[520];
 } itPokemonSpawn_DatAttrs;
 DISC_ASSERT_SIZE(itPokemonSpawn_DatAttrs, 0x2BC);
@@ -1515,10 +1576,10 @@ typedef struct it_802E5FXX_struct { // used for it_802E5F00 and it_802E5F8C
 typedef struct itYaku_ItemVars {
     /*  +0 ip+DD4 */ s16 x0;
     /*  +2 ip+DD6 */ s16 x2; // type of union: 1=jobj, 2=vec
-    union {
+    union itYaku_ItemVars_x4 {
         /*  +4 ip+DD8 */ HSD_JObj* x4;
         /*  +4 ip+DD8 */ Vec3 x4_vec;
-    };
+    } x4_u;
     /* +10 ip+DE4 */ Ground* x10;
     /* +14 ip+DE8 */ void (*x14)(Item_GObj*, Ground*);
     /* +18 ip+DEC */ void (*x18)(Item_GObj*, Ground*, Vec3*, HSD_GObj*, f32);
@@ -1716,6 +1777,13 @@ typedef struct DISC_STRUCT itPatapataAttributes {
 } itPatapataAttributes;
 DISC_ASSERT_SIZE(itPatapataAttributes, 0x40);
 
+typedef struct DISC_STRUCT itOldkuriAttributes {
+    /* 0x00 */ DISC_PTR(itOttoseaAttr_x0) x0;
+    /* 0x04 */ f32 x4;
+    /* 0x08 */ f32 x8;
+    /* 0x0C */ f32 xC;
+} itOldkuriAttributes;
+DISC_ASSERT_SIZE(itOldkuriAttributes, 0x10);
 typedef struct DISC_STRUCT itOldottoseaAttributes {
     /* 0x00 */ DISC_PTR(itOttoseaAttr_x0) x0;
     /* 0x04 */ f32 x4;
@@ -1824,16 +1892,16 @@ typedef struct itOldkuri_ItemVars {
 typedef struct itUnknown_ItemVars {
     /* +00 ip+DD4 */ char pad_0[0x60];
     /* +60 ip+E34 */ f32 x60;
-    /* +64 ip+E38 */ union {
+    /* +64 ip+E38 */ union itUnknown_ItemVars_x64 {
         f32 f;
         s32 i;
     } x64;
-    /* +68 ip+E3C */ union {
+    /* +68 ip+E3C */ union itUnknown_ItemVars_x68 {
         f32 f;
         s32 i;
     } x68;
     /* +6C ip+E40 */ Vec3 x6C;
-    /* +78 ip+E4C */ union {
+    /* +78 ip+E4C */ union itUnknown_ItemVars_x78 {
         Vec3 vec;
         s32 dir;
     } x78;
@@ -1849,7 +1917,7 @@ typedef struct DISC_STRUCT itGreatFoxLaser_Attrs {
 DISC_ASSERT_SIZE(itGreatFoxLaser_Attrs, 0x10);
 
 typedef struct DISC_STRUCT itUnknownAttributes {
-    /* +00 */ union DISC_STRUCT {
+    /* +00 */ union DISC_STRUCT itUnknownAttributes_x0 {
         f32 f;
         s32 i;
     } x0;
@@ -1858,15 +1926,15 @@ typedef struct DISC_STRUCT itUnknownAttributes {
     /* +0C */ f32 xC;
     /* +10 */ f32 x10;
     /* +14 */ f32 x14;
-    /* +18 */ union DISC_STRUCT {
+    /* +18 */ union DISC_STRUCT itUnknownAttributes_x18 {
         f32 f;
         s32 i;
     } x18;
-    /* +1C */ union DISC_STRUCT {
+    /* +1C */ union DISC_STRUCT itUnknownAttributes_x1C {
         f32 f;
         s32 i;
     } x1C;
-    /* +20 */ union DISC_STRUCT {
+    /* +20 */ union DISC_STRUCT itUnknownAttributes_x20 {
         f32 f;
         s32 i;
     } x20;

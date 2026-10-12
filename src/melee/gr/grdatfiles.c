@@ -1,5 +1,7 @@
 #include "grdatfiles.h"
 
+#include <stdbool.h>
+
 #include "ground.h"
 #include "types.h"
 #include <melee/lb/lb_00B0.h>
@@ -7,6 +9,7 @@
 #include <melee/lb/lbheap.h>
 #include <sysdolphin/baselib/archive.h>
 #include <sysdolphin/baselib/debug.h>
+#include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/particle.h>
 #include <sysdolphin/baselib/psstructs.h>
 
@@ -22,56 +25,55 @@ static StageParam grDatFiles_803E07E4;
 
 void grDatFiles_801C5FC0(HSD_Archive* archive, void* data, size_t length)
 {
-    HSD_Archive* map_ptcl;
-    HSD_Archive* map_texg;
+    int* map_ptcl;
+    int* map_texg;
     lbArchive_InitializeDAT(archive, data, length);
-    map_ptcl = HSD_ArchiveGetPublicAddress(archive, "map_ptcl");
-    map_texg = HSD_ArchiveGetPublicAddress(archive, "map_texg");
+    map_ptcl = HSD_ArchiveGetPublicAs(int, archive, "map_ptcl");
+    map_texg = HSD_ArchiveGetPublicAs(int, archive, "map_texg");
 
     if (map_ptcl != NULL && map_texg != NULL) {
         psInitDataBankLocate(map_ptcl, map_texg, NULL);
     }
 }
 
-void grDatFiles_801C6038(void* arg0, s32 arg1, s32 arg2)
+void grDatFiles_801C6038(char* filename, bool bool1, bool bool2)
 {
     UnkArchiveStruct* temp_r3 = grDatFiles_801C62B4();
-    if (arg0 != NULL) {
+    if (filename != NULL) {
         HSD_Archive* sp14;
-        s32 phi_r28;
-        void* r4 = arg0;
-        if (arg2 != 0) {
+        bool phi_r28;
+        char* r4 = filename;
+        if (bool2 != false) {
             phi_r28 =
                 lbArchive_800171CC(&sp14, r4, &temp_r3->unk4, "map_head", 0);
         } else {
-            sp14 =
-                lbArchive_80016DBC(r4, (void**) &temp_r3->unk4, "map_head", 0);
-            phi_r28 = 0;
+            sp14 = lbArchive_80016DBC(r4, &temp_r3->unk4, "map_head", 0);
+            phi_r28 = false;
         }
         temp_r3->unk8 = 0;
-        if (arg1 == 0) {
+        if (bool1 == false) {
             stage_info.coll_data =
-                HSD_ArchiveGetPublicAddress(sp14, "coll_data");
+                HSD_ArchiveGetPublicAs(MapCollData, sp14, "coll_data");
             stage_info.param =
-                HSD_ArchiveGetPublicAddress(sp14, "grGroundParam");
-            stage_info.itemdata =
-                HSD_ArchiveGetPublicAddress(sp14, "itemdata");
+                HSD_ArchiveGetPublicAs(GroundParam, sp14, "grGroundParam");
+        stage_info.itemdata =
+            (DiscU32*) HSD_ArchiveGetPublicAddress(sp14, "itemdata");
             stage_info.ald_yaku_all =
-                HSD_ArchiveGetPublicAddress(sp14, "ALDYakuAll");
+                (DiscU32*) HSD_ArchiveGetPublicAddress(sp14, "ALDYakuAll");
             stage_info.map_ptcl =
                 HSD_ArchiveGetPublicAddress(sp14, "map_ptcl");
             stage_info.map_texg =
                 HSD_ArchiveGetPublicAddress(sp14, "map_texg");
             stage_info.yakumono_param =
                 HSD_ArchiveGetPublicAddress(sp14, "yakumono_param");
-            stage_info.map_plit =
-                HSD_ArchiveGetPublicAddress(sp14, "map_plit");
-            stage_info.quake_model_set =
-                HSD_ArchiveGetPublicAddress(sp14, "quake_model_set");
+        stage_info.map_plit =
+            (DiscU32*) HSD_ArchiveGetPublicAddress(sp14, "map_plit");
+            stage_info.quake_model_set = HSD_ArchiveGetPublicAs(
+                DynamicModelDesc, sp14, "quake_model_set");
         }
         temp_r3->unk0 = sp14;
         if (stage_info.map_ptcl != NULL && stage_info.map_texg != NULL) {
-            if (phi_r28 != 0) {
+            if (phi_r28 != false) {
                 psInitDataBankLoad(0x40, stage_info.map_ptcl,
                                    stage_info.map_texg, 0, 0);
             } else {
@@ -82,7 +84,7 @@ void grDatFiles_801C6038(void* arg0, s32 arg1, s32 arg2)
         grDatFiles_801C6228(temp_r3->unk4);
     } else {
         temp_r3->unk4 = &grDatFiles_803E0924;
-        if (arg1 == 0) {
+        if (bool1 == false) {
             stage_info.coll_data = NULL;
             /* DISC_PTR slots cannot be statically initialised. */
             DP_SET(grDatFiles_803E0848.stage_params, &grDatFiles_803E07E4);
@@ -163,7 +165,7 @@ UnkArchiveStruct* grDatFiles_801C6478(void* data, s32 length)
     arc = grDatFiles_801C62B4();
     HSD_ASSERT(290, arc);
     arc->unk0 = archive;
-    arc->unk4 = HSD_ArchiveGetPublicAddress(archive, "map_head");
+    arc->unk4 = HSD_ArchiveGetPublicAs(UnkStageDat, archive, "map_head");
     arc->unk8 = 1;
 
     grDatFiles_801C6228(arc->unk4);

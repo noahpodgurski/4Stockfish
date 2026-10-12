@@ -11,11 +11,6 @@
 #include <melee/it/item.h>
 #include <melee/it/itgroundcoll.h>
 
-typedef struct DISC_STRUCT StarRodAttributes {
-    int x0;
-    DiscVec3 x4;
-} StarRodAttributes;
-DISC_ASSERT_SIZE(StarRodAttributes, 0x10);
 
 ItemStateTable it_803F5F90[] = {
     { -1, itStarrod_UnkMotion0_Anim, itStarrod_UnkMotion0_Phys,

@@ -29,18 +29,6 @@
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/spline.h>
 
-struct DISC_STRUCT grBigBlueRoute_YakumonoParam {
-    int x0;
-    f32 x4;
-    u8 pad_8[0x20 - 0x8];
-    f32 x20;
-    u8 pad_24[0x3C - 0x24];
-    f32 x3C;
-    f32 x40;
-    f32 x44;
-    f32 x48;
-    f32 x4C;
-};
 
 /* car_info stores 31 RouteEntry records in its 0x554-byte allocation. */
 union grBigBlueRoute_RouteStorage {
@@ -439,7 +427,7 @@ void grBigBlueRoute_8020C140(Ground_GObj* gobj)
     gp->u.car.xD0 = Ground_801C247C(33, 0);
     gp->u.car.xD4 = Ground_801C247C(33, 2);
     grBigBlueRoute_8020C238(gobj);
-    gp->u.bigblue.b0 = 0; // same byte as u.car.xC4 on GameCube
+    gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b0 = 0; // same byte as u.car.xC4 on GameCube
 }
 
 bool grBigBlueRoute_8020C1D4(Ground_GObj* arg)
@@ -873,7 +861,7 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                     RE_ENTRY->x24 = RE_ENTRY->x14;
                     RE_ENTRY->flags.b6 = 0;
                     if (RE_ENTRY->flags.b1) {
-                        gp->u.bigblue.b1 = 0;
+                        gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b1 = 0;
                     }
                 }
                 break;
@@ -995,8 +983,8 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                 pos.z - 260.0f < fighter_pos.z &&
                 fighter_pos.z < 260.0f + pos.z && !RE_ENTRY->flags.b1)
             {
-                if (!gp->u.bigblue.b1) {
-                    gp->u.bigblue.b1 = 1;
+                if (!gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b1) {
+                    gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b1 = 1;
                     Ground_801C53EC(0x77A16);
                 }
             }
@@ -1007,10 +995,10 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                 fighter_pos.z < 100.0f + pos.z)
             {
                 if (RE_ENTRY->flags.b1) {
-                    if (!gp->u.bigblue.b0) {
+                    if (!gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b0) {
                         un_802FD604((s32) yakumono_param->x4C);
                         Ground_801C53EC(0x77A11);
-                        gp->u.bigblue.b0 = 1;
+                        gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b0 = 1;
                     }
                 } else {
                     Camera_RequestQuake(QuakeKind_Loop, NULL);
@@ -1032,8 +1020,8 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                     }
                 }
             } else if (RE_ENTRY->flags.b1) {
-                if (gp->u.bigblue.b0) {
-                    gp->u.bigblue.b0 = 0;
+                if (gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b0) {
+                    gp->u.bigblue.x0_u.x0_s.x0_u.x0_2.b0 = 0;
                 }
             }
         }
@@ -1173,7 +1161,7 @@ void grBigBlueRoute_8020DED4(Vec3* pos)
     Ground_801C38BC(x, y);
 }
 
-DynamicsDesc* grBigBlueRoute_8020DF78(enum_t arg)
+lbColl_80008D30_arg1* grBigBlueRoute_8020DF78(enum_t arg)
 {
     return NULL;
 }

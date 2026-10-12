@@ -175,7 +175,7 @@ static void build_info(SlpInfoBlock* b, const StartMeleeData* d) {
     b->x18 = r->x18;
     b->x1C = r->x1C_pad[0];
     b->item_mask = r->x20;
-    b->x28 = r->x28;
+    b->x28 = r->it_kind;
     b->x2C = r->x2C;
     b->damage_ratio = r->x30;
     b->game_speed = r->game_speed;
@@ -456,8 +456,9 @@ static void capture_fighter(Staged* s, int i, HSD_GObj* g) {
         fp->x2218_b4, fp->x2218_b5, fp->x2218_b6, fp->x2218_b7); /* fp+2218 */
     po->flags[1] = BITS8(fp->x221A_b0, fp->x221A_b1, fp->allow_sdi, fp->x221A_b3, fp->fall_fast,
         fp->x221A_b5, fp->x221A_b6, fp->x221A_b7); /* fp+221A */
-    po->flags[2] = BITS8(fp->x221B_b0, fp->x221B_b1, fp->x221B_b2, fp->x221B_b3, fp->x221B_b4,
-        fp->x221B_b5, fp->x221B_b6, fp->x221B_b7); /* fp+221B */
+    po->flags[2] = BITS8(fp->x221B.x221B_b0, fp->x221B.x221B_b1, fp->x221B.x221B_b2,
+        fp->x221B.x221B_b3, fp->x221B.x221B_b4, fp->x221B.x221B_b5, fp->x221B.x221B_b6,
+        fp->x221B.x221B_b7); /* fp+221B */
     /* fp+221C is the high byte of a u16 of bitfields; its last bit is the top
      * bit of the three-bit x221C_u16_y. */
     po->flags[3] = BITS8(fp->x221C_b0, fp->x221C_b1, fp->x221C_b2, fp->x221C_b3, fp->x221C_b4,

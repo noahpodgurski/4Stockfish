@@ -104,60 +104,8 @@ StageData grCs_StageData = {
     2,
 };
 
-typedef struct DISC_STRUCT grCastleParams_Entry {
-    /* 0x00 */ s16 x0;
-    /* 0x02 */ u8 pad_x2[2];
-    /* 0x04 */ f32 x4;
-    /* 0x08 */ DiscVec3 rot;
-} grCastleParams_Entry;
 DISC_ASSERT_SIZE(grCastleParams_Entry, 0x14);
 
-struct DISC_STRUCT grCastle_YakumonoParam {
-    /* 0x000 */ s16 x0;
-    /* 0x002 */ s16 x2;
-    /* 0x004 */ s16 x4;
-    /* 0x006 */ s16 x6;
-    /* 0x008 */ s16 x8;
-    /* 0x00A */ s16 xA;
-    /* 0x00C */ s16 xC;
-    /* 0x00E */ s16 xE;
-    /* 0x010 */ f32 x10;
-    /* 0x014 */ f32 x14;
-    /* 0x018 */ f32 x18;
-    /* 0x01C */ u8 pad_x1C[4];
-    /* 0x020 */ f32 x20;
-    /* 0x024 */ f32 x24;
-    /* 0x028 */ f32 x28;
-    /* 0x02C */ f32 x2C;
-    /* 0x030 */ f32 x30;
-    /* 0x034 */ f32 x34;
-    /* 0x038 */ f32 x38;
-    /* 0x03C */ f32 x3C;
-    /* 0x040 */ s16 x40;
-    /* 0x042 */ s16 x42;
-    /* 0x044 */ s16 x44;
-    /* 0x046 */ u8 pad_x46[2];
-    /* 0x048 */ f32 x48;
-    /* 0x04C */ f32 x4C;
-    /* 0x050 */ f32 x50;
-    /* 0x054 */ s16 x54;
-    /* 0x056 */ u8 pad_x56[2];
-    /* 0x058 */ s16 x58;
-    /* 0x05A */ u8 pad_x5A[2];
-    /* 0x05C */ grCastleParams_Entry entries[9];
-    /* 0x110 */ f32 x110;
-    /* 0x114 */ s32 x114;
-    /* 0x118 */ f32 x118;
-    /* 0x11C */ f32 x11C;
-    /* 0x120 */ f32 x120;
-    /* 0x124 */ f32 x124;
-    /* 0x128 */ u8 pad_x128[4];
-    /* 0x12C */ s16 x12C[4];
-    /* 0x134 */ f32 x134;
-    /* 0x138 */ f32 x138;
-    /* 0x13C */ f32 x13C;
-    /* 0x140 */ f32 x140;
-};
 DISC_ASSERT_SIZE(struct grCastle_YakumonoParam, 0x144);
 
 typedef struct grCastle_PlatSubObj {
@@ -395,9 +343,9 @@ void grCastle_801CD658(Ground_GObj* gobj)
 {
     Ground* gp = GET_GROUND(gobj);
     UnkArchiveStruct* archive;
-    DynamicsDesc* flag3;
-    DynamicsDesc* flag4;
-    DynamicsDesc* flag6;
+    DynamicsTemplate* flag3;
+    DynamicsTemplate* flag4;
+    DynamicsTemplate* flag6;
     Vec3 pos;
     grCastle_DynEntries entries_s;
     s32 i;
@@ -419,14 +367,14 @@ void grCastle_801CD658(Ground_GObj* gobj)
 
     archive = grDatFiles_GetArchive();
     if (archive != NULL) {
-        flag3 =
-            HSD_ArchiveGetPublicAddress(archive->unk0, "dynamicsdata_flag3");
+        flag3 = HSD_ArchiveGetPublicAs(DynamicsTemplate, archive->unk0,
+                                       "dynamicsdata_flag3");
         if (flag3 != NULL) {
-            flag4 = HSD_ArchiveGetPublicAddress(archive->unk0,
-                                                "dynamicsdata_flag4");
+            flag4 = HSD_ArchiveGetPublicAs(DynamicsTemplate, archive->unk0,
+                                           "dynamicsdata_flag4");
             if (flag4 != NULL) {
-                flag6 = HSD_ArchiveGetPublicAddress(archive->unk0,
-                                                    "dynamicsdata_flag6");
+                flag6 = HSD_ArchiveGetPublicAs(DynamicsTemplate, archive->unk0,
+                                               "dynamicsdata_flag6");
                 if (flag6 != NULL) {
                     entries_s = grCs_803B7EA8;
 
@@ -894,7 +842,7 @@ void grCastle_801CE578(Ground_GObj* gobj)
         if (grAnime_801C83D0(gobj, 0, 1)) {
             gp->u.castle11.xC8 = yakumono_param->x58;
             gp->u.castle11.xC4.b0 = 1;
-            grMaterial_801C9604(gobj, yakumono_param->x114, 0);
+            grMaterial_801C9604(gobj, DP(union ColorOverlay_x8_t, yakumono_param->x114), 0);
             if (gp->u.castle11.xCC != NULL) {
                 Ground_801C4A08(gp->u.castle11.xCC);
             }
@@ -1911,7 +1859,7 @@ void grCastle_801D0A9C(Vec3* arg0, f32 arg8)
     }
 }
 
-DynamicsDesc* grCastle_801D0B04(enum_t arg)
+lbColl_80008D30_arg1* grCastle_801D0B04(enum_t arg)
 {
     return NULL;
 }

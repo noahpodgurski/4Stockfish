@@ -23,16 +23,6 @@
 #include <sysdolphin/baselib/psstructs.h>
 #include <sysdolphin/baselib/random.h>
 
-struct DISC_STRUCT grGarden_YakumonoParam {
-    float x0;
-    float x4;
-    int x8;
-    int xC;
-    int x10;
-    int x14;
-    float x18;
-    float x1C;
-};
 
 static void stageGObj0_OnInit(Ground_GObj* gobj);
 
@@ -394,7 +384,7 @@ void grGarden_80203560(float param1, Vec3* vec)
     }
 }
 
-DynamicsDesc* grGarden_802035C8(enum_t arg)
+lbColl_80008D30_arg1* grGarden_802035C8(enum_t arg)
 {
     return NULL;
 }

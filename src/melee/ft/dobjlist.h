@@ -6,6 +6,8 @@
 #include <melee/ft/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
+
 /**
  * @todo This was split out of ft/types.h to break a circular dependency with
  * fighter-specific types.h headers. Figure out a better place for it.

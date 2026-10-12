@@ -43,10 +43,10 @@ ASSERT_SIZE(ToyAnimState, 0x14);
 /* Used by _Toy_803109A0 for table lookup */
 struct ToyEntry {
     s32 id;
-    union {
+    union ToyEntry_x4 {
         s8 value_byte;
         s32 value;
-    };
+    } x4;
 };
 
 /* One row of tyInitModelTbl / tyInitModelDTbl in TyDataI.dat, read in place,
@@ -97,7 +97,7 @@ struct Toy {
     /* +3E8 */ char pad_3E8[0x3EC - 0x3E8];
     /* +3EC */ s16 trophyCount;
 };
-// TODO: This struct should only be 0x58
+/// @TODO: This struct should only be 0x58
 // STATIC_ASSERT(sizeof(struct Toy) == 0x58);
 
 /* One row of tyDisplayModelTbl / tyDisplayModelUsTbl in TyDataI.dat, read in
@@ -178,10 +178,10 @@ struct Toy26B8 {
     /* 0x3EA */ s16 selectedTrophyId;
     /* 0x3EC */ s16 trophy_count;
     /* 0x3EE */ u8 pad_3EE[0x3F0 - 0x3EE];
-    /* 0x3F0 */ union {
+    /* 0x3F0 */ union Toy26B8_x3F0 {
         ToyAnimState anim;
         HSD_GObj* x3F0;
-    };
+    } x3F0_u;
 };
 
 /* GC size 0x8. pad_0 was the GObj slot toy_make_gobj creates and
@@ -517,11 +517,11 @@ struct PosArrayFull {
 };
 
 struct lbl_803FDDE4_t {
-    struct {
+    struct lbl_803FDDE4_t_symbols {
         char* name;
         UNK_T empty;
     } symbols[6];
-    struct {
+    struct lbl_803FDDE4_t_values {
         int index;
         GXColor color;
         bool flag;

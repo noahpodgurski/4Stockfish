@@ -29,7 +29,7 @@
 /* 022650 */ static void fn_80022650(void);
 /* 022940 */ static void fn_80022940(void);
 
-static struct {
+static struct lbl_804336D0_t {
     int refractionUserCount;
     void* image_ptr;
     HSD_ImageDesc* imagedesc;
@@ -37,10 +37,7 @@ static struct {
     Mtx texture_mtx;
 } lbl_804336D0;
 
-static struct DISC_STRUCT {
-    u8 x0;
-    DISC_PTR(DiscF32) x4;
-}* refract_data;
+static struct refract_data_t* refract_data;
 
 static inline void lbRefract_WriteTexCoord(lbRefract_CallbackData* cb, s32 row,
                                            u32 col, f32 y, f32 x, f32 param0)

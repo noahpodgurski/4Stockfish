@@ -333,12 +333,15 @@ static inline void ifStatus_UpdateDamageDisplay(IfDamageState* state,
     }
 }
 
+struct ifStatus_802F4EDC_digit_offset {
+    f32 value;
+};
+
 void ifStatus_802F4EDC(HSD_GObj* gobj)
 {
     HudIndex* hud;
     IfDamageState* state;
     HSD_JObj* jobj;
-    HSD_TObj* tobj;
     HSD_JObj* digit_jobj;
     s32 is_stamina;
     GXColor color;
@@ -389,20 +392,7 @@ found_player:
                     (DiscU32*) hud->damage_num_shapeanims);
         HSD_JObjReqAnimAll(jobj, 0.0F);
 
-        digit_jobj = state->jobjs[Percent];
-        if (digit_jobj != NULL) {
-            tobj = digit_jobj->u.dobj->mobj->tobj;
-            HSD_MatAnimJoint* mj =
-                DP(HSD_MatAnimJoint, ((DiscU32*) *anim_base)[0].v);
-            HSD_TObjAddAnimAll(tobj, get_percent_texanim(mj));
-            if (Player_GetMoreFlagsBit2((s8) state->player_slot)) {
-                HSD_TObjReqAnimAll(tobj, 1.0F);
-            } else {
-                HSD_TObjReqAnimAll(tobj, 0.0F);
-            }
-            HSD_AObjSetRate(tobj->aobj, 0.0F);
-            HSD_TObjAnim(tobj);
-        }
+        ifStatus_InitPercentSign(state->jobjs[Percent], state, anim_base);
 
         mn_8022F3D8(jobj, 1, 0x400);
         ifStatus_InitDamageDigits(state, anim_base);
@@ -448,9 +438,7 @@ found_player:
                                  &normal_color);
 
     {
-        struct {
-            f32 value;
-        } digit_offset;
+        struct ifStatus_802F4EDC_digit_offset digit_offset;
 
         /* Calculate digit spacing offsets based on which digit is "1" */
         ones_offset = (state->damage_percent % 10 == 1) ? 0.5069F : 0.0F;
@@ -548,7 +536,10 @@ void ifStatus_802F5B48(HSD_GObj* gobj)
             p->flags.unk10 = 0;
         }
         if (p->old_damage == 0) {
-            if (gmVs_GetSceneState()->fighters[(s8) p->player_slot].x4_b5) {
+            if (gmVs_GetSceneState()
+                    ->fighters[(s8) p->player_slot]
+                    .x4.x0.x4_b5)
+            {
                 ifStatus_802F6948((s8) p->player_slot);
             }
         }
@@ -666,19 +657,7 @@ HSD_GObj* ifStatus_802F5EC0(IfDamageState* state, s32 player_idx)
         state->translation_x[i] = HSD_JObjGetTranslationX(state->jobjs[i]);
         state->translation_y[i] = HSD_JObjGetTranslationY(state->jobjs[i]);
     }
-    if (state->jobjs[3] != NULL) {
-        HSD_TObj* tobj = state->jobjs[3]->u.dobj->mobj->tobj;
-        HSD_MatAnimJoint* mj =
-            DP(HSD_MatAnimJoint, ((DiscU32*) *anim_base)[0].v);
-        HSD_TObjAddAnimAll(tobj, get_percent_texanim(mj));
-        if (Player_GetMoreFlagsBit2((s8) state->player_slot) != 0) {
-            HSD_TObjReqAnimAll(tobj, 1.0f);
-        } else {
-            HSD_TObjReqAnimAll(tobj, 0.0f);
-        }
-        HSD_AObjSetRate(tobj->aobj, 0.0f);
-        HSD_TObjAnim(tobj);
-    }
+    ifStatus_InitPercentSign(state->jobjs[Percent], state, anim_base);
     ifStatus_802F5B48(state->HUD_parent_entity);
     state->old_damage = !state->damage_percent;
     ifStatus_802F4EDC(state->HUD_parent_entity);

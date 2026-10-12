@@ -105,7 +105,7 @@ void ft_8007C77C(Fighter_GObj* gobj)
             if (ip->xDD4_itemVar.unk4.xDEC_b1) {
                 var_r29 = 1;
             }
-        } else if (ip->xDD4_itemVar.it_2E5A.x18.b0) {
+        } else if (ip->xDD4_itemVar.unk4.xDEC_b0) {
             var_r29 = 1;
         }
         if (!var_r29) {

@@ -12,9 +12,6 @@
 
 static Item_GObj* it_804D6D50;
 
-typedef struct DISC_STRUCT {
-    f32 x0;
-} ItMetamonVars;
 DISC_ASSERT_SIZE(ItMetamonVars, 0x4);
 
 ItemStateTable it_803F7FC8[] = {

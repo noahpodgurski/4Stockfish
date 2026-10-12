@@ -1,3 +1,5 @@
+#include "grbattle.h"
+
 #include "granime.h"
 #include "grdisplay.h"
 #include "grlib.h"
@@ -18,15 +20,6 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/random.h>
 
-/** @var ::grBattle_YakumonoParam::bg_curr_color_overlay
- * @todo ::ColorOverlay_x8_t, from ::grMaterial_801C9604
- * @var ::grBattle_YakumonoParam::bg_prev_color_overlay
- * @copydoc ::grBattle_YakumonoParam::bg_curr_color_overlay
- */
-struct DISC_STRUCT grBattle_YakumonoParam {
-    int bg_curr_color_overlay;
-    int bg_prev_color_overlay;
-};
 
 /* 219C98 */ static void grBattle_OnDemoInit(s32);
 /* 219CA4 */ static void grBattle_OnInit(void);
@@ -62,7 +55,7 @@ struct DISC_STRUCT grBattle_YakumonoParam {
 /* 21A3B4 */ static bool grBattle_BG_Callback1(Ground_GObj* gobj);
 /* 21A3BC */ static void grBattle_BG_Callback2(Ground_GObj* gobj);
 /* 21A60C */ static void grBattle_BG_Callback3(Ground_GObj* gobj);
-/* 21A610 */ static DynamicsDesc* grBattle_OnTouchLine(enum_t);
+/* 21A610 */ static lbColl_80008D30_arg1* grBattle_OnTouchLine(enum_t);
 /* 21A618 */ static bool grBattle_OnCheckShadowRender(Vec3*, int, HSD_JObj*);
 
 /* 4D6AC8 */ static GXBool isDemoFight;
@@ -398,13 +391,11 @@ void grBattle_BG_Callback2(Ground_GObj* gobj)
 
             bg_gobj = Ground_GetMapGObj(gp->u.battle_bg.prev);
             HSD_ASSERT(535, bg_gobj);
-            grMaterial_801C9604(bg_gobj, yakumono_param->bg_prev_color_overlay,
-                                0);
+            grMaterial_801C9604(bg_gobj, DP(union ColorOverlay_x8_t, yakumono_param->bg_prev_color_overlay), 0);
 
             bg_gobj = grBattle_80219D84(gp->u.battle_bg.curr);
             HSD_ASSERT(539, bg_gobj);
-            grMaterial_801C9604(bg_gobj, yakumono_param->bg_curr_color_overlay,
-                                0);
+            grMaterial_801C9604(bg_gobj, DP(union ColorOverlay_x8_t, yakumono_param->bg_curr_color_overlay), 0);
 
             gp->u.battle_bg.state = BG_Done;
         }
@@ -425,7 +416,7 @@ void grBattle_BG_Callback2(Ground_GObj* gobj)
 
 void grBattle_BG_Callback3(Ground_GObj* gobj) {}
 
-DynamicsDesc* grBattle_OnTouchLine(enum_t arg0)
+lbColl_80008D30_arg1* grBattle_OnTouchLine(enum_t arg0)
 {
     return NULL;
 }

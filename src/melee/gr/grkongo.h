@@ -55,13 +55,13 @@ struct DISC_STRUCT grKongo_YakumonoParam {
     f32 unk60;
     s32 unk64;
     s32 unk68;
-    u32 unk6C;
-    u32 unk70;
-    u32 unk74;
-    u32 unk78;
-    u32 unk7C;
-    u32 unk80;
-    s32 unk84;
+    f32 unk6C;
+    f32 unk70;
+    f32 unk74;
+    f32 unk78;
+    f32 unk7C;
+    f32 unk80;
+    DISC_PTR(union ColorOverlay_x8_t) unk84 DAT_SCRIPT(colAnimCommandLength(_command));
     f32 unk88;
     f32 unk8C;
     f32 unk90;
@@ -78,8 +78,6 @@ struct DISC_STRUCT grKongo_YakumonoParam {
 };
 
 extern const grKg_SplineChoiceList grKg_803B7FD4;
-
-static struct grKongo_YakumonoParam* yakumono_param;
 
 /* 1D5238 */ void grKongo_801D5238(s32);
 /* 1D523C */ void grKongo_801D523C(void);

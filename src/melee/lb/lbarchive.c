@@ -54,7 +54,7 @@ static inline void vLoadSections(HSD_Archive* archive, void** symbol,
     }
 }
 
-void lbArchive_LoadSections(HSD_Archive* archive, void* symbol, ...)
+void(lbArchive_LoadSections)(HSD_Archive* archive, void* symbol, ...)
 {
     va_list symbols;
 
@@ -190,7 +190,7 @@ static inline void lbArchive_vLoadSections(HSD_Archive* archive, void** symbol,
     }
 }
 
-HSD_Archive* lbArchive_LoadSymbols(const char* filename, void* symbols, ...)
+HSD_Archive*(lbArchive_LoadSymbols) (const char* filename, void* symbols, ...)
 {
     va_list sections;
     HSD_Archive* archive;
@@ -204,7 +204,7 @@ HSD_Archive* lbArchive_LoadSymbols(const char* filename, void* symbols, ...)
     return archive;
 }
 
-HSD_Archive* lbArchive_80016DBC(const char* filename, void* symbols, ...)
+HSD_Archive*(lbArchive_80016DBC) (const char* filename, void* symbols, ...)
 {
     va_list sections;
     HSD_Archive* archive;
@@ -244,8 +244,8 @@ bool lbArchive_80016F80(HSD_Archive** dst, const char* filename)
     return preloaded;
 }
 
-bool lbArchive_80017040(HSD_Archive** dst, const char* filename, void* symbols,
-                        ...)
+bool(lbArchive_80017040)(HSD_Archive** dst, const char* filename,
+                         void* symbols, ...)
 {
     HSD_Archive* archive;
     bool preloaded;
@@ -271,8 +271,8 @@ bool lbArchive_80017040(HSD_Archive** dst, const char* filename, void* symbols,
     return preloaded;
 }
 
-bool lbArchive_800171CC(HSD_Archive** dst, const char* filename, void* symbols,
-                        ...)
+bool(lbArchive_800171CC)(HSD_Archive** dst, const char* filename,
+                         void* symbols, ...)
 {
     HSD_Archive* archive;
     bool preloaded;

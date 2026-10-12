@@ -157,8 +157,8 @@ void ftCommon_SetSelfMovementFromGroundedMovement(HSD_GObj* gobj)
         fp->xE4_ground_accel_1 *= ground_friction;
     }
 
-    // TODO(Aitch): this almost definitely uses above inline, but I couldn't
-    // make it work. Let the brain machines match it.
+    /// @todo (Aitch): this almost definitely uses above inline, but I couldn't
+    /// make it work. Let the brain machines match it.
     fp->x74_self_accel.x = +ground_normal->y * fp->xE4_ground_accel_1;
     fp->x74_self_accel.y = -ground_normal->x * fp->xE4_ground_accel_1;
     fp->x74_self_accel.z = 0;
@@ -563,7 +563,7 @@ void ftCommon_UseAllJumps(Fighter* fp)
 
 void ftCommon_8007D6A4(Fighter* fp)
 {
-    if (fp->x594_b0) {
+    if (fp->x594.x0.x594_b0) {
         fp->self_vel.x = fp->x6A4_transNOffset.z * fp->facing_dir;
     }
     ftCommon_ClampGroundVel(fp, fp->co_attrs.ground_max_horizontal_velocity);
@@ -1040,11 +1040,11 @@ void ftCommon_8007E79C(HSD_GObj* gobj, s32 arg1)
     }
 }
 
-void ftCommon_8007E7E4(HSD_GObj* gobj, s32 arg1)
+void ftCommon_8007E7E4(HSD_GObj* gobj, bool flag)
 {
     Fighter* fp = gobj->user_data;
     if (ftData_OnItemPickup[fp->kind] != NULL) {
-        ftData_OnItemPickup[fp->kind](gobj, arg1);
+        ftData_OnItemPickup[fp->kind](gobj, flag);
     }
 }
 

@@ -260,7 +260,7 @@ int main(void) {
             fps[NANA]->x2219_b5 = true;
             break;
         case 2:
-            fps[NANA]->x2070.x2071_b0_3 = 13;
+            fps[NANA]->x2070.x0.x2071_b0_3 = 13;
             break;
         case 3:
             nana_present = false;

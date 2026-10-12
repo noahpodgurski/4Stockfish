@@ -37,7 +37,7 @@ typedef enum {
     statex10_1,
 } statex10;
 
-/* 433318 */ static struct {
+/* 433318 */ static struct state_t {
     /* +0  */ bool probe_status;
     /* +4  */ bool unk_status;
     /* +8  */ LbCardStatus card_status;
@@ -49,7 +49,7 @@ typedef enum {
 #ifdef TARGET_PC
     /* +5C */ DiscS32* icon_data;
 #else
-    /* +5C */ void** icon_data;
+    /* +5C */ u8** icon_data;
 #endif
 
     /// Always set to 0 by ::lbCardGame_LoadArchive
@@ -66,7 +66,7 @@ typedef enum {
 #define GET_ICON_DATA(idx) (_p(icon_data)[idx])
 #endif
 
-static struct {
+static struct lb_803BAB60_t {
     u32 x0, x4, x8;
     u32 pad[2];
 } lb_803BAB60 = {

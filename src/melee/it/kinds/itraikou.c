@@ -23,7 +23,8 @@ ItemStateTable it_803F7DE8[] = {
 void it_802CF814(Item_GObj* gobj)
 {
     Item* it = gobj->user_data;
-    itPokemonAttributes* sa = DP(itPokemonAttributes, it->xC4_article_data->x4_specialAttributes);
+    itSanseijuuAttributes* sa =
+        DP(itSanseijuuAttributes, it->xC4_article_data->x4_specialAttributes);
     PAD_STACK(16);
 
     it_80279C48(gobj);
@@ -59,7 +60,7 @@ void it_802CF908(Item_GObj* gobj)
 {
     Item* it = gobj->user_data;
     Article* ap = it->xC4_article_data;
-    itPokemonAttributes* sa = DP(itPokemonAttributes, ap->x4_specialAttributes);
+    itSanseijuuAttributes* sa = DP(itSanseijuuAttributes, ap->x4_specialAttributes);
 
     Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(it);
@@ -70,7 +71,7 @@ void it_802CF908(Item_GObj* gobj)
 bool itRaikou_UnkMotion0_Anim(Item_GObj* gobj)
 {
     Item* it = gobj->user_data;
-    itPokemonAttributes* sa;
+    itSanseijuuAttributes* sa;
     int timer;
     int sfx;
 
@@ -85,7 +86,7 @@ bool itRaikou_UnkMotion0_Anim(Item_GObj* gobj)
     if (it->xDB4_itcmd_var2) {
         timer = --it->xDD4_itemVar.pokemon.timer;
         if (timer == 0) {
-            sa = DP(itPokemonAttributes, it->xC4_article_data->x4_specialAttributes);
+            sa = DP(itSanseijuuAttributes, it->xC4_article_data->x4_specialAttributes);
             switch (HSD_Randi(3)) {
             case 0:
                 sfx = 0x2746;

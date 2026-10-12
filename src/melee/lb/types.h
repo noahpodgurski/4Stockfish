@@ -7,6 +7,7 @@
 #include <melee/lb/forward.h> // IWYU pragma: export
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
 #include <placeholder.h>
 
 #include <dolphin/gx.h>
@@ -80,10 +81,10 @@ struct HitCapsule {
     /* +70 */ float coll_distance;
     /* +74 */ HitVictim victims_1[12];
     /* +D4 */ HitVictim victims_2[12];
-    /* +134 */ union {
+    /* +134 */ union HitCapsule_x134 {
         HSD_GObj* owner;
         u8 hit_grabbed_victim_only : 1;
-    };
+    } x134;
 };
 ASSERT_SIZE(HitCapsule, 0x138);
 
@@ -187,19 +188,19 @@ typedef struct _ftECB {
 
 typedef struct ECBSource {
     /* fp+7F4 */ ECBSourceKind kind;
-    /* fp+7F8 */ union {
-        /* fp+7F8 */ struct {
+    /* fp+7F8 */ union ECBSource_x4 {
+        /* fp+7F8 */ struct ECBSource_x4_x0 {
             /* fp+7F8 */ HSD_JObj* x108_joint;
             /* fp+7FC */ HSD_JObj* x10C_joint[6];
-        };
-        /* fp+7F8 */ struct {
+        } x0;
+        /* fp+7F8 */ struct ECBSource_x4_x0_1 {
             /* fp+7F8 */ float up;
             /* fp+7FC */ float down;
             /* fp+800 */ float front;
             /* fp+804 */ float back;
             /* fp+808 */ float angle;
-        };
-    };
+        } x0_1;
+    } x4;
     /* fp+814 */ float x124;
     /* fp+818 */ float x128;
     /* fp+81C */ float x12C;
@@ -213,7 +214,7 @@ struct CollData {
     // position before collision routine started
     /* fp+70C */ Vec3 last_pos;
     /* fp+718 */ Vec3 x28_vec;
-    /* fp+724 */ ECBFlagStruct x34_flags;
+    /* fp+724 */ ECBFlagStruct x34_flags; // Make an enum? (See it_80275E98)
     /* fp+725 */ ECBFlagStruct x35_flags;
     /* fp+726 */ s16 facing_dir;
     /* fp+728 */ int x38;
@@ -326,6 +327,15 @@ struct lbCardNew_SnapshotEntry {
 };
 ASSERT_SIZE(lbCardNew_SnapshotEntry, 0x8);
 
+/// A rumble pattern in @c lbRumbleData (LbRb.dat), played by #lb_80014574.
+struct DISC_STRUCT lbRumbleEntry {
+    /// A zero-terminated script passed to #HSD_PadRumbleAdd.
+    /* +0 */ DISC_PTR(union HSD_Rumble) list DAT_TERMINATED(0);
+    /* +4 */ u8 pri;
+    /* +5 */ u8 x5;
+};
+DISC_ASSERT_SIZE(struct lbRumbleEntry, 8);
+
 struct ColorOverlay_UnkInner {
     /*  +0 */ int x0;
     /*  +0 */ u8 x4[0x7B - 0x4];
@@ -370,7 +380,7 @@ struct ColorOverlay {
     s32 x1c;                          // 0x1c
     s32 x20;                          // 0x20
     s32 x24;                          // 0x24
-    union {
+    union ColorOverlay_x28_colanim {
         enum_t i;
         struct ColorOverlay_UnkInner* ptr;
     } x28_colanim;            // 0x28, id for the color animation in effect
@@ -507,6 +517,21 @@ struct DISC_STRUCT BoneDynamicsDesc {
     DynamicsDesc dyn_desc;
 };
 DISC_ASSERT_SIZE(struct BoneDynamicsDesc, 0x18);
+
+/// A dynamics template in an archive; lb_80011710 copies it to runtime.
+struct DISC_STRUCT DynamicsTemplate {
+    /* +0 */ DISC_PTR(struct lb_00F9_UnkDesc1Inner) params DAT_COUNT(count);
+    /* +4 */ unsigned int count;
+    /* +8 */ DiscVec3 pos;
+};
+DISC_ASSERT_SIZE(struct DynamicsTemplate, 0x14);
+
+/// A bone-linked dynamics template as stored in archives.
+struct DISC_STRUCT BoneDynamicsTemplate {
+    enum_t bone_id;
+    DynamicsTemplate dyn_desc;
+};
+DISC_ASSERT_SIZE(struct BoneDynamicsTemplate, 0x18);
 
 struct lb_8000FD18_t {
     char pad_0[0x94];
@@ -1011,11 +1036,11 @@ union CmdUnion {
 struct CommandInfo {
     f32 timer;       // 0x00
     f32 frame_count; // 0x04
-    union {
+    union CommandInfo_x8 {
         u32* ptr[1]; ///< @todo Hack to match #Command_04
         /// @todo eventually clean this up, probably have each struct as its
         CmdUnion* u;
-    };
+    } x8;
     u32 loop_count; // 0x0C
     /* 0x10..0x23 on GameCube: five slots, which is what the interpreter can
      * push (two nested loops of two entries plus one subroutine return).

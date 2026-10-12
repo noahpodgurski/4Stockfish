@@ -18,14 +18,6 @@
 #include <melee/it/itzako.h>
 #include <sysdolphin/baselib/random.h>
 
-typedef struct DISC_STRUCT itOldkuriAttributes {
-    DISC_PTR(DiscS32) x0;
-    f32 x4;
-    f32 x8;
-    f32 xC;
-} itOldkuriAttributes;
-DISC_ASSERT_SIZE(itOldkuriAttributes, 0x10);
-
 ItemStateTable it_803F8320[] = {
     { -1, itOldkuri_UnkMotion0_Anim, itOldkuri_UnkMotion0_Phys,
       itOldkuri_UnkMotion0_Coll },

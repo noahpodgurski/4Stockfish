@@ -73,7 +73,7 @@ HSD_GObj* it_802B55C8(Fighter_GObj* gobj, Vec3* pos, enum Fighter_Part arg2,
     si.vel.x = si.vel.y = si.vel.z = 0.0f;
     si.x0_parent_gobj = gobj;
     si.x4_parent_gobj2 = si.x0_parent_gobj;
-    si.x44_flag.b0 = true;
+    si.x44_flag.x0.b0 = true;
     si.x40 = 0;
     n = Item_80268B18(&si);
     if (n != NULL) {

@@ -36,6 +36,7 @@
 
 char* GetNameText(u8 slot);
 int GetNameCount(void);
+void lbCardGame_SaveChanges(void);
 
 // Local inline JObj functions using the weak HSD_JObjSetMtxDirty pattern
 static inline f32 mnVibration_JObjGetTranslationX(HSD_JObj* jobj)
@@ -115,40 +116,16 @@ AnimLoopSettings mnVibration_803EECE0 = { 0.0f, 20.0f, -0.1f };
 AnimLoopSettings mnVibration_803EECEC = { 50.0f, 70.0f, -0.1f };
 AnimLoopSettings mnVibration_803EECF8 = { 0.0f, 14.0f, -0.1f };
 Vec3 mnVibration_803EED04 = { -0.4f, 0.5f, 0.0f };
-#ifdef MUST_MATCH
-#pragma push
-#pragma force_active on
-#endif
-static char mnVibration_803EED10[0x18] = "Can't get user_data.\n";
-static char mnVibration_803EED28[0x10] = "mnvibration.c";
-static char mnVibration_803EED38[0xC] = "user_data";
-static char mnVibration_803EED44[0x18] = "MenMainConVi_Top_joint";
-static char mnVibration_803EED5C[0x1C] = "MenMainConVi_Top_animjoint";
-static char mnVibration_803EED78[0x20] = "MenMainConVi_Top_matanim_joint";
-static char mnVibration_803EED98[0x24] = "MenMainConVi_Top_shapeanim_joint";
-static char mnVibration_803EEDBC[0x18] = "MenMainCtlVi_Top_joint";
-static char mnVibration_803EEDD4[0x1C] = "MenMainCtlVi_Top_animjoint";
-static char mnVibration_803EEDF0[0x20] = "MenMainCtlVi_Top_matanim_joint";
-static char mnVibration_803EEE10[0x24] = "MenMainCtlVi_Top_shapeanim_joint";
-static char mnVibration_803EEE34[0x1C] = "MenMainOnoffVi_Top_joint";
-static char mnVibration_803EEE50[0x20] = "MenMainOnoffVi_Top_animjoint";
-static char mnVibration_803EEE70[0x24] = "MenMainOnoffVi_Top_matanim_joint";
-static char mnVibration_803EEE94[0x24] = "MenMainOnoffVi_Top_shapeanim_joint";
-static char mnVibration_803EEEB8[0x20] = "MenMainCursorVi_Top_joint";
-
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 // --- Globals ---
 HSD_GObj* mnVibration_804D6C28;
 
 /// --- Local Helper Structs ---
 typedef struct MnVibrationJointAssets {
-    void* joint;     // 0x00
-    void* animjoint; // 0x04
-    void* matanim;   // 0x08
-    void* shapeanim; // 0x0C
+    HSD_Joint* joint;              // 0x00
+    HSD_AnimJoint* animjoint;      // 0x04
+    HSD_MatAnimJoint* matanim;     // 0x08
+    HSD_ShapeAnimJoint* shapeanim; // 0x0C
 } MnVibrationJointAssets;
 
 typedef struct MnVibrationData {
@@ -1056,7 +1033,7 @@ void mnVibration_CreateScreen(s32 arg0)
     MnVibrationData* data;
 
     (void) arg0;
-    PAD_STACK(24);
+    PAD_STACK(20);
     assets = &mnVibration_804A0898;
     gobj = GObj_Create(6, 7, 0x80);
     mnVibration_804D6C28 = gobj;
@@ -1068,8 +1045,8 @@ void mnVibration_CreateScreen(s32 arg0)
     HSD_JObjReqAnimAll(jobj, 0.0f);
     data = HSD_MemAlloc(sizeof(MnVibrationData));
     if (data == NULL) {
-        OSReport(mnVibration_803EED10);
-        __assert(mnVibration_803EED28, 0x3A7, mnVibration_803EED38);
+        OSReport("Can't get user_data.\n");
+        __assert("mnvibration.c", 0x3A7, "user_data");
     }
     data->x0[0] = 0;
     data->x0[1] = 0;
@@ -1078,14 +1055,9 @@ void mnVibration_CreateScreen(s32 arg0)
         data->x6[i] = HSD_PadCopyStatus[(u8) i].err != 0 ? 0 : 1;
     }
     data->scroll_offset = 0;
-    data->texts[0] = NULL;
-    data->texts[1] = NULL;
-    data->texts[2] = NULL;
-    data->texts[3] = NULL;
-    data->texts[4] = NULL;
-    data->texts[5] = NULL;
-    data->texts[6] = NULL;
-    data->texts[7] = NULL;
+    for (i = 0; i < 8; i++) {
+        data->texts[i] = NULL;
+    }
     GObj_InitUserData(gobj, 0, HSD_Free, data);
     {
         s32 k = 0;
@@ -1124,24 +1096,21 @@ void mnVibration_Init(int arg0)
     archive = mn_804D6BB8;
 
     lbArchive_LoadSections(
-        archive, &mnVibration_804A0898.joint, mnVibration_803EED44,
-        &mnVibration_804A0898.animjoint, mnVibration_803EED5C,
-        &mnVibration_804A0898.matanim, mnVibration_803EED78,
-        &mnVibration_804A0898.shapeanim, mnVibration_803EED98,
-
-        &mnVibration_804A0878.joint, mnVibration_803EEDBC,
-        &mnVibration_804A0878.animjoint, mnVibration_803EEDD4,
-        &mnVibration_804A0878.matanim, mnVibration_803EEDF0,
-        &mnVibration_804A0878.shapeanim, mnVibration_803EEE10,
-
-        &mnVibration_804A0888.joint, mnVibration_803EEE34,
-        &mnVibration_804A0888.animjoint, mnVibration_803EEE50,
-        &mnVibration_804A0888.matanim, mnVibration_803EEE70,
-        &mnVibration_804A0888.shapeanim, mnVibration_803EEE94,
-
-        &mnVibration_804A0868.joint, mnVibration_803EEEB8,
-
+        archive, &mnVibration_804A0898.joint, "MenMainConVi_Top_joint",
+        &mnVibration_804A0898.animjoint, "MenMainConVi_Top_animjoint",
+        &mnVibration_804A0898.matanim, "MenMainConVi_Top_matanim_joint",
+        &mnVibration_804A0898.shapeanim, "MenMainConVi_Top_shapeanim_joint",
+        &mnVibration_804A0878.joint, "MenMainCtlVi_Top_joint",
+        &mnVibration_804A0878.animjoint, "MenMainCtlVi_Top_animjoint",
+        &mnVibration_804A0878.matanim, "MenMainCtlVi_Top_matanim_joint",
+        &mnVibration_804A0878.shapeanim, "MenMainCtlVi_Top_shapeanim_joint",
+        &mnVibration_804A0888.joint, "MenMainOnoffVi_Top_joint",
+        &mnVibration_804A0888.animjoint, "MenMainOnoffVi_Top_animjoint",
+        &mnVibration_804A0888.matanim, "MenMainOnoffVi_Top_matanim_joint",
+        &mnVibration_804A0888.shapeanim, "MenMainOnoffVi_Top_shapeanim_joint",
+        &mnVibration_804A0868.joint, "MenMainCursorVi_Top_joint",
         NULL);
+
 
     mnVibration_CreateScreen(arg0);
 

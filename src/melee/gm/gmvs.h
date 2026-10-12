@@ -12,7 +12,8 @@
 /* 16AE80 */ s32 gm_8016AE80(void);
 /* 16AE94 */ f32 gm_8016AE94(void);
 /* 16AEA4 */ u64 gm_8016AEA4(void);
-/* 16AEB8 */ s32 gm_8016AEB8(void);
+/* 16AEB8 */ ItemKind gm_8016AEB8(void);
+/// s32, not bool: callers test the -1/-2 SD penalty, which _Bool clamps to 1.
 /* 16AEC8 */ s32 gm_8016AEC8(void);
 /* 16AEDC */ u32 gm_GetFrameCount(void);
 /* 16AEEC */ u32 gm_8016AEEC(void);

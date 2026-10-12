@@ -115,7 +115,7 @@ int it_80291DAC(Item_GObj* gobj, int arg1)
     s32 level;
     int cost;
     int i;
-    PAD_STACK(12);
+    PAD_STACK(8);
 
     if (ip->xD4C <= 0) {
         return -1;

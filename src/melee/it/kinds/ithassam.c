@@ -22,20 +22,6 @@
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/jobj.h>
 
-/* ponytail: decomp casts x4_specialAttributes to itHassam_ItemVars (a runtime
- * Item union member); mirror only the disc fields actually read here. */
-typedef struct DISC_STRUCT itHassamAttributes {
-    f32 x0;
-    f32 x4;
-    f32 x8;
-    f32 xC;
-    f32 x10;
-    f32 x14;
-    s32 x18;
-    s32 x1C;
-    s32 x20;
-} itHassamAttributes;
-DISC_ASSERT_SIZE(itHassamAttributes, 0x24);
 
 /* 2CDC5C */ static void itHassam_802CDC5C(Item_GObj* gobj);
 /* 2CDC80 */ static void itHassam_802CDC80(Item_GObj* gobj);

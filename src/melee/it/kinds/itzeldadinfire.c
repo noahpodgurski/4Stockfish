@@ -28,24 +28,6 @@ ItemStateTable ItemStateTable_ZeldaDinFire[] = {
       itZeldadinfire_UnkMotion1_Coll },
 };
 
-/* Din's Fire article special attributes, read in place through
- * Article::x4_specialAttributes. Distinct from itZeldaDinFire_ItemVars
- * (itCommonItems.h), which is the native ip+DD4 runtime view. */
-typedef struct DISC_STRUCT {
-    float x0;
-    float x4;
-    float x8;
-    float xC;
-    float x10;
-    float x14;
-    float x18;
-    float x1C;
-    float x20;
-    float x24;
-    float x28;
-    float x2C;
-} ItZeldaDinFire_ItemVars;
-DISC_ASSERT_SIZE(ItZeldaDinFire_ItemVars, 0x30);
 
 Fighter_GObj* itZeldaDinFire_GetOwner(Item_GObj* gobj)
 {
@@ -88,7 +70,7 @@ Item_GObj* it_802C3BAC(Item_GObj* gobj, Vec* vec, float facing_dir, float arg3)
     si.vel.x = si.vel.y = si.vel.z = 0.0f;
     si.x0_parent_gobj = gobj;
     si.x4_parent_gobj2 = si.x0_parent_gobj;
-    si.x44_flag.b0 = 1;
+    si.x44_flag.x0.b0 = 1;
     si.x40 = 0;
     n = Item_80268B18(&si);
     if (n != NULL) {

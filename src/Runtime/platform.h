@@ -5,6 +5,9 @@
 #include <stddef.h>  // IWYU pragma: export
 
 #include <dolphin/types.h> // IWYU pragma: export
+#ifdef TARGET_PC
+#include <sys/types.h> // IWYU pragma: export
+#endif
 
 /// @typedef bool
 /// @note Dolphin's #BOOL macro is not supported.
@@ -26,9 +29,8 @@
 
 /// The underlying type of an @c enum, used as a placeholder
 typedef int enum_t;
-
-/// Signed variant of ::size_t
 #ifndef TARGET_PC
+/// Signed variant of ::size_t
 typedef signed int ssize_t;
 #endif
 
@@ -117,8 +119,10 @@ typedef bool (*Predicate)(void);
     struct {                                                                  \
         int x[1 - 2 * !(cond)];                                               \
     };
-#else
+#elif defined(LINT)
 #define STATIC_ASSERT(cond) _Static_assert((cond), "(" #cond ") failed")
+#else
+#define STATIC_ASSERT(cond)
 #endif
 
 #if defined(MUST_MATCH) || defined(LINT)
@@ -153,6 +157,13 @@ typedef bool (*Predicate)(void);
 #define SECTION_CTORS
 #define SECTION_DTORS
 #define ATTRIBUTE_RESTRICT
+#endif
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#ifndef M_PI_2
+#define M_PI_2 (M_PI / 2)
 #endif
 
 #define M_TAU 6.283185307179586
