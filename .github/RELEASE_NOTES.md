@@ -26,6 +26,9 @@ English (UK) text.
 
 ## Fixes
 
+- Fixed garbled, overlapping and off-centre original menu text caused by incorrect
+  indexing into the font spacing table.
+
 - Fixed `mnDiagram_SortNamesByKOs` indexing beyond its buffer and corrupting adjacent
   menu descriptors (#123).
 - Replaced indexed stack reads in `ftCo_DeadUpStar_Anim` with direct `ftCommonData`

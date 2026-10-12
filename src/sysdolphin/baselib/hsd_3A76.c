@@ -306,7 +306,7 @@ void HSD_SisLib_803A8134(void* cursor, HSD_Text* text, f32* out_width,
     uintptr_t pop_result;
     TextKerning* kern_data_2;
     u8 opcode;
-    TextKerning* kern_data;
+    TextGlyphMetrics* kern_data;
     saved_scale_x = text->x80.x;
     saved_scale_y = text->x80.y;
     saved_spacing = text->x78.x;
@@ -388,10 +388,7 @@ loop_3:
             if (kern_enabled != 0) {
                 glyph_code = sis_glyph(cursor);
                 if (glyph_code < 0x4000U) {
-                    kern_data =
-                        (TextKerning*) (default_kerning +
-                                        (((glyph_code - 0x2000) * 2) &
-                                         0x1FFFE));
+                    kern_data = &default_kerning[glyph_code - 0x2000];
                     kern_width = kern_data->left + kern_data->right - 2;
                     *out_width =
                         -((text->x80.x * (f32) kern_width) - *out_width);
@@ -849,7 +846,7 @@ void HSD_SisLib_803A84BC(HSD_GObj* gobj, uintptr_t pass)
                                 scale_x = text->font_size.x;
                                 if ( text->kerning != 0) {
                                     if (glyph_idx < 0x4000U) {
-                                        glyph_x = -((scale_x * (text->x80.x * (f32) (default_kerning[(tex_offset * 2) & 0x1FFFE].left - 1))) - glyph_x);
+                                        glyph_x = -((scale_x * (text->x80.x * (f32) (default_kerning[tex_offset].left - 1))) - glyph_x);
                                     } else {
                                         glyph_x = -((scale_x * (text->x80.x * (f32) (textures->data[(tex_offset * 2) & 0x1FFFE] - 1))) - glyph_x);
                                     }
@@ -928,7 +925,7 @@ void HSD_SisLib_803A84BC(HSD_GObj* gobj, uintptr_t pass)
                                     if ( text->kerning != 0) {
                                         if (glyph_idx < 0x4000U) {
                                             TextGlyphMetrics* kern_pair =
-                                                &default_kerning[(tex_offset * 2) & 0x1FFFE];
+                                                &default_kerning[tex_offset];
                                             tex_offset = (clear_idx = kern_pair->right - 2);
                                             text->current_width = (-((text->x88 * (text->x80.x * (f32) (kern_pair->left + tex_offset))) - text->current_width));
                                         } else {
