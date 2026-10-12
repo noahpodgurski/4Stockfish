@@ -16,20 +16,29 @@ English (UK) text.
 
 ## Highlights
 
-- **Direct Connect** accepts a friend's eight-character code in the game,
-  offers clipboard and recent opponents, and lets either player call.
-- Set `MELEE_SLP_DIR` to record offline or online VS matches as `.slp` replays
-  (off by default).
+- **Upstream doldecomp/melee sync**: 57 upstream commits ported up to `79b13a324`,
+  incorporating archive data annotations, typed item and stage attributes,
+  and structured control flow improvements.
+- **Renderer & dependency updates**: Vendored Aurora updated to `40cf48fce`, adding
+  reusable `LruCache` texture management, compiled pipeline prepasses, dual-source
+  blending, and an updated gamepad/input layer.
+- **SDL3 tracking**: Pinned to latest development main (`a419debd2`).
 
 ## Fixes
 
-- Fixed Items: Off online handshakes, sped up matchmaking, and corrected LAN
-  discovery on non-release builds and Windows VPN setups (thanks @Joyastick,
-  #91–#93).
-- Improved rollback, desync handling and netplay sound effects.
-- Fixed the Android startup library mismatch. Android now warms known graphics
-  pipelines while Direct Connect waits; occasional frame stalls remain.
-
+- Fixed `mnDiagram_SortNamesByKOs` indexing beyond its buffer and corrupting adjacent
+  menu descriptors (#123).
+- Replaced indexed stack reads in `ftCo_DeadUpStar_Anim` with direct `ftCommonData`
+  member accesses (#122).
+- Fixed Pikachu Thunder segfault caused by host 64-bit struct padding leaving stale
+  Thunder GObj pointers (#121).
+- Enforced deterministic build paths with `-ffile-prefix-map` in CMake and
+  `-fmacro-prefix-map` (#114).
+- Fixed Pokemon Stadium stage transformation table indexing and guarded async archive
+  parsing loop (#113).
+- Resolved Apple Silicon macOS archive crashes caused by variadic 64-bit zero sentinel
+  promotions (#112).
+- Corrected Windows updater browser redirects from showing false download completions (#108).
 ## Known issues
 
 Open reports are tracked on the [issue tracker](https://github.com/999sian/melee-pc/issues);
@@ -42,7 +51,7 @@ the numbers below link there.
   NATs in general and live ranked acceptance are unproven, and cross-platform simulation
   determinism is not claimed. Ratings are community-computed and unverified.
   Every datagram is authenticated (protocol 9), and the LAN lobby
-  only pairs identical builds, so both players should update to v0.2.2. A
+  only pairs identical builds, so both players should update to v0.3.0. A
   connect code is 8 characters after the `#`.
 - Widescreen applies to fights (VS, Sudden Death, Training); menus, results and
   cutscenes stay at the original aspect. The wide HUD is a separate toggle and
