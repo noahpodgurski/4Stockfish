@@ -331,8 +331,14 @@ jobs:
           # A tag containing a hyphen (v0.1.0-beta) is a prerelease.
           prerelease=""
           [[ "${GITHUB_REF_NAME}" == *-* ]] && prerelease="--prerelease"
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "${GITHUB_REF_NAME}" \
-            --notes-file .github/RELEASE_NOTES.md \
-            ${prerelease} \
-            artifacts/*
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" artifacts/* --clobber
+            gh release edit "${GITHUB_REF_NAME}" \
+              --notes-file .github/RELEASE_NOTES.md
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "${GITHUB_REF_NAME}" \
+              --notes-file .github/RELEASE_NOTES.md \
+              ${prerelease} \
+              artifacts/*
+          fi
