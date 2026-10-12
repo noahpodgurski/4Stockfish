@@ -14,6 +14,7 @@
 #include <aurora/event.h>
 #include <aurora/gfx.h>
 #include <aurora/rmlui.hpp>
+#include <aurora/input.hpp>
 /* TargetConditionals.h defines TARGET_OS_IPHONE on macOS too, as 0, so this
  * has to test its value: defined() alone pulled the iOS-only dialog into the
  * macOS build and left the link short a symbol. */
@@ -38,6 +39,25 @@
 namespace {
 launcher::Preferences prefs;
 std::filesystem::path config_path;
+
+/* Aurora's input router no longer feeds RmlUi itself: the host registers a
+ * layer that forwards events to aurora::rmlui::process_input. Without it the
+ * launcher and F1 menu get no mouse, touch or keyboard input at all. */
+void ensure_rmlui_input_layer() {
+    static aurora::input::LayerId layer = aurora::input::kInvalidLayerId;
+    if (layer != aurora::input::kInvalidLayerId)
+        return;
+    layer = aurora::input::register_layer({
+        .label = "melee.rmlui",
+        .priority = aurora::input::kRmlUiLayerPriority,
+        .onEvent =
+            [](const aurora::input::InputEvent& event, void*) {
+                return aurora::rmlui::process_input(event).handled ?
+                           aurora::input::EventResult::Consume :
+                           aurora::input::EventResult::Pass;
+            },
+    });
+}
 
 void refresh_online(Rml::ElementDocument* doc) {
     pc_net_set_input_delay(prefs.net_delay);
@@ -1160,6 +1180,7 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
             error = info.supported ? "Could not load the requested disc. Choose another image." :
                                      info.message;
         }
+        ensure_rmlui_input_layer();
         auto* context = aurora::rmlui::get_context();
         if (!context) {
             SDL_Log("Launcher: RmlUi context is unavailable.");
@@ -1774,6 +1795,7 @@ extern "C" void pc_menu_init(SDL_Window* window) {
     pc_audio_set_music_volume(prefs.music_volume);
     pc_audio_set_sfx_volume(prefs.sfx_volume);
     pc_audio_set_reverb(prefs.reverb);
+    ensure_rmlui_input_layer();
     auto* context = aurora::rmlui::get_context();
     if (!context) {
         SDL_Log("F1 menu: RmlUi context unavailable");
