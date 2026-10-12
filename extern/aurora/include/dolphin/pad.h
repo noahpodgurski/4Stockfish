@@ -170,6 +170,11 @@ typedef struct PADKeyAxisBinding {
   s16 influence; // normalized percentage between 0 and 1
 } PADKeyAxisBinding;
 
+typedef struct PADDefaultKeyBindings {
+  PADKeyButtonBinding buttons[PAD_BUTTON_COUNT];
+  PADKeyAxisBinding axes[PAD_AXIS_COUNT];
+} PADDefaultKeyBindings;
+
 /* New API to facilitate controller interactions */
 typedef struct PADDeadZones {
   bool emulateTriggers;
@@ -219,6 +224,8 @@ PADKeyButtonBinding* PADGetKeyButtonBindings(u32 port, u32* buttonCount);
 BOOL PADSetKeyAxisBinding(u32 port, PADKeyAxisBinding binding);
 BOOL PADSetKeyAxisBindings(u32 port, PADKeyAxisBinding bindings[PAD_BUTTON_COUNT]);
 PADKeyAxisBinding* PADGetKeyAxisBindings(u32 port, u32* axisCount);
+BOOL PADSetDefaultKeyBindings(u32 port, const PADDefaultKeyBindings* bindings);
+void PADRestoreDefaultKeyBindings(u32 port);
 void PADClearKeyBindings(u32 port);
 void PADSetKeyboardActive(u32 port, BOOL active);
 
@@ -245,6 +252,11 @@ void PADBlockInput(bool block);
 void PADSetVirtualStatus(u32 port, const PADStatus* status);
 void PADClearVirtualStatus(u32 port);
 void PADClearAllVirtualStatus();
+
+/* Returns TRUE once after held input on the port was cancelled, e.g. because a menu opened. */
+BOOL PADConsumeCancellation(u32 port);
+/* Returns TRUE while something above gameplay, such as a menu, captures any input the port reads. */
+BOOL PADIsInputCaptured(u32 port);
 
 /**
  * Set the default controller mapping used.

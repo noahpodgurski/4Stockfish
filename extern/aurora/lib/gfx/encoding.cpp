@@ -32,7 +32,7 @@ using webgpu::g_queue;
 
 namespace {
 constexpr Module Log{"aurora::gfx"};
-PipelineRef g_currentPipeline;
+WGPURenderPipeline g_currentPipeline = nullptr;
 
 void apply_viewport(const wgpu::RenderPassEncoder& pass, const Viewport& vp) {
   const float minDepth = gx::UseReversedZ ? 1.f - vp.zfar : vp.znear;
@@ -107,7 +107,7 @@ void execute_encoder_task(wgpu::CommandEncoder& cmd, FramePacket& frame, const E
 
 void render_pass(const wgpu::RenderPassEncoder& pass, FramePacket& frame, RenderPass& passInfo) {
   ZoneScoped;
-  g_currentPipeline = UINTPTR_MAX;
+  g_currentPipeline = nullptr;
 #ifdef AURORA_GFX_DEBUG_GROUPS
   std::vector<std::string> lastDebugGroupStack;
 #endif
@@ -160,7 +160,7 @@ void render_pass(const wgpu::RenderPassEncoder& pass, FramePacket& frame, Render
     } break;
     case CommandType::CustomDraw: {
       render_custom_draw(cmd.data.customDraw, pass, passInfo);
-      g_currentPipeline = UINTPTR_MAX;
+      g_currentPipeline = nullptr;
       pass.SetBindGroup(0, resources().staticBindGroup);
       pass.SetBindGroup(2, gx::g_emptyTextureBindGroup);
       if (hasViewport) {
@@ -262,6 +262,7 @@ void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& passInfo,
     const bool isDepth = gx::is_depth_format(passInfo.resolveFormat);
     const tex_copy_conv::ConvRequest convReq{
         .fmt = passInfo.resolveFormat,
+        .srcFmt = passInfo.resolveSourceFormat,
         .srcView = isDepth ? passInfo.copySourceDepthView : passInfo.copySourceView,
         .uniformRange = passInfo.resolveUniformRange,
         .dst = passInfo.resolveTarget,
@@ -270,9 +271,12 @@ void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& passInfo,
          * shader reads sample 0 of the multisampled texture instead. */
         .msaaSamples = isDepth ? passInfo.msaaSamples : 1,
     };
-    if (isDepth || needsConversion) {
+    const bool needsOpaqueAlpha = !isDepth && !gx::efb_has_alpha(convReq.srcFmt);
+    const bool sameFormat =
+        passInfo.resolveTarget->format == passInfo.colorAttachments[SceneColorAttachmentIndex].format;
+    if (needsConversion) {
       tex_copy_conv::run(cmd, convReq);
-    } else if (needsScaling) {
+    } else if (needsScaling || needsOpaqueAlpha || !sameFormat) {
       tex_copy_conv::blit(cmd, convReq);
     } else {
       const webgpu::gpu_prof::Zone zone{cmd, "EFB copy"};
@@ -437,16 +441,21 @@ void encode_op(wgpu::CommandEncoder& cmd, FramePacket& frame, const FrameOp& op)
 }
 } // namespace detail
 
-bool bind_pipeline(PipelineRef ref, const wgpu::RenderPassEncoder& pass) {
-  if (ref == g_currentPipeline) {
-    return true;
+void bind_pipeline(const wgpu::RenderPipeline& pipeline, const wgpu::RenderPassEncoder& pass) {
+  if (pipeline.Get() == g_currentPipeline) {
+    return;
   }
-  wgpu::RenderPipeline pipeline;
+  pass.SetPipeline(pipeline);
+  g_currentPipeline = pipeline.Get();
+}
+
+bool bind_pipeline(PipelineRef ref, const wgpu::RenderPassEncoder& pass) {
+  CompiledPipeline pipeline;
   if (!get_pipeline(ref, pipeline)) {
     return false;
   }
-  pass.SetPipeline(pipeline);
-  g_currentPipeline = ref;
+  AURORA_ASSERT(!pipeline.prepass, "Prepass pipelines require individual binding");
+  bind_pipeline(pipeline.main, pass);
   return true;
 }
 } // namespace aurora::gfx

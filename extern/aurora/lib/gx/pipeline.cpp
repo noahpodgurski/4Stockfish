@@ -14,12 +14,49 @@
 
 namespace aurora::gx {
 
-wgpu::RenderPipeline create_pipeline(const PipelineConfig& config, const gfx::RenderTargetLayout& layout) {
+gfx::CompiledPipeline create_pipeline(const PipelineConfig& config, const gfx::RenderTargetLayout& layout) {
   ZoneScoped;
-  const auto shader = build_shader(config.shaderConfig, layout);
-  const auto label = fmt::format("GX Pipeline {:x}",
-                                 xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(gfx::ShaderType::GX))));
-  return build_pipeline(config, layout, {}, shader, label.c_str());
+  const auto hash = xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(gfx::ShaderType::GX)));
+  const auto create = [&](const PipelineOptions& options, const char* passName) {
+    const auto shader = build_shader(config.shaderConfig, layout, options.dstAlphaMode);
+    const auto label = fmt::format("GX Pipeline {:x} {}", hash, passName);
+    return build_pipeline(config, layout, options, {}, shader, label.c_str());
+  };
+
+  PipelineOptions options{
+      .colorUpdate = config.colorUpdate,
+      .alphaUpdate = config.alphaUpdate,
+      .depthUpdate = config.depthUpdate,
+  };
+  gfx::CompiledPipeline pipeline;
+  if (config.alphaUpdate && config.dstAlpha != UINT32_MAX && config.dstAlpha != 0) {
+    const auto usesSourceAlpha = [](GXBlendFactor factor) {
+      return factor == GX_BL_SRCALPHA || factor == GX_BL_INVSRCALPHA;
+    };
+    const bool needsSourceAlpha = config.colorUpdate && config.blendMode == GX_BM_BLEND &&
+                                  (usesSourceAlpha(config.blendFacSrc) || usesSourceAlpha(config.blendFacDst));
+    if (!needsSourceAlpha) {
+      options.dstAlphaMode = DstAlphaMode::Replace;
+    } else if (webgpu::g_dualSourceBlendingSupported && layout.colorAttachmentCount == 1) {
+      options.dstAlphaMode = DstAlphaMode::DualSource;
+    } else {
+      // Write alpha before RGB, no depth write
+      auto alpha = options;
+      alpha.dstAlphaMode = DstAlphaMode::Replace;
+      alpha.colorUpdate = false;
+      alpha.depthUpdate = false;
+      pipeline.prepass = create(alpha, "alpha");
+      if (!pipeline.prepass) {
+        return {};
+      }
+      options.alphaUpdate = false;
+    }
+  }
+  pipeline.main = create(options, "main");
+  if (!pipeline.main) {
+    return {};
+  }
+  return pipeline;
 }
 
 // Diagnostics for the untextured-white-quad artifact in melee-pc:
@@ -40,10 +77,11 @@ static bool env_flag(const char* name) {
 }
 
 void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
-  if (!gfx::bind_pipeline(data.pipeline, pass)) {
-    /* AURORA_LOG_SKIPPED=1: report draws dropped because their pipeline is
-     * still compiling. Pipelines are built asynchronously and an unready one
-     * silently skips its draw, so a short-lived screen can miss its geometry
+gfx::CompiledPipeline pipeline;
+  if (!gfx::get_pipeline(data.pipeline, pipeline)) {
+    /* AURORA_LOG_SKIPPED=1: report draws dropped because pipeline
+     * is still compiling. Pipelines built asynchronously but unready
+     * silently skip their draw, so short-lived screens can miss geometry
      * entirely on a cold cache. */
     if (env_flag("AURORA_LOG_SKIPPED")) {
       static u32 count = 0;
@@ -55,10 +93,8 @@ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
     return;
   }
 
-  // AURORA_ONLY_UNTEX_VTX=<n>: render ONLY untextured draws with n vertices
-  // and drop everything else, so the offending geometry can be seen in
-  // isolation on a black frame. Suppressing a draw proves it is responsible;
-  // isolating it shows WHAT it is.
+  // AURORA_ONLY_UNTEX_VTX=<n>: render ONLY untextured draws with n vertices.
+  // Drop everything else, so suspect geometry is isolated on a black frame.
   {
     static const long onlyN = [] {
       const char* v = std::getenv("AURORA_ONLY_UNTEX_VTX");
@@ -73,16 +109,10 @@ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
   if (!data.bindGroups.textureBindGroup) {
     static const bool skip = env_flag("AURORA_SKIP_UNTEX");
     static const bool log = env_flag("AURORA_LOG_UNTEX");
-    // AURORA_SKIP_UNTEX_VTX=<n>: only drop untextured draws with exactly n
-    // vertices, so a suspect quad can be removed without also removing the
-    // legitimate untextured geometry that shares this path.
     static const long onlyVtx = [] {
       const char* v = std::getenv("AURORA_SKIP_UNTEX_VTX");
       return v != nullptr ? std::strtol(v, nullptr, 10) : 0L;
     }();
-    // Untextured quads are the shape the artifact takes, so report those
-    // individually and the rest only sparsely. The per-vertex byte stride
-    // discriminates a 2D sprite quad (XY + ST floats = 16B) from 3D geometry.
     if (log) {
       static uint64_t n = 0;
       const bool quad = data.vtxCount == 4;
@@ -101,7 +131,6 @@ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
       return;
     }
   }
-
   const auto& resources = gfx::detail::resources();
 #ifdef __EMSCRIPTEN__
   const std::array immediateOffsets{data.immediateRange.offset};
@@ -119,11 +148,19 @@ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
     const wgpu::Color color{0.f, 0.f, 0.f, data.dstAlpha / 255.f};
     pass.SetBlendConstant(&color);
   }
-  if (data.indexCount == 0) {
-    pass.Draw(data.vtxCount, data.instanceCount);
-  } else {
-    pass.DrawIndexed(data.indexCount, data.instanceCount);
+  const auto draw = [&] {
+    if (data.indexCount == 0) {
+      pass.Draw(data.vtxCount, data.instanceCount);
+    } else {
+      pass.DrawIndexed(data.indexCount, data.instanceCount);
+    }
+  };
+  if (pipeline.prepass) {
+    gfx::bind_pipeline(pipeline.prepass, pass);
+    draw();
   }
+  gfx::bind_pipeline(pipeline.main, pass);
+  draw();
 }
 
 } // namespace aurora::gx

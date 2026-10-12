@@ -22,6 +22,15 @@ enum class ShaderType : uint8_t {
   Rml = 2,
 };
 
+struct CompiledPipeline {
+  wgpu::RenderPipeline main;
+  wgpu::RenderPipeline prepass;
+
+  [[nodiscard]] uint32_t pipeline_count() const {
+    return static_cast<uint32_t>(static_cast<bool>(main)) + static_cast<uint32_t>(static_cast<bool>(prepass));
+  }
+};
+
 void initialize_pipeline_cache();
 void shutdown_pipeline_cache();
 void begin_pipeline_frame();
@@ -32,7 +41,7 @@ PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLa
 PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTargetLayout& layout);
 PipelineRef find_pipeline(const rmlui::PipelineConfig& config);
 
-bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline);
+bool get_pipeline(PipelineRef ref, CompiledPipeline& pipeline);
 /* Blocks up to maxWaitMs while queued pipelines compile; returns how many are
  * still pending (queued or mid-compile). */
 uint32_t wait_pipelines(uint32_t maxWaitMs);

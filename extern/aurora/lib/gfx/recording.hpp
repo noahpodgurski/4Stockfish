@@ -20,9 +20,16 @@ void shutdown_recording();
 void increment_merged_draw_count() noexcept;
 
 namespace testing {
+struct OffscreenCacheStats {
+  uint64_t bytes;
+  size_t entries;
+};
 void suppress_render_worker(bool suppress) noexcept;
 void seed_offscreen_cache(uint32_t width, uint32_t height, wgpu::TextureFormat colorFormat,
                           wgpu::TextureFormat depthFormat);
+OffscreenCacheStats offscreen_cache_stats() noexcept;
+bool is_offscreen_cached(uint32_t width, uint32_t height, wgpu::TextureFormat colorFormat,
+                         wgpu::TextureFormat depthFormat);
 }
 
 } // namespace aurora::gfx::detail
@@ -103,7 +110,8 @@ template <typename PipelineConfig>
 PipelineRef pipeline_ref(const PipelineConfig& config);
 
 void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bool clearAlpha, bool clearDepth,
-                       Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat = GX_TF_RGBA8);
+                       Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat,
+                       GXPixelFmt sourceFormat);
 uint32_t align_uniform(uint32_t value);
 Vec2<uint32_t> get_render_target_size() noexcept;
 void set_viewport(const Viewport& viewport) noexcept;

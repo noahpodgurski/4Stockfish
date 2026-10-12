@@ -2,6 +2,7 @@
 
 #include "encoding.hpp"
 #include "frame.hpp"
+#include "lru_cache.hpp"
 #include "resource_cache.hpp"
 
 #include "clear.hpp"
@@ -28,7 +29,6 @@
 #include <utility>
 #include <vector>
 
-#include <absl/container/flat_hash_map.h>
 #include <magic_enum.hpp>
 #include <tracy/Tracy.hpp>
 
@@ -128,18 +128,25 @@ void set_single_color_target(RenderPass& pass, wgpu::TextureFormat format, const
 struct OffscreenCacheKey {
   uint32_t width;
   uint32_t height;
+  wgpu::TextureFormat colorFormat;
+  wgpu::TextureFormat depthFormat;
 
-  bool operator==(const OffscreenCacheKey& rhs) const { return width == rhs.width && height == rhs.height; }
+  bool operator==(const OffscreenCacheKey&) const = default;
   template <typename H>
   friend H AbslHashValue(H h, const OffscreenCacheKey& key) {
-    return H::combine(std::move(h), key.width, key.height);
+    return H::combine(std::move(h), key.width, key.height, key.colorFormat, key.depthFormat);
   }
 };
 struct OffscreenCacheEntry {
   webgpu::TextureWithSampler color;
   webgpu::TextureWithSampler depth;
+
+  uint64_t size_bytes() const {
+    return calc_texture_size(color.format, color.size.width, color.size.height, 1) +
+           calc_texture_size(depth.format, depth.size.width, depth.size.height, 1);
+  }
 };
-absl::flat_hash_map<OffscreenCacheKey, OffscreenCacheEntry> g_offscreenCache;
+LruCache<OffscreenCacheKey, OffscreenCacheEntry> g_offscreenCache{RenderTextureCacheLimits};
 
 // Pooled destinations for the public resolve_pass API. Entries are recycled
 // per frame slot: a slot is only re-acquired after the render worker has
@@ -169,7 +176,7 @@ PassSnapshotEntry& acquire_pass_snapshot(uint32_t width, uint32_t height, bool w
     const auto format = webgpu::g_graphicsConfig.surfaceConfiguration.format;
     const wgpu::TextureDescriptor desc{
         .label = "Pass Snapshot Color",
-        .usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding,
+        .usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopySrc,
         .dimension = wgpu::TextureDimension::e2D,
         .size = size,
         .format = format,
@@ -188,7 +195,7 @@ PassSnapshotEntry& acquire_pass_snapshot(uint32_t width, uint32_t height, bool w
   if (wantDepth && (!entry.depth.texture || entry.depth.size.width != width || entry.depth.size.height != height)) {
     const wgpu::TextureDescriptor desc{
         .label = "Pass Snapshot Depth",
-        .usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding,
+        .usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopySrc,
         .dimension = wgpu::TextureDimension::e2D,
         .size = size,
         .format = wgpu::TextureFormat::R32Float,
@@ -207,7 +214,7 @@ PassSnapshotEntry& acquire_pass_snapshot(uint32_t width, uint32_t height, bool w
   if (wantNormal && (!entry.normal.texture || entry.normal.size.width != width || entry.normal.size.height != height)) {
     const wgpu::TextureDescriptor desc{
         .label = "Pass Snapshot Normal",
-        .usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding,
+        .usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopySrc,
         .dimension = wgpu::TextureDimension::e2D,
         .size = size,
         .format = webgpu::NormalBufferFormat,
@@ -370,11 +377,12 @@ void push_draw_command(DrawCommand data) {
 }
 
 OffscreenCacheEntry get_offscreen_textures(uint32_t width, uint32_t height) {
-  OffscreenCacheKey key{width, height};
-  if (const auto it = g_offscreenCache.find(key); it != g_offscreenCache.end()) {
-    return it->second;
-  }
   const auto colorFormat = webgpu::g_graphicsConfig.surfaceConfiguration.format;
+  const auto depthFormat = webgpu::g_graphicsConfig.depthFormat;
+  const OffscreenCacheKey key{width, height, colorFormat, depthFormat};
+  if (const auto* entry = g_offscreenCache.find(key)) {
+    return *entry;
+  }
   const wgpu::Extent3D size{width, height, 1};
   const wgpu::TextureDescriptor colorDesc{
       .label = "Offscreen Color",
@@ -394,7 +402,6 @@ OffscreenCacheEntry get_offscreen_textures(uint32_t width, uint32_t height) {
       .size = size,
       .format = colorFormat,
   };
-  const auto depthFormat = webgpu::g_graphicsConfig.depthFormat;
   const wgpu::TextureDescriptor depthDesc{
       .label = "Offscreen Depth",
       .usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding,
@@ -416,8 +423,8 @@ OffscreenCacheEntry get_offscreen_textures(uint32_t width, uint32_t height) {
       .color = std::move(color),
       .depth = std::move(depth),
   };
-  auto [insertIt, _] = g_offscreenCache.emplace(key, std::move(entry));
-  return insertIt->second;
+  g_offscreenCache.insert(key, entry, entry.size_bytes());
+  return entry;
 }
 
 void enqueue_pass(FramePacket& frame, uint32_t passIndex);
@@ -622,6 +629,9 @@ RecordedFrame end_recording() {
   const RecordedFrame recorded{.packet = g_recorder.packet, .frameSlot = g_recorder.frameSlot};
   g_recorder.packet = nullptr;
   g_recorder.frameSlot = 0;
+  g_offscreenCache.end_frame();
+  TracyPlot("aurora: offscreenCacheBytes", static_cast<int64_t>(g_offscreenCache.cached_bytes()));
+  TracyPlot("aurora: offscreenCacheEntries", static_cast<int64_t>(g_offscreenCache.cached_count()));
   return recorded;
 }
 
@@ -648,11 +658,20 @@ void suppress_render_worker(bool suppress) noexcept { g_recorder.suppressRenderW
 void seed_offscreen_cache(uint32_t width, uint32_t height, wgpu::TextureFormat colorFormat,
                           wgpu::TextureFormat depthFormat) {
   const wgpu::Extent3D size{width, height, 1};
-  g_offscreenCache.insert_or_assign(OffscreenCacheKey{width, height},
-                                    OffscreenCacheEntry{
-                                        .color = {.size = size, .format = colorFormat},
-                                        .depth = {.size = size, .format = depthFormat},
-                                    });
+  const OffscreenCacheEntry entry{
+      .color = {.size = size, .format = colorFormat},
+      .depth = {.size = size, .format = depthFormat},
+  };
+  g_offscreenCache.insert({width, height, colorFormat, depthFormat}, entry, entry.size_bytes());
+}
+
+OffscreenCacheStats offscreen_cache_stats() noexcept {
+  return {.bytes = g_offscreenCache.cached_bytes(), .entries = g_offscreenCache.cached_count()};
+}
+
+bool is_offscreen_cached(uint32_t width, uint32_t height, wgpu::TextureFormat colorFormat,
+                         wgpu::TextureFormat depthFormat) {
+  return g_offscreenCache.contains({width, height, colorFormat, depthFormat});
 }
 
 } // namespace testing
@@ -836,26 +855,33 @@ PipelineRef pipeline_ref(const clear::PipelineConfig& config) {
 }
 
 void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bool clearAlpha, bool clearDepth,
-                       Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat) {
+                       Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat,
+                       GXPixelFmt sourceFormat) {
   // Resolve current render pass
   auto& prevPass = current_render_passes()[g_recorder.currentRenderPass];
   prevPass.resolveTarget = std::move(texture);
   prevPass.resolveRect = rect;
   prevPass.resolveFormat = resolveFormat;
-  // Push UV transform uniform for tex_copy_conv (crop region in UV space)
+  prevPass.resolveSourceFormat = sourceFormat;
   const auto srcW = static_cast<float>(prevPass.colorAttachments[SceneColorAttachmentIndex].size.width);
   const auto srcH = static_cast<float>(prevPass.colorAttachments[SceneColorAttachmentIndex].size.height);
-  const std::array uvTransform{
-      static_cast<float>(rect.x) / srcW,
-      static_cast<float>(rect.y) / srcH,
-      static_cast<float>(rect.width) / srcW,
-      static_cast<float>(rect.height) / srcH,
+  const tex_copy_conv::Uniforms uniforms{
+      .offset = {static_cast<float>(rect.x) / srcW, static_cast<float>(rect.y) / srcH},
+      .scale = {static_cast<float>(rect.width) / srcW, static_cast<float>(rect.height) / srcH},
+      .opaqueAlpha = !gx::efb_has_alpha(sourceFormat),
   };
-  prevPass.resolveUniformRange = push_uniform(uvTransform);
+  prevPass.resolveUniformRange = push_uniform(uniforms);
   enqueue_pass(current_frame_packet(), g_recorder.currentRenderPass);
 
   // Populate new render pass from previous
   const auto msaaSamples = prevPass.msaaSamples;
+  const auto& targetSize = prevPass.colorAttachments[SceneColorAttachmentIndex].size;
+  const auto left = std::clamp<int32_t>(rect.x, 0, static_cast<int32_t>(targetSize.width));
+  const auto top = std::clamp<int32_t>(rect.y, 0, static_cast<int32_t>(targetSize.height));
+  const auto right = std::clamp<int32_t>(rect.x + rect.width, left, static_cast<int32_t>(targetSize.width));
+  const auto bottom = std::clamp<int32_t>(rect.y + rect.height, top, static_cast<int32_t>(targetSize.height));
+  const ClipRect clearRect{.x = left, .y = top, .width = right - left, .height = bottom - top};
+  const bool fullTarget = left == 0 && top == 0 && right == targetSize.width && bottom == targetSize.height;
   RenderPass newPass{
       .label = pass_label(g_recorder.inOffscreen ? "Offscreen" : "EFB"),
       .colorAttachments = prevPass.colorAttachments,
@@ -868,15 +894,15 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
       .copySourceNormalTexture = prevPass.copySourceNormalTexture,
       .msaaSamples = msaaSamples,
       .clearDepthValue = clearDepthValue,
-      .clearDepth = clearDepth,
+      .clearDepth = clearDepth && fullTarget,
       .hasDepth = prevPass.hasDepth,
       .hasStencil = prevPass.hasStencil,
   };
-  const bool fullColorClear = clearColor && clearAlpha;
+  const bool fullColorClear = clearColor && clearAlpha && fullTarget;
   for (uint32_t i = 0; i < newPass.colorAttachmentCount; ++i) {
     auto& color = newPass.colorAttachments[i];
     color.loadOp = wgpu::LoadOp::Undefined;
-    if (color.semantic == ColorAttachmentSemantic::Normal && clearDepth) {
+    if (color.semantic == ColorAttachmentSemantic::Normal && clearDepth && fullTarget) {
       color.clear = true;
     } else {
       color.clear = false;
@@ -891,13 +917,16 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
   current_render_passes().emplace_back(std::move(newPass));
   ++g_recorder.currentRenderPass;
 
-  if (!fullColorClear && (clearColor || clearAlpha)) {
-    // If we're only clearing color _or_ alpha, perform a clear draw
+  const bool drawClearColor = clearColor && !fullColorClear;
+  const bool drawClearAlpha = clearAlpha && !fullColorClear;
+  const bool drawClearDepth = clearDepth && !fullTarget;
+  if (clearRect.width > 0 && clearRect.height > 0 && (drawClearColor || drawClearAlpha || drawClearDepth)) {
+    // If we're only clearing a portion of the render target (or only one of color/alpha), perform a clear draw
     push_draw_command(clear::DrawData{
         .pipeline = pipeline_ref(clear::PipelineConfig{
-            .clearColor = clearColor,
-            .clearAlpha = clearAlpha,
-            .clearDepth = false,
+            .clearColor = drawClearColor,
+            .clearAlpha = drawClearAlpha,
+            .clearDepth = drawClearDepth,
         }),
         .color =
             wgpu::Color{
@@ -906,6 +935,8 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
                 .b = clearColorValue.z(),
                 .a = clearColorValue.w(),
             },
+        .depth = clearDepthValue,
+        .rect = clearRect,
     });
   }
   push_command(CommandType::SetViewport, Command::Data{.setViewport = g_recorder.cachedViewport});
@@ -935,11 +966,6 @@ bool has_normal_attachment() noexcept {
 RenderTargetLayout get_render_target_layout() noexcept {
   CHECK(g_recorder.currentRenderPass != UINT32_MAX, "get_render_target_layout called outside of a frame");
   return current_render_passes()[g_recorder.currentRenderPass].target_layout();
-}
-
-void clear_caches() noexcept {
-  g_offscreenCache.clear();
-  clear_bind_group_cache();
 }
 
 bool push_custom_draw(DrawTypeId type, const void* payload, size_t payloadSize) {
@@ -1047,15 +1073,18 @@ bool resolve_pass(const ResolveDesc& desc, ResolvedTargets& out) {
     auto& entry = acquire_pass_snapshot(width, height, desc.color, wantDepth, wantNormal);
     if (desc.color) {
       prevPass.snapshotColorDst = entry.color.texture;
+      out.colorTexture = entry.color.texture;
       out.color = entry.color.view;
       out.colorFormat = entry.color.format;
     }
     if (wantDepth) {
       prevPass.snapshotDepthDst = entry.depth.view;
+      out.depthTexture = entry.depth.texture;
       out.depth = entry.depth.view;
     }
     if (wantNormal) {
       prevPass.snapshotNormalDst = entry.normal.texture;
+      out.normalTexture = entry.normal.texture;
       out.normal = entry.normal.view;
     }
   }

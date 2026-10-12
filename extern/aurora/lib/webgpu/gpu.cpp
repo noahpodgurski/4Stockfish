@@ -32,10 +32,6 @@
 #endif
 
 
-namespace aurora::gfx {
-void clear_offscreen_cache();
-} // namespace aurora::gfx
-
 namespace aurora::webgpu {
 static Module Log("aurora::gpu");
 
@@ -67,6 +63,7 @@ std::string g_adapterName;
 std::string g_adapterDriver;
 static wgpu::SurfaceCapabilities g_surfaceCapabilities;
 bool g_hasCoreFeatures = false;
+bool g_dualSourceBlendingSupported = false;
 bool g_bcTexturesSupported = false;
 bool g_astcTexturesSupported = false;
 bool g_textureComponentSwizzleSupported = false;
@@ -1002,13 +999,14 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
     g_bcTexturesSupported = false;
     g_astcTexturesSupported = false;
     g_textureComponentSwizzleSupported = false;
+    g_dualSourceBlendingSupported = false;
     wgpu::SupportedFeatures supportedFeatures;
     g_adapter.GetFeatures(&supportedFeatures);
     for (size_t i = 0; i < supportedFeatures.featureCount; ++i) {
       const auto feature = supportedFeatures.features[i];
       if (feature == wgpu::FeatureName::CoreFeaturesAndLimits || feature == wgpu::FeatureName::TextureCompressionBC ||
           feature == wgpu::FeatureName::TextureCompressionASTC ||
-          feature == wgpu::FeatureName::TextureComponentSwizzle) {
+          feature == wgpu::FeatureName::TextureComponentSwizzle || feature == wgpu::FeatureName::DualSourceBlending) {
         if (feature == wgpu::FeatureName::CoreFeaturesAndLimits) {
           g_hasCoreFeatures = true;
         } else if (feature == wgpu::FeatureName::TextureCompressionBC) {
@@ -1017,6 +1015,8 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
           g_astcTexturesSupported = true;
         } else if (feature == wgpu::FeatureName::TextureComponentSwizzle) {
           g_textureComponentSwizzleSupported = true;
+        } else if (feature == wgpu::FeatureName::DualSourceBlending) {
+          g_dualSourceBlendingSupported = true;
         }
         requiredFeatures.push_back(feature);
       }
@@ -1063,6 +1063,9 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
     };
     constexpr std::array disableToggles{
         "timestamp_quantization",
+        // Adreno strikes again!
+        // https://github.com/TwilitRealm/dusklight/issues/2563
+        "use_spirv_reconvergence_mode",
     };
     wgpu::DawnTogglesDescriptor togglesDescriptor(wgpu::DawnTogglesDescriptor::Init{
         .nextInChain = &cacheDescriptor,
@@ -1215,9 +1218,6 @@ static void resize_swapchain_internal(uint32_t width, uint32_t height, uint32_t 
                            g_frameBuffer.size.width != width || g_frameBuffer.size.height != height;
   if (!force && !sizeChanged) {
     return;
-  }
-  if (sizeChanged) {
-    gfx::clear_caches();
   }
   g_graphicsConfig.surfaceConfiguration.width = nativeWidth;
   g_graphicsConfig.surfaceConfiguration.height = nativeHeight;
