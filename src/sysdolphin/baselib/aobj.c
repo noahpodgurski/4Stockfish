@@ -177,7 +177,7 @@ HSD_AObj* HSD_AObjLoadDesc(HSD_AObjDesc* aobjdesc)
     u8 _[4];
 
     HSD_FObj* fobj;
-    u32 id;
+    HSD_IDKey id;
     HSD_Obj* phi_r30;
 
     if (aobjdesc != NULL) {
@@ -188,7 +188,7 @@ HSD_AObj* HSD_AObjLoadDesc(HSD_AObjDesc* aobjdesc)
         fobjdesc = DP(HSD_FObjDesc, aobjdesc->fobjdesc);
         fobj = HSD_FObjLoadDesc(fobjdesc);
         HSD_AObjSetFObj(aobj, fobj);
-        id = (HSD_IDKey) aobjdesc->obj_id;
+        id = (uintptr_t) DP(HSD_Joint, aobjdesc->obj_id);
         if (id != 0U) {
             HSD_Obj* hsd_obj = HSD_IDGetDataFromTable(0, id, 0);
             phi_r30 = hsd_obj;

@@ -1319,12 +1319,31 @@ public:
         if (focus)
             apply(focus->GetId());
     }
+    bool is_back_bound() const {
+        for (u32 p = 0; p < 4; ++p) {
+            u32 count = 0;
+            const PADButtonMapping* bmap = PADGetButtonMappings(p, &count);
+            for (u32 i = 0; bmap && i < count; ++i) {
+                if (bmap[i].nativeButton == SDL_GAMEPAD_BUTTON_BACK)
+                    return true;
+            }
+            u32 axes = 0;
+            const PADAxisMapping* amap = PADGetAxisMappings(p, &axes);
+            for (u32 i = 0; amap && i < axes; ++i) {
+                if (amap[i].nativeButton == SDL_GAMEPAD_BUTTON_BACK)
+                    return true;
+            }
+        }
+        return false;
+    }
     void refresh_bindings() {
         label("pad-port", "Port " + std::to_string(pad_port + 1));
         const char* name = PADGetName(pad_port);
         label("pad-name", name && *name ? name : "No controller in this port.");
         u32 count = 0;
         const PADButtonMapping* map = PADGetButtonMappings(pad_port, &count);
+        u32 axes = 0;
+        const PADAxisMapping* amap = PADGetAxisMappings(pad_port, &axes);
         for (int i = 0; i < PAD_BUTTON_COUNT; ++i) {
             const auto row = std::to_string(i);
             const char* gc = map && u32(i) < count ? PADGetButtonName(map[i].padButton) : nullptr;
@@ -1332,13 +1351,23 @@ public:
                 map && u32(i) < count && map[i].nativeButton != PAD_NATIVE_BUTTON_INVALID ?
                     PADGetNativeButtonName(map[i].nativeButton) :
                     nullptr;
+            if (!native && map && u32(i) < count && amap &&
+                (map[i].padButton == PAD_TRIGGER_L || map[i].padButton == PAD_TRIGGER_R))
+            {
+                const PADAxis triggerAxis =
+                    map[i].padButton == PAD_TRIGGER_L ? PAD_AXIS_TRIGGER_L : PAD_AXIS_TRIGGER_R;
+                for (u32 a = 0; a < axes; ++a) {
+                    if (amap[a].padAxis == triggerAxis && amap[a].nativeAxis.nativeAxis >= 0) {
+                        native = PADGetNativeAxisName(amap[a].nativeAxis);
+                        break;
+                    }
+                }
+            }
             label(("bind-name-" + row).c_str(), gc ? gc : "-");
             label(("bind-" + row).c_str(), binding == i && !binding_axis ? "Press a button..." :
                                            native                        ? native :
                                                                            "Unbound");
         }
-        u32 axes = 0;
-        const PADAxisMapping* amap = PADGetAxisMappings(pad_port, &axes);
         for (int i = 0; i < PAD_AXIS_COUNT; ++i) {
             const auto row = std::to_string(i);
             const char* gc = amap && u32(i) < axes ? PADGetAxisName(amap[i].padAxis) : nullptr;
@@ -1451,20 +1480,19 @@ public:
     void poll_binding() {
         if (binding < 0)
             return;
+        constexpr uint32_t kNativeButtonAxisBit = 0x40000000u;
         const int native = PADGetNativeButtonPressed(pad_port);
-        const PADSignedNativeAxis axis = binding_axis ? PADGetNativeAxisPulled(pad_port) :
-                                                        PADSignedNativeAxis{-1, AXIS_SIGN_POSITIVE};
+        const PADSignedNativeAxis pulled = PADGetNativeAxisPulled(pad_port);
+        const bool triggerPulled = pulled.nativeAxis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER ||
+                                   pulled.nativeAxis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER;
+        const PADSignedNativeAxis axis =
+            (binding_axis || triggerPulled) ? pulled : PADSignedNativeAxis{-1, AXIS_SIGN_POSITIVE};
         if (!binding_armed) {
             binding_armed = native < 0 && axis.nativeAxis < 0;
             return;
         }
         if (native < 0 && axis.nativeAxis < 0)
             return;
-        if (axis.nativeAxis < 0 && native == SDL_GAMEPAD_BUTTON_BACK) {
-            label("menu-status", "Back opens this menu; pick another input.");
-            binding_armed = false;
-            return;
-        }
         u32 count = 0;
         if (binding_axis) {
             const PADAxisMapping* map = PADGetAxisMappings(pad_port, &count);
@@ -1482,7 +1510,20 @@ public:
         } else {
             const PADButtonMapping* map = PADGetButtonMappings(pad_port, &count);
             if (map && u32(binding) < count) {
-                PADSetButtonMapping(pad_port, {u32(native), map[binding].padButton});
+                const u32 encoded =
+                    native >= 0 ? u32(native) :
+                                  (kNativeButtonAxisBit | static_cast<uint32_t>(axis.nativeAxis));
+                PADSetButtonMapping(pad_port, {encoded, map[binding].padButton});
+                if (native < 0 && axis.nativeAxis >= 0 &&
+                    (map[binding].padButton == PAD_TRIGGER_L ||
+                        map[binding].padButton == PAD_TRIGGER_R))
+                {
+                    const PADAxis triggerAxis = map[binding].padButton == PAD_TRIGGER_L ?
+                                                    PAD_AXIS_TRIGGER_L :
+                                                    PAD_AXIS_TRIGGER_R;
+                    PADSetAxisMapping(
+                        pad_port, PADAxisMapping{axis, SDL_GAMEPAD_BUTTON_INVALID, triggerAxis});
+                }
                 PADSerializeMappings();
                 label("menu-status", "Bound.");
             }
@@ -1674,7 +1715,10 @@ public:
             return;
         if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
             const auto button = e.gbutton.button;
-            if (button == SDL_GAMEPAD_BUTTON_BACK && binding < 0) {
+            if (binding < 0 &&
+                (button == SDL_GAMEPAD_BUTTON_GUIDE ||
+                    (button == SDL_GAMEPAD_BUTTON_BACK && (open || !is_back_bound()))))
+            {
                 toggle();
                 return;
             }

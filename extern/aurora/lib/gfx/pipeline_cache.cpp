@@ -1213,17 +1213,15 @@ static void pipeline_worker() {
     SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_LOW);
   }
 
-  bool hasMore = false;
-
   while (g_hasPipelineThread || g_pipelinesPerFrame < BuildPipelinesPerFrame) {
     PendingPipeline pending;
     {
       std::unique_lock lock{g_pipelineMutex};
       if (g_hasPipelineThread) {
-        if (!hasMore) {
-          g_pipelineQueueCv.wait(
-              lock, [] { return !g_pipelineQueue.empty() || !g_backgroundPipelineQueue.empty() || g_pipelineThreadEnd; });
-        }
+        // Several workers share the queues, so always re-check under the lock
+        // rather than trusting a "has more" observed before it was released.
+        g_pipelineQueueCv.wait(
+            lock, [] { return !g_pipelineQueue.empty() || !g_backgroundPipelineQueue.empty() || g_pipelineThreadEnd; });
       } else if (g_pipelineQueue.empty()) {
         // On platforms without a background compilation thread (Android, WebGPU),
         // only process pipelines actively queued by the current frame (g_pipelineQueue).
@@ -1244,7 +1242,6 @@ auto result = create_timed(pending.create);
       std::lock_guard lock{g_pipelineMutex};
       g_pipelines.try_emplace(pending.hash, std::move(result));
       g_pendingPipelines.erase(pending.hash);
-      hasMore = !g_pipelineQueue.empty() || !g_backgroundPipelineQueue.empty();
     }
     if (!g_hasPipelineThread) {
       g_pipelinesPerFrame += std::max(1u, pipelineCount);

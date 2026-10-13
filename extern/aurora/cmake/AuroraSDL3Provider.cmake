@@ -162,6 +162,10 @@ elseif (_aurora_sdl3_provider STREQUAL "vendor")
     if (ANDROID OR IOS)
       set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
     endif ()
+    if (APPLE AND NOT IOS)
+      set(SDL_HIDAPI_LIBUSB ON CACHE BOOL "" FORCE)
+      set(SDL_HIDAPI_LIBUSB_SHARED OFF CACHE BOOL "" FORCE)
+    endif ()
     if (EMSCRIPTEN)
       # Source archives have no .git directory. SDL would otherwise describe
       # the enclosing Melee checkout, changing its banner on every fork commit.

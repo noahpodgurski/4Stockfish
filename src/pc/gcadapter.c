@@ -179,7 +179,10 @@ static void try_open(void) {
         if (info != NULL && !s_warned_open) {
             s_warned_open = true;
             pc_log_line("GC adapter: WUP-028 attached but could not be opened: %s"
-#if !defined(_WIN32) && !defined(__APPLE__)
+#if defined(__APPLE__)
+                        " (check GCAdapterDriver / USB permissions if macOS IOHIDFamily claimed "
+                        "the adapter)"
+#elif !defined(_WIN32)
                         " (udev rule: SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"057e\", "
                         "ATTRS{idProduct}==\"0337\", MODE=\"0666\")"
 #endif

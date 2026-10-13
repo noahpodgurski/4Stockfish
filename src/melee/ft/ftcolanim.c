@@ -110,7 +110,7 @@ void ftCo_800BFFAC(Fighter* fp)
     lb_80014498(&fp->x488);
 }
 
-bool ftCo_800BFFD0(Fighter* fp, FtColAnim arg1, bool arg2)
+bool ftCo_800BFFD0(Fighter* fp, FtColAnim arg1, int arg2)
 {
     if (arg1 >= FtColAnim_SpycloakStart) {
         if (lb_800144C8(&fp->x508, Fighter_804D6538,
