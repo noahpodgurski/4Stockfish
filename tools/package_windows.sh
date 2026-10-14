@@ -17,6 +17,8 @@ case "${TARGET_ARCH}" in
         DAWN_PROVIDER="package"
         NOD_PROVIDER="package"
         CXX_BIN="${CXX:-x86_64-w64-mingw32-g++}"
+        CC_BIN="${CC:-x86_64-w64-mingw32-gcc}"
+        USB_HOST="x86_64-w64-mingw32"
         VCREDIST_URL="${VCREDIST_URL:-https://aka.ms/vs/17/release/vc_redist.x64.exe}"
         VCREDIST_EXE="vc_redist.x64.exe"
         CAB_ARCH="amd64"
@@ -33,6 +35,8 @@ case "${TARGET_ARCH}" in
         DAWN_PROVIDER="package"
         NOD_PROVIDER="package"
         CXX_BIN="${CXX:-aarch64-w64-mingw32-clang++}"
+        CC_BIN="${CC:-aarch64-w64-mingw32-clang}"
+        USB_HOST="aarch64-w64-mingw32"
         VCREDIST_URL="${VCREDIST_URL:-https://aka.ms/vs/17/release/vc_redist.arm64.exe}"
         VCREDIST_EXE="vc_redist.arm64.exe"
         CAB_ARCH="arm64"
@@ -48,11 +52,39 @@ case "${TARGET_ARCH}" in
         ;;
 esac
 
+# SDL's optional USB backend must not disappear when building from source.
+# Build libusb into SDL3.dll so no separately installed USB DLL is required.
+LIBUSB_DIR="$(realpath -m "${BUILD_DIR}/libusb-1.0.29")"
+if [[ ! -f "${LIBUSB_DIR}/lib/libusb-1.0.a" ]]; then
+    mkdir -p "${LIBUSB_DIR}/lib" "${LIBUSB_DIR}/include"
+    curl -fL "https://github.com/libusb/libusb/releases/download/v1.0.29/libusb-1.0.29.tar.bz2" \
+        -o "${LIBUSB_DIR}/source.tar.bz2"
+    printf '%s  %s\n' \
+        "5977fc950f8d1395ccea9bd48c06b3f808fd3c2c961b44b0c2e6e29fc3a70a85" \
+        "${LIBUSB_DIR}/source.tar.bz2" | sha256sum -c -
+    (
+        # Autotools does not support source/build paths containing spaces.
+        usb_work="$(mktemp -d)"
+        trap 'rm -rf "${usb_work}"' EXIT
+        tar -xjf "${LIBUSB_DIR}/source.tar.bz2" -C "${usb_work}" --strip-components=1
+        cd "${usb_work}"
+        ./configure --build="$(./config.guess)" --host="${USB_HOST}" CC="${CC_BIN}" \
+            --disable-shared --enable-static --disable-examples-build --disable-tests-build
+        make -j"$(nproc)"
+        cp libusb/libusb.h "${LIBUSB_DIR}/include/"
+        cp COPYING "${LIBUSB_DIR}/COPYING"
+        cp libusb/.libs/libusb-1.0.a "${LIBUSB_DIR}/lib/"
+    )
+fi
+
 echo "=== Building Windows release (${TARGET_ARCH}) ==="
 cmake -B "${BUILD_DIR}" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" \
     -DAURORA_SDL3_PROVIDER="${SDL3_PROVIDER}" \
+    -DAURORA_SDL3_LINKAGE=shared \
+    -DLibUSB_LIBRARY="${LIBUSB_DIR}/lib/libusb-1.0.a" \
+    -DLibUSB_INCLUDE_PATH="${LIBUSB_DIR}/include" \
     -DAURORA_DAWN_PROVIDER="${DAWN_PROVIDER}" \
     -DAURORA_NOD_PROVIDER="${NOD_PROVIDER}"
 ninja -C "${BUILD_DIR}" melee
@@ -62,6 +94,7 @@ rm -rf "${STAGE_DIR}"
 mkdir -p "${STAGE_DIR}"
 
 cp "${BUILD_DIR}/melee.exe" "${STAGE_DIR}/"
+cp "${LIBUSB_DIR}/COPYING" "${STAGE_DIR}/LICENSE.libusb.txt"
 cp -r "${ROOT_DIR}/resources" "${STAGE_DIR}/"
 # A double-clicked run loses its console on exit, so ship a launcher that
 # turns on verbose logging, records the environment, and stays open.

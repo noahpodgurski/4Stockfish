@@ -14,14 +14,13 @@ case "${ARCH}" in
     *) echo "Unsupported architecture: ${ARCH}" >&2; exit 1 ;;
 esac
 
-# SDL3 is not packaged on most distros yet, so build it from source by
-# default; set AURORA_SDL3_PROVIDER=system where a system SDL3 exists.
-SDL3_PROVIDER="${AURORA_SDL3_PROVIDER:-vendor}"
+# Release packages always ship the patched SDL build, not the host's SDL.
 
 echo "=== Building Melee PC (Linux ${ARCH}) ==="
 cmake -B "${BUILD_DIR}" -G Ninja \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DAURORA_SDL3_PROVIDER="${SDL3_PROVIDER}" \
+    -DAURORA_SDL3_PROVIDER=vendor \
+    -DAURORA_SDL3_LINKAGE=shared \
     -DAURORA_DAWN_PROVIDER="${AURORA_DAWN_PROVIDER:-package}" \
     -DAURORA_NOD_PROVIDER="${AURORA_NOD_PROVIDER:-package}"
 ninja -C "${BUILD_DIR}" melee
@@ -86,6 +85,8 @@ gzip -dc "${ROOT_DIR}/tools/initial_pipeline_cache.db.gz" \
     > "${TAR_STAGE}/initial_pipeline_cache.db"
 cp "${ROOT_DIR}/platforms/linux/melee.png" "${TAR_STAGE}/"
 cp "${ROOT_DIR}/platforms/linux/melee.desktop" "${TAR_STAGE}/"
+mkdir -p "${TAR_STAGE}/lib"
+cp -a "${BUILD_DIR}/_deps/sdl-build/"libSDL3.so* "${TAR_STAGE}/lib/"
 if [[ -n "${LIBUSB_PATH}" && -f "${LIBUSB_PATH}" ]]; then
     mkdir -p "${TAR_STAGE}/lib"
     cp -L "${LIBUSB_PATH}" "${TAR_STAGE}/lib/libusb-1.0.so.0"

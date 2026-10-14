@@ -16,7 +16,8 @@ cmake -B "${BUILD_DIR}" -G Ninja \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
-    -DAURORA_SDL3_PROVIDER="${AURORA_SDL3_PROVIDER:-vendor}" \
+    -DAURORA_SDL3_PROVIDER=vendor \
+    -DAURORA_SDL3_LINKAGE=shared \
     -DAURORA_DAWN_PROVIDER="${AURORA_DAWN_PROVIDER:-package}" \
     -DAURORA_NOD_PROVIDER="${AURORA_NOD_PROVIDER:-package}"
 ninja -C "${BUILD_DIR}" melee
@@ -40,6 +41,9 @@ echo "=== Bundling Homebrew dylibs ==="
 # Copy every non-system dylib the binary (transitively) loads into
 # Contents/Frameworks and point the load commands at @rpath.
 FRAMEWORKS="${APP}/Contents/Frameworks"
+# SDL uses an @rpath install name, which bundle_deps deliberately skips.
+cp -L "${BUILD_DIR}/_deps/sdl-build/libSDL3.0.dylib" "${FRAMEWORKS}/"
+install_name_tool -id "@rpath/libSDL3.0.dylib" "${FRAMEWORKS}/libSDL3.0.dylib"
 bundle_deps() {
     local target="$1"
     otool -L "${target}" | awk 'NR > 1 { print $1 }' | while read -r dep; do
@@ -56,6 +60,7 @@ bundle_deps() {
         install_name_tool -change "${dep}" "@rpath/${name}" "${target}"
     done
 }
+bundle_deps "${FRAMEWORKS}/libSDL3.0.dylib"
 bundle_deps "${APP}/Contents/MacOS/melee"
 install_name_tool -add_rpath "@executable_path/../Frameworks" "${APP}/Contents/MacOS/melee"
 ls "${FRAMEWORKS}"

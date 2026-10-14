@@ -44,20 +44,13 @@ typedef struct mnDiagram_PopupData {
 } mnDiagram_PopupData;
 ASSERT_SIZE(mnDiagram_PopupData, 0x4C);
 
-/// Head label for the contiguous mnDiagram popup animation data run.
-typedef struct mnDiagram_PopupAnimTableHead {
-    /* 0x00 */ Point3d points[3];
-} mnDiagram_PopupAnimTableHead;
-
 u8 mnDiagram_FighterDisplayOrder[0x1C];
 u8 mnDiagram_NameDisplayOrder[GM_NAMETAG_COUNT];
 
-static mnDiagram_PopupAnimTableHead mnDiagram_PopupTextOffsets = {
-    {
-        { 4.0F, 1.0F, 0.0F },
-        { -3.0F, 0.8F, 0.0F },
-        { -1.0F, 0.7F, 0.0F },
-    },
+static Point3d mnDiagram_PopupTextOffsets[3] = {
+    { 4.0F, 1.0F, 0.0F },
+    { -3.0F, 0.8F, 0.0F },
+    { -1.0F, 0.7F, 0.0F },
 };
 
 static u8 mnDiagram_DefaultFighterOrder[0x1C] = {
@@ -96,24 +89,6 @@ static AnimLoopSettings mnDiagram_IntroAnim = { 0.0f, 9.0f, -0.1f };
 static AnimLoopSettings mnDiagram_PopupExitAnim = { 10.0f, 19.0f, -0.1f };
 static AnimLoopSettings mnDiagram_ArrowAnim = { 0.0f, 199.0f, 0.0f };
 static AnimLoopSettings mnDiagram_CursorAnim = { 0.0f, 10.0f, -0.1f };
-
-/// Overlay over the contiguous .data run starting at
-/// mnDiagram_PopupTextOffsets. The compiler addresses a few of these from that
-/// base rather than from their own symbols: the popup text offsets in
-/// mnDiagram_PopupAnimProc and mnDiagram_CreatePopupTexts, and cursor_anim.
-/// Everything else is accessed through its own symbol.
-typedef struct mnDiagram_AnimTable {
-    /* 0x00 */ Point3d points[3]; ///< mnDiagram_PopupTextOffsets
-    /* 0x24 */ u8
-        default_fighter_order[0x1C];         ///< mnDiagram_DefaultFighterOrder
-    /* 0x40 */ AnimLoopSettings intro_anim;  ///< mnDiagram_IntroAnim
-    /* 0x4C */ AnimLoopSettings exit_anim;   ///< mnDiagram_PopupExitAnim
-    /* 0x58 */ AnimLoopSettings arrow_anim;  ///< mnDiagram_ArrowAnim
-    /* 0x64 */ AnimLoopSettings cursor_anim; ///< mnDiagram_CursorAnim
-} mnDiagram_AnimTable;
-
-#define GET_DIAGRAM_ANIM_TABLE()                                              \
-    ((mnDiagram_AnimTable*) &mnDiagram_PopupTextOffsets)
 
 static GXColor mnDiagram_PopupTextColor = { 0, 0, 0, 0xFF };
 char mnDiagram_StringTerminator[1] = "";
@@ -1375,12 +1350,6 @@ void mnDiagram_PopupCleanup(void* arg0)
     HSD_Free(arg0);
 }
 
-static inline Vec3* mnDiagram_PopupAnimProc_Inline(mnDiagram_AnimTable* arg0,
-                                                   int arg1)
-{
-    return &arg0->points[arg1];
-}
-
 static inline void mnDiagram_TextSetPos(HSD_Text* text, f32 x, f32 y, f32 z)
 {
     text->pos_x = x;
@@ -1392,14 +1361,13 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
 {
     mnDiagram_PopupData* data = arg0->user_data;
     HSD_Text* text;
-    mnDiagram_AnimTable* tbl = GET_DIAGRAM_ANIM_TABLE();
     Vec3 pos;
     f32 anim_frame;
 
     HSD_JObjAnimAll(data->jobjs[5]);
 
     text = data->text[0];
-    lb_8000B1CC(data->jobjs[8], mnDiagram_PopupAnimProc_Inline(tbl, 0), &pos);
+    lb_8000B1CC(data->jobjs[8], &mnDiagram_PopupTextOffsets[0], &pos);
     {
         f32 y = -pos.y;
         f32 z = pos.z;
@@ -1412,8 +1380,7 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
         HSD_Text* t;
         f32 y;
         f32 z;
-        lb_8000B1CC(data->jobjs[11], mnDiagram_PopupAnimProc_Inline(tbl, 1),
-                    &pos);
+        lb_8000B1CC(data->jobjs[11], &mnDiagram_PopupTextOffsets[1], &pos);
         y = -pos.y;
         z = pos.z;
         t = data->text[1];
@@ -1424,8 +1391,7 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
         HSD_Text* t;
         f32 y;
         f32 z;
-        lb_8000B1CC(data->jobjs[10], mnDiagram_PopupAnimProc_Inline(tbl, 2),
-                    &pos);
+        lb_8000B1CC(data->jobjs[10], &mnDiagram_PopupTextOffsets[2], &pos);
         y = -pos.y;
         z = pos.z;
         t = data->text[2];
@@ -1438,8 +1404,7 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
         HSD_Text* t;
         f32 y;
         f32 z;
-        lb_8000B1CC(data->jobjs[3], mnDiagram_PopupAnimProc_Inline(tbl, 1),
-                    &pos);
+        lb_8000B1CC(data->jobjs[3], &mnDiagram_PopupTextOffsets[1], &pos);
         y = -pos.y;
         z = pos.z;
         t = data->text[3];
@@ -1451,8 +1416,7 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
         HSD_Text* t;
         f32 y;
         f32 z;
-        lb_8000B1CC(data->jobjs[2], mnDiagram_PopupAnimProc_Inline(tbl, 2),
-                    &pos);
+        lb_8000B1CC(data->jobjs[2], &mnDiagram_PopupTextOffsets[2], &pos);
         y = -pos.y;
         z = pos.z;
         t = data->text[4];
@@ -1460,13 +1424,12 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
         text->default_alignment = 1;
     }
 
-    anim_frame = mn_8022EFD8(data->jobjs[12], &tbl->cursor_anim);
+    anim_frame = mn_8022EFD8(data->jobjs[12], &mnDiagram_CursorAnim);
     {
         HSD_Text* t;
         f32 y;
         f32 z;
-        lb_8000B1CC(data->jobjs[13], mnDiagram_PopupAnimProc_Inline(tbl, 1),
-                    &pos);
+        lb_8000B1CC(data->jobjs[13], &mnDiagram_PopupTextOffsets[1], &pos);
         y = -pos.y;
         z = pos.z;
         t = data->text[3];
@@ -1474,7 +1437,7 @@ void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
     }
     text->default_alignment = 1;
 
-    if (anim_frame == tbl->cursor_anim.end_frame) {
+    if (anim_frame == mnDiagram_CursorAnim.end_frame) {
         HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
     }
 }
@@ -1506,7 +1469,7 @@ void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
 
     HSD_Text* text = HSD_SisLib_803A6754(0, 1);
     data->text[0] = text;
-    lb_8000B1CC(data->jobjs[8], &mnDiagram_PopupTextOffsets.points[0], &pos);
+    lb_8000B1CC(data->jobjs[8], &mnDiagram_PopupTextOffsets[0], &pos);
     text->font_size.x = 0.0521f;
     text->font_size.y = 0.0521f;
     setPopupTextPosition(text, &pos);
@@ -1527,8 +1490,7 @@ void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
 
             label_text = HSD_SisLib_803A6754(0, 1);
             data->text[2] = label_text;
-            lb_8000B1CC(data->jobjs[10], &mnDiagram_PopupTextOffsets.points[2],
-                        &pos);
+            lb_8000B1CC(data->jobjs[10], &mnDiagram_PopupTextOffsets[2], &pos);
             label_text->font_size.x = 0.035f;
             label_text->font_size.y = 0.05f;
             setPopupTextPosition(label_text, &pos);
@@ -1542,8 +1504,7 @@ void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
 
             label_text = HSD_SisLib_803A6754(0, 1);
             data->text[4] = label_text;
-            lb_8000B1CC(data->jobjs[2], &GET_DIAGRAM_ANIM_TABLE()->points[2],
-                        &pos);
+            lb_8000B1CC(data->jobjs[2], &mnDiagram_PopupTextOffsets[2], &pos);
             label_text->font_size.x = 0.035f;
             label_text->font_size.y = 0.05f;
             setPopupTextPosition(label_text, &pos);
@@ -1556,8 +1517,7 @@ void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
     if ((use_nametag == 0) || (selkind_or_nametag_slot_id != arg2)) {
         text = HSD_SisLib_803A6754(0, 1);
         data->text[1] = text;
-        lb_8000B1CC(data->jobjs[11], &mnDiagram_PopupTextOffsets.points[1],
-                    &pos);
+        lb_8000B1CC(data->jobjs[11], &mnDiagram_PopupTextOffsets[1], &pos);
         text->font_size.x = 0.0521f;
         text->font_size.y = 0.0521f;
         text->default_alignment = 1;
@@ -1578,8 +1538,7 @@ void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
     if (selkind_or_nametag_slot_id == arg2) {
         text = HSD_SisLib_803A6754(0, 1);
         data->text[3] = text;
-        lb_8000B1CC(data->jobjs[13], &mnDiagram_PopupTextOffsets.points[1],
-                    &pos);
+        lb_8000B1CC(data->jobjs[13], &mnDiagram_PopupTextOffsets[1], &pos);
         text->font_size.x = 0.0521f;
         text->font_size.y = 0.0521f;
         text->default_alignment = 1;
@@ -1598,8 +1557,7 @@ void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
     } else {
         text = HSD_SisLib_803A6754(0, 1);
         data->text[3] = text;
-        lb_8000B1CC(data->jobjs[3], &mnDiagram_PopupTextOffsets.points[1],
-                    &pos);
+        lb_8000B1CC(data->jobjs[3], &mnDiagram_PopupTextOffsets[1], &pos);
         text->font_size.x = 0.0521f;
         text->font_size.y = 0.0521f;
         text->default_alignment = 1;

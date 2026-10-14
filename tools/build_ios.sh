@@ -39,6 +39,7 @@ cmake -B "${BUILD_DIR}" -G Ninja \
     -DAURORA_CACHE_USE_ZSTD=OFF \
     -DAURORA_DAWN_PROVIDER=package \
     -DAURORA_SDL3_PROVIDER=vendor \
+    -DAURORA_SDL3_LINKAGE=static \
     -DAURORA_NOD_PROVIDER=vendor \
     -DBUILD_SHARED_LIBS=OFF \
     -DPNG_SHARED=OFF \

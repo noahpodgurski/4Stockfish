@@ -136,7 +136,7 @@ static inline void fn_80179990_copy_efb_at(HSD_ImageDesc* imgs, int slot,
 
 void fn_80179990(HSD_GObj* arg0, int arg1, int arg2)
 {
-    ResultsDisplayLayout* disp = (ResultsDisplayLayout*) &lbl_8046E1B0;
+    ResultsDisplayData* disp = &lbl_8046E1B0;
     MatchEnd* match_end = &lbl_8046E3AC.match_end;
     HSD_ImageDesc* image_desc1;
     HSD_CObj* cobj;
@@ -195,7 +195,7 @@ void fn_80179990(HSD_GObj* arg0, int arg1, int arg2)
             }
         } else {
             if (ftLib_IsFramesRemaining(Player_GetEntity(arg2)) == 0) {
-                if (disp->state.player_flags[arg2] == 0 && disp->state.x0_6) {
+                if (lbl_8046E3AC.player_flags[arg2] == 0 && lbl_8046E3AC.x0_6) {
                     fn_80179990_set_erase_color(match_end, arg2);
                     HSD_CObjEraseScreen(cobj, 1, 0, 0);
                     Camera_800313E0(arg0, 0);
@@ -578,7 +578,7 @@ static inline void inline1(HSD_ImageDesc* imgs, int slot, const u16* w,
 
 void fn_8017A9B4(int slot)
 {
-    ResultsDisplayLayout* disp = (ResultsDisplayLayout*) &lbl_8046E1B0;
+    ResultsDisplayData* disp = &lbl_8046E1B0;
     MatchEnd* match_end = &lbl_8046E3AC.match_end;
     int lookup;
 

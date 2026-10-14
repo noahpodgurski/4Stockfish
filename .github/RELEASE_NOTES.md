@@ -23,11 +23,21 @@ English (UK) text.
   reusable `LruCache` texture management, compiled pipeline prepasses, dual-source
   blending, and an updated gamepad/input layer.
 - **SDL3 tracking**: Pinned to latest development main (`a419debd2`).
+- **Custom SDL on every platform**: Desktop packages bundle the patched SDL
+  shared library; Android, iOS and browser builds link it into the application.
 
 ## Fixes
 
+- Restored mouse and keyboard input in the launcher and F1 settings menu with
+  Aurora's updated input router.
 - Fixed garbled, overlapping and off-centre original menu text caused by incorrect
   indexing into the font spacing table.
+- Restored libusb support in the Windows SDL build for GameCube-compatible
+  adapters, including Lossless Adapter console mode. Builds now reject a
+  missing USB backend instead of silently shipping without adapter support.
+- Fixed name-menu animation selection, VS Records popup timing, results-screen
+  capture and distance tracking by removing assumptions that separate static
+  objects are adjacent in memory.
 
 - Fixed `mnDiagram_SortNamesByKOs` indexing beyond its buffer and corrupting adjacent
   menu descriptors (#123).
@@ -203,4 +213,3 @@ Special thanks to our community members whose detailed bug reports and reproduct
 - **[encounter/aurora](https://github.com/encounter/aurora)** — Luke Street (@encounter) and contributors for the GameCube hardware emulation layer and WebGPU backend.
 - **[TwilitRealm/dusklight](https://github.com/TwilitRealm/dusklight)** — Architectural inspiration for GameCube PC ports.
 - **SDL3, RmlUi, stb_vorbis, and Dawn teams** for the runtime engine libraries.
-

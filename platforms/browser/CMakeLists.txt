@@ -8,6 +8,7 @@ set(AURORA_ENABLE_THP ON CACHE BOOL "" FORCE)
 set(AURORA_ENABLE_RMLUI OFF CACHE BOOL "" FORCE)
 set(AURORA_CACHE_USE_ZSTD OFF CACHE BOOL "" FORCE)
 set(AURORA_SDL3_PROVIDER vendor CACHE STRING "" FORCE)
+set(AURORA_SDL3_LINKAGE static CACHE STRING "" FORCE)
 add_compile_definitions(ENABLE_BACKEND_WEBGPU)
 # -fsigned-char: wasm32's default, stated as the top-level CMakeLists.txt does
 # for every native target (it returns before reaching that line for this one).

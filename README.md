@@ -163,6 +163,12 @@ low-power E-cores, using about a third of one core in total.
   executable. `dxcompiler.dll` and `dxil.dll` are the D3D12 shader compiler;
   D3D11 needs no extra DLL, since `d3d11.dll`, `dxgi.dll` and the FXC
   compiler are Windows components.
+- Packages use the project's patched SDL: `SDL3.dll` on Windows,
+  `libSDL3.so` on Linux and `libSDL3.0.dylib` inside the macOS app.
+  Keep the Linux tarball's `lib/` directory and launch with `run.sh`.
+  Android, iOS and browser builds link the same SDL source into the app.
+  Windows builds include libusb inside `SDL3.dll`; no separate libusb DLL
+  is required.
 - Settings, memory cards, `music/` and `textures/` live in the `melee-pc`
   preference directory above.
 

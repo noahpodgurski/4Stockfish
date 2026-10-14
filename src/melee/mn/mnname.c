@@ -809,28 +809,28 @@ static inline f32 mnName_80238964_noinline(u8 index, u8 target, u8 flag)
 f32 mnName_80238964(u8 index, u8 target, u8 flag)
 {
     s32 idx;
-    AnimLoopSettings* base = mnName_803ED538;
+    AnimLoopSettings* const* base = mnName_803B8510;
 
     if (target == 0x18) {
         if (flag) {
-            return base[5].start_frame;
+            return base[1]->start_frame;
         }
-        return base[4].start_frame;
+        return base[0]->start_frame;
     }
 
     idx = index;
     switch (idx) {
     case 0x18:
         if (flag) {
-            return base[8].start_frame;
+            return base[4]->start_frame;
         }
-        return base[6].start_frame;
+        return base[2]->start_frame;
     case 0x19:
     case 0x1A:
         if (flag) {
-            return base[8 + (index == target)].start_frame;
+            return base[4 + (index == target)]->start_frame;
         }
-        return base[6 + (index == target)].start_frame;
+        return base[2 + (index == target)]->start_frame;
     }
     /* PPC build fell off the end here; only 0x18-0x1A are ever passed. */
     return 0.0F;
@@ -838,7 +838,6 @@ f32 mnName_80238964(u8 index, u8 target, u8 flag)
 
 void mnName_80238A04(MnName_GObj* data, u8 target, u8 flag)
 {
-    AnimLoopSettings* base = mnName_803ED538;
     HSD_JObj* jobj2;
     int i;
     HSD_JObj* jobj;
@@ -851,19 +850,7 @@ void mnName_80238A04(MnName_GObj* data, u8 target, u8 flag)
 
     jobj2 = data->jobjs[3];
 
-    if (target == 0x18) {
-        if (flag) {
-            HSD_JObjReqAnimAll(jobj2, base[5].start_frame);
-        } else {
-            HSD_JObjReqAnimAll(jobj2, base[4].start_frame);
-        }
-    } else {
-        if (flag) {
-            HSD_JObjReqAnimAll(jobj2, base[8].start_frame);
-        } else {
-            HSD_JObjReqAnimAll(jobj2, base[6].start_frame);
-        }
-    }
+    HSD_JObjReqAnimAll(jobj2, mnName_80238964_noinline(0x18, target, flag));
     HSD_JObjAnimAll(jobj2);
 }
 
@@ -948,7 +935,6 @@ static inline void mnName_UpdateSelection(u8 do_update, MnName_GObj* data)
 void mnName_80238C34(HSD_GObj* arg0, u8 arg1, u8 arg2)
 {
     AnimLoopSettings* const* tableBase = mnName_803B8510;
-    AnimLoopSettings* base = (0, mnName_803ED538);
     MnName_GObj* data = (MnName_GObj*) arg0->user_data;
     HSD_JObj* jobj2;
     HSD_JObj* jobj3;
@@ -976,8 +962,8 @@ void mnName_80238C34(HSD_GObj* arg0, u8 arg1, u8 arg2)
         result = mn_8022ED6C(
             jobj, mnName_FindAnimLoop(mnName_803B8510, mn_8022F298(jobj)));
 
-        if (mnName_FindAnimLoop(tableBase, result) == base + 5) {
-            if (result >= mnName_80238C34_inline(&base[5])) {
+        if (mnName_FindAnimLoop(tableBase, result) == tableBase[1]) {
+            if (result >= mnName_80238C34_inline(tableBase[1])) {
                 HSD_GObjFree(arg0);
             }
         }

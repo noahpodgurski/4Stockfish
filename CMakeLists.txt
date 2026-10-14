@@ -601,6 +601,9 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
         add_test(NAME mndiagram_sort COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_mndiagram_sort.py)
         set_tests_properties(mndiagram_sort PROPERTIES LABELS melee TIMEOUT 60)
+        add_test(NAME name_animation COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_name_animation.py)
+        set_tests_properties(name_animation PROPERTIES LABELS melee TIMEOUT 60)
     endif ()
 
     add_executable(updater_test EXCLUDE_FROM_ALL tools/test_updater.cpp src/pc/version.cpp)
