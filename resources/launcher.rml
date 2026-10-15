@@ -1,14 +1,28 @@
 <rml>
 <head><title>Melee-PC</title><link type="text/rcss" href="launcher.rcss" /></head>
-<body>
-  <div id="shell">
-    <div class="topline"><span class="brand">MELEE / PC</span><span class="edition"><span id="app-version">v0.1.8-beta</span> · NTSC-U 1.02</span></div>
-    <div class="hero"><div class="eyebrow">SUPER SMASH BROS.</div><h1>MELEE</h1></div>
+<!-- The body's classes are set by src/pc/launcher.cpp: the platform
+     (desktop or mobile) hides what that platform has no use
+     for, and theme-* colours the frame after the focused main-menu plate. -->
+<body class="desktop theme-choose">
+  <div id="frame">
+    <div id="titlebar">
+      <span id="title">Melee PC</span><span id="title-sub">/ Settings</span>
+      <span class="stripes"><span></span><span></span><span></span><span></span><span></span></span>
+      <span id="edition"><span id="app-version">v0.1.8-beta</span> &#183; NTSC-U 1.02</span>
+    </div>
     <div id="home">
-      <div id="update-card" class="update-card" style="display: none;">
-        <div class="update-content">
+      <div id="plates">
+        <button id="play" class="plate" data-desc="Start Melee from this disc."><span>Play</span></button>
+        <button id="choose" class="plate" data-desc="Pick a Melee disc image: ISO, GCM, CISO, RVZ, GCZ or WIA."><span>Choose Disc</span></button>
+        <button id="verify" class="plate" data-desc="Check the disc image against the original NTSC-U 1.02 disc."><span id="verify-label">Verify Disc</span></button>
+        <button id="settings" class="plate" data-desc="Graphics, audio, gameplay, controls and online play."><span>Settings</span></button>
+        <button id="discord" class="plate" data-desc="Join the community Discord server in your browser."><span>Discord</span></button>
+        <button id="quit" class="plate" data-desc="Close Melee PC."><span>Quit</span></button>
+      </div>
+      <div id="side">
+        <div id="update-card" style="display: none;">
           <div class="update-badge-row">
-            <span class="update-badge">UPDATE AVAILABLE</span>
+            <span class="update-badge">NEW</span>
             <span id="update-tag" class="update-tag">v0.1.8-beta</span>
           </div>
           <div id="update-title" class="update-title">Melee PC Update</div>
@@ -19,192 +33,90 @@
             </div>
             <span id="update-progress-text" class="progress-text">0%</span>
           </div>
+          <div class="update-actions">
+            <button id="update-action" class="mini primary" data-desc="Download the new version.">Update Now</button>
+            <button id="update-browser" class="mini" data-desc="Open the release notes in the browser.">View Release</button>
+            <button id="update-later" class="mini" data-desc="Hide this until the next start.">Later</button>
+          </div>
         </div>
-        <div class="update-actions">
-          <button id="update-action" class="primary">Update Now</button>
-          <button id="update-browser">View Release</button>
-          <button id="update-later" class="quiet">Later</button>
-        </div>
-      </div>
-      <div class="columns">
-        <div class="menu">
-          <button id="play" class="primary">Play Melee</button>
-          <button id="choose">Choose disc</button>
-          <button id="verify">Verify disc</button>
-          <button id="settings">Settings</button>
-          <button id="discord" class="discord-btn"><img class="discord-icon" src="discord.png" /> Discord</button>
-          <button id="quit" class="quiet">Quit</button>
-        </div>
-        <div class="disc-card">
-          <div class="eyebrow">DISC</div>
+        <div id="disc-panel">
+          <div class="side-label">Disc</div>
           <h2 id="disc-name">No disc selected</h2>
           <p id="disc-info">Melee, USA revision 2 (NTSC-U 1.02).</p>
-          <p id="disc-path" class="path">ISO · GCM · CISO · RVZ</p>
-          <div class="divider"></div>
-          <p class="note">Use Choose disc, or place a disc image in Files &gt; On My iPhone &gt; Melee.</p>
+          <p id="disc-path" class="path">ISO &#183; GCM &#183; CISO &#183; RVZ</p>
+          <div id="status">No disc selected.</div>
+          <p id="disc-note" class="note">Drop a disc image here, or use Choose Disc.</p>
         </div>
       </div>
     </div>
     <div id="preferences">
-      <div id="settings-window">
-        <div id="settings-heading">
-          <h2>Settings</h2>
-          <span class="version">NTSC-U 1.02</span>
+      <div id="categories">
+        <button id="tab-graphics" class="plate small" data-desc="How the game looks."><span>Graphics</span></button>
+        <button id="tab-audio" class="plate small" data-desc="Volume, reverb and the interface."><span>Audio</span></button>
+        <button id="tab-cheats" class="plate small" data-desc="Unlocks, stage hazards and controller fixes."><span>Gameplay</span></button>
+        <button id="tab-controls" class="plate small" data-desc="The keyboard layout and controller setup."><span>Controls</span></button>
+        <button id="tab-online" class="plate small" data-desc="Your player name, connect codes and input delay."><span>Online</span></button>
+        <button id="back" class="plate small back" data-desc="Back to the main menu."><span>Back</span></button>
+      </div>
+      <div id="settings-content">
+        <div id="page-graphics" class="page">
+          <div class="row no-mobile" data-desc="Windowed or fullscreen."><span class="name">Display mode</span><button id="display" class="value">Display</button></div>
+          <div class="row" data-desc="Synchronise presentation with your display."><span class="name">Vertical sync</span><button id="sync" class="value">VSync</button></div>
+          <div class="row" data-desc="How sharp the game renders. Auto follows the window size."><span class="name">Internal resolution</span>
+            <div class="slider-control"><input type="range" class="range" id="resolution" min="0" max="10" step="1" value="0" /><span id="resolution-val" class="slider-value">Auto</span></div></div>
+          <div class="row" data-desc="Applies to fights. Menus and cutscenes keep the original aspect."><span class="name">Aspect ratio</span><button id="aspect" class="value">Original (73:60)</button></div>
+          <div class="row" data-desc="Classic keeps 4:3 safe margins; Wide anchors damage and stocks to the 16:9 edges."><span class="name">HUD layout</span><button id="hud-mode" class="value">Classic (4:3)</button></div>
+          <div class="row" data-desc="Smooth polygon edges with multisampling. Applies after a restart."><span class="name">Anti-aliasing <span class="badge">RESTART</span></span><button id="aa" class="value">Anti-aliasing</button></div>
+          <div class="row" data-desc="Sharper textures seen at an angle, where the texture allows it. Applies after a restart."><span class="name">Anisotropic filtering <span class="badge">RESTART</span></span><button id="filter" class="value">Filtering</button></div>
+          <div class="row" data-desc="A filter over the finished frame. Off presents it as rendered."><span class="name">Post-processing</span><button id="filter-mode" class="value">Off</button></div>
+          <div class="row" data-desc="Load replacement textures from the textures folder."><span class="name">Custom HD textures</span><button id="custom-textures" class="value">Enabled</button></div>
+          <div class="row" data-desc="Auto, or a specific graphics API this platform provides. Applies after a restart."><span class="name">Graphics backend <span class="badge">RESTART</span></span><button id="backend" class="value">Auto</button></div>
+          <div class="row" data-desc="For slow devices: 1x internal resolution, no anti-aliasing, 1x filtering and reverb off."><span class="name">Performance preset</span><button id="performance" class="value action">Apply</button></div>
         </div>
-        <div id="tabstrip">
-          <button id="tab-graphics" class="tab">Graphics</button>
-          <button id="tab-audio" class="tab">Audio &amp; interface</button>
-          <button id="tab-cheats" class="tab">Cheats</button>
-          <button id="tab-controls" class="tab">Controls</button><button id="tab-online" class="tab">Online</button>
+        <div id="page-audio" class="page">
+          <div class="row" data-desc="Everything the game plays. Left and right adjust it."><span class="name">Master volume</span>
+            <div class="slider-control"><input type="range" class="range" id="volume" min="0" max="100" step="5" value="100" /><span id="volume-val" class="slider-value">100%</span></div></div>
+          <div class="row" data-desc="Background music."><span class="name">Music volume</span>
+            <div class="slider-control"><input type="range" class="range" id="music-volume" min="0" max="100" step="5" value="100" /><span id="music-volume-val" class="slider-value">100%</span></div></div>
+          <div class="row" data-desc="Sound effects, voices and combat audio."><span class="name">SFX volume</span>
+            <div class="slider-control"><input type="range" class="range" id="sfx-volume" min="0" max="100" step="5" value="100" /><span id="sfx-volume-val" class="slider-value">100%</span></div></div>
+          <div class="row" data-desc="Silence the game without changing the volumes."><span class="name">Mute</span><button id="mute" class="value">Mute</button></div>
+          <div class="row" data-desc="Stage reverb and echo. Off saves audio CPU on slow devices."><span class="name">Reverb</span><button id="reverb" class="value">On</button></div>
+          <div class="row" data-desc="Show the frame rate in a corner of the screen."><span class="name">FPS counter</span><button id="fps" class="value">FPS counter</button></div>
+          <div class="row" data-desc="The size of these menus."><span class="name">Interface size</span>
+            <div class="slider-control"><input type="range" class="range" id="scale" min="75" max="150" step="25" value="100" /><span id="scale-val" class="slider-value">100%</span></div></div>
+          <div class="row" data-desc="Look for a new release on GitHub at each start."><span class="name">Check for updates</span><button id="check-updates" class="value">On</button></div>
+          <div class="row" id="check-row" data-desc="Look for a new release now."><span class="name">Updates <span id="check-status" class="detail">Melee-PC is up to date.</span></span><button id="check-now" class="value action">Check now</button></div>
+          <div class="row" data-desc="Join the community Discord server in your browser."><span class="name">Discord community</span><button id="settings-discord" class="value action">Join Discord</button></div>
         </div>
-        <div id="settings-content">
-          <div id="page-graphics" class="page">
-            <div class="setting">
-              <div class="description"><h3>Display mode</h3><p>Choose windowed or fullscreen.</p></div>
-              <button id="display">Display</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Vertical sync</h3><p>Synchronise presentation with your display.</p></div>
-              <button id="sync">VSync</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Internal resolution</h3><p>Auto follows the window size.</p></div>
-              <div class="slider-control">
-                <input type="range" class="range" id="resolution" min="0" max="10" step="1" value="0" />
-                <span id="resolution-val" class="slider-value">Auto</span>
-              </div>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Aspect ratio</h3><p>Applies to fights. Menus and cutscenes keep the original aspect.</p></div>
-              <button id="aspect">Original (73:60)</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>HUD layout</h3><p>Classic keeps 4:3 safe margins; Wide anchors damage/stocks to 16:9 edges.</p></div>
-              <button id="hud-mode">Classic (4:3)</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Anti-aliasing <span class="badge">RESTART</span></h3><p>Smooth polygon edges with multisampling.</p></div>
-              <button id="aa">Anti-aliasing</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Anisotropic filtering <span class="badge">RESTART</span></h3><p>Improve supported textures viewed at an angle.</p></div>
-              <button id="filter">Filtering</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Post-processing filter</h3><p>Off presents the frame as rendered.</p></div>
-              <button id="filter-mode">Off</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Custom HD textures</h3><p>Load replacement textures from textures folder.</p></div>
-              <button id="custom-textures">Enabled</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Graphics backend <span class="badge">RESTART</span></h3><p>Auto, or a specific API this platform provides.</p></div>
-              <button id="backend">Auto</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Performance preset</h3><p>For slow devices: 1x internal resolution, no anti-aliasing, 1x filtering and reverb off.</p></div>
-              <button id="performance">Apply</button>
-            </div>
+        <div id="page-cheats" class="page">
+          <div class="row" data-desc="Unlock all 26 characters, the 11 secret stages and All-Star mode."><span class="name">Unlock everything</span><button id="unlock-all" class="value">Off</button></div>
+          <div class="row" data-desc="Keep Pokémon Stadium in its neutral form, with no transformations."><span class="name">Hazardless stages</span><button id="frozen-stadium" class="value">Off</button></div>
+          <div class="row" data-desc="Free the pause camera's rotation and zoom."><span class="name">Free camera</span><button id="free-camera" class="value">Normal</button></div>
+          <div class="row" data-desc="UCF 0.8x dashback and shield-drop consistency on any controller. MELEE_UCF overrides."><span class="name">Universal Controller Fix</span><button id="ucf" class="value">Off</button></div>
+        </div>
+        <div id="page-controls" class="page">
+          <div class="info no-mobile">
+            <h3>Keyboard</h3>
+            <p>WASD / arrows Move &#183; X Attack &#183; Z Special &#183; C / V Jump &#183; Q / E Shield<br/>Tab Grab &#183; Enter Start &#183; IJKL C-stick</p>
           </div>
-          <div id="page-cheats" class="page">
-            <div class="setting">
-              <div class="description"><h3>Unlock everything</h3><p>Unlock all 26 characters, 11 secret stages, and All-Star mode.</p></div>
-              <button id="unlock-all">Off</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Hazardless stages</h3><p>Lock Pokémon Stadium in neutral mode without transformations.</p></div>
-              <button id="frozen-stadium">Off</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Free camera</h3><p>Unlock camera rotation and zoom distance in pause mode.</p></div>
-              <button id="free-camera">Normal</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Universal Controller Fix</h3><p>UCF 0.8x dashback and shield-drop consistency on any controller. MELEE_UCF overrides.</p></div>
-              <button id="ucf">Off</button>
-            </div>
-          </div>
-          <div id="page-audio" class="page">
-            <div class="setting">
-              <div class="description"><h3>Master volume</h3><p>Use left/right arrows or drag slider.</p></div>
-              <div class="slider-control">
-                <input type="range" class="range" id="volume" min="0" max="100" step="5" value="100" />
-                <span id="volume-val" class="slider-value">100%</span>
-              </div>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Music volume</h3><p>Background music volume.</p></div>
-              <div class="slider-control">
-                <input type="range" class="range" id="music-volume" min="0" max="100" step="5" value="100" />
-                <span id="music-volume-val" class="slider-value">100%</span>
-              </div>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>SFX volume</h3><p>Sound effects and combat audio volume.</p></div>
-              <div class="slider-control">
-                <input type="range" class="range" id="sfx-volume" min="0" max="100" step="5" value="100" />
-                <span id="sfx-volume-val" class="slider-value">100%</span>
-              </div>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Mute audio</h3><p>Silence audio output without changing volume.</p></div>
-              <button id="mute">Mute</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Reverb</h3><p>Stage reverb and echo. Off saves audio CPU on slow devices.</p></div>
-              <button id="reverb">On</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Performance display</h3><p>Show the current frame rate.</p></div>
-              <button id="fps">FPS counter</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>UI scale</h3><p>Scale launcher and overlay elements.</p></div>
-              <div class="slider-control">
-                <input type="range" class="range" id="scale" min="75" max="150" step="25" value="100" />
-                <span id="scale-val" class="slider-value">100%</span>
-              </div>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Check for updates on launch</h3><p>Automatically query GitHub for new releases on startup.</p></div>
-              <button id="check-updates">On</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Check for updates now</h3><p id="check-status">Melee-PC is up to date.</p></div>
-              <button id="check-now">Check now</button>
-            </div>
-            <div class="setting">
-              <div class="description"><h3>Discord community</h3><p>Join the community Discord server.</p></div>
-              <button id="settings-discord" class="discord-btn"><img class="discord-icon" src="discord.png" /> Join Discord</button>
-            </div>
-          </div>
-          <div id="page-online" class="page">
-<div class="setting"><div class="description"><h3>Player name</h3><p>1–8 letters or digits. Changes apply to the next search.</p></div><input type="text" id="net-name" maxlength="8" value="PLAYER" /></div>
-<div class="setting"><div class="description"><h3>Your connect code</h3><p id="net-code"></p></div></div>
-<div class="setting"><div class="description"><h3>Friend's connect code</h3><p>Leave blank to host your code. Open Online → Direct Connect in-game.</p></div><input type="text" id="net-target" maxlength="17" value="" /></div>
-<div class="setting"><div class="description"><h3>Input delay</h3><p>Automatic adapts to your connection. Changes apply next match.</p></div><button id="net-delay">Auto</button></div>
-<div class="setting"><div class="description"><p>Internet discovery can take a few minutes. Some home networks cannot connect without a relay.</p></div></div>
-</div>
-<div id="page-controls" class="page">
-            <div class="section controls">
-              <div class="section-heading"><h2>Keyboard</h2></div>
-              <p>WASD / arrows Move · X Attack · Z Special · C / V Jump · Q / E Shield<br/>Tab Grab · Enter Start · IJKL C-stick</p>
-            </div>
-            <div class="section controls">
-              <div class="section-heading"><h2>Controller</h2></div>
-              <p>Remap a gamepad from the in-game menu: press BACK on the pad, or F1, then open Controls. Controllers are only detected once the game is running.</p>
-            </div>
+          <div class="info">
+            <h3>Controller</h3>
+            <p>Remap a gamepad from the in-game menu: press BACK on the pad, or F1, then open Controls. Controllers are only detected once the game is running.</p>
           </div>
         </div>
-        <div id="settings-bottom">
-          <p id="settings-status">Saved automatically.</p>
-          <button id="back" class="primary">Back to launcher</button>
+        <div id="page-online" class="page">
+          <div class="row" data-desc="1-8 letters or digits. Changes apply to the next search."><span class="name">Player name</span><input type="text" id="net-name" maxlength="8" value="PLAYER" /></div>
+          <div class="row" data-desc="Give this to a friend so they can connect to you."><span class="name">Your connect code</span><span id="net-code" class="readout"></span></div>
+          <div class="row" data-desc="Leave blank to host your code. Open Online, then Direct Connect, in the game."><span class="name">Friend's connect code</span><input type="text" id="net-target" maxlength="17" value="" /></div>
+          <div class="row" data-desc="Automatic adapts to your connection. Changes apply next match."><span class="name">Input delay</span><button id="net-delay" class="value">Auto</button></div>
+          <p class="note">Internet discovery can take a few minutes. Some home networks cannot connect without a relay.</p>
         </div>
+        <p id="settings-status" style="display: none;"></p>
       </div>
     </div>
-    <div id="status">No disc selected.</div>
-    <div class="footer">ARROWS / D-PAD Navigate <span>ENTER / A Select</span><span>ESC / B Back</span></div>
+    <div id="descbar"><p id="desc">Pick a disc to play.</p></div>
   </div>
+  <div id="hints" class="no-mobile">Arrows / D-Pad Move<span>Enter / A Select</span><span>Esc / B Back</span></div>
 </body>
 </rml>
