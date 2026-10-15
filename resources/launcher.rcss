@@ -16,6 +16,8 @@
     small-inner: 56px 210px 346px 69px;
     small-on: 512px 180px 480px 124px;
     small-on-inner: 568px 210px 346px 69px;
+    small-hover: 0px 488px 480px 124px;
+    small-hover-inner: 56px 518px 346px 69px;
     disc: 0px 304px 184px 184px;
     disc-plate: 0px 304px 184px 184px;
     arrow-l: 192px 304px 28px 40px;
@@ -161,6 +163,12 @@ button {
     font-size: 26dp;
     decorator: ninepatch(small, small-inner, 15dp 39dp 12.5dp 28dp);
 }
+/* The pointer over a category, between idle and selected: pointing only
+ * lights it, a click opens it (launcher.cpp, hover()). */
+.plate.small:hover {
+    color: #ffe9a8;
+    decorator: ninepatch(small-hover, small-hover-inner, 15dp 39dp 12.5dp 28dp);
+}
 .plate.small.selected {
     color: #141008;
     font-effect: none;
@@ -171,6 +179,10 @@ button {
     color: #dba63c;
     font-effect: outline(2dp #000000);
     decorator: ninepatch(small, small-inner, 15dp 39dp 12.5dp 28dp);
+}
+.on-back .plate.small.selected:hover {
+    color: #ffe9a8;
+    decorator: ninepatch(small-hover, small-hover-inner, 15dp 39dp 12.5dp 28dp);
 }
 .plate.small:focus {
     color: #141008;
@@ -298,11 +310,12 @@ button.mini.primary { border-color: #e0b030; }
     margin-right: 22dp;
 }
 #categories .plate { width: 80%; margin-bottom: -10dp; }
-#tab-graphics { margin-left: 10%; }
+#tab-graphics { margin-left: 9%; }
 #tab-audio { margin-left: 4.5%; }
 #tab-cheats { margin-left: 0; }
-#tab-controls { margin-left: 4.5%; }
-#tab-online { margin-left: 9%; }
+#tab-controls { margin-left: 0; }
+#tab-online { margin-left: 4.5%; }
+#tab-launcher { margin-left: 9%; }
 #back { margin-top: 22dp; margin-left: 6%; }
 
 #settings-content {

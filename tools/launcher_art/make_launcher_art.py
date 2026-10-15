@@ -3,7 +3,8 @@
 """Draws the launcher's Melee-style art (resources/launcher.rml) into
 resources/launcher/, and cuts its menu font:
 
-  launcher/sprites.png   menu plates (idle and selected), the cursor disc,
+  launcher/sprites.png   menu plates (idle and selected, and the settings
+                         categories' pointer-hover plate), the cursor disc,
                          the value arrows; drawn at 2x, see launcher.rcss
   launcher/backdrop.png  the navy grid and light swirls behind the menus
                          (PNG: aurora's RmlUi loads no other format)
@@ -59,6 +60,7 @@ DISC_SIZE = 184
 DISC_PAD = 0
 ARROW_W, ARROW_H = 28, 40
 ARROWS_X = DISC_SIZE + DISC_PAD + 8
+HOVER_Y = PLATE_H + SMALL_H + DISC_SIZE  # the small plate's hover variant
 
 
 def vgradient(w, h, stops):
@@ -138,14 +140,15 @@ def tab_centre(h):
     return PLATE_W - p["cx"], p["cy"]
 
 
-def draw_plate(h, selected):
+def draw_plate(h, selected, hover=False):
     """Melee's menu plate. Idle: a soft, glowing gold band around a
     see-through black window. At the right end the window stops square, and a
     black ring arcs from its top edge round the right and drops straight down
     through the bottom band; the gold it encloses is the P (a small black
     half disc for its counter), and the casing's rounded end wraps the ring.
     Selected: the whole plate solid yellow, glowing (the cursor disc goes on
-    the ring, as a separate sprite)."""
+    the ring, as a separate sprite). Hover, in between: the idle plate with a
+    brighter rim and its window lit a dim amber."""
     w = PLATE_W
     W, H = w * SS, h * SS
     g = GLOW * SS
@@ -180,16 +183,20 @@ def draw_plate(h, selected):
     ccx, ccy, rc = cx - wh * 0.12, cy - wh * 0.02, wh * 0.13
     d.pieslice((ccx - rc, ccy - rc, ccx + rc, ccy + rc), -90, 90, fill=255)
     # The casing's glowing gold, everywhere the black is not.
-    gold = vgradient(W, H, [(0, (236, 190, 84)), (0.35, (218, 166, 58)), (1, (184, 132, 40))])
+    if hover:
+        gold = vgradient(W, H, [(0, (255, 226, 128)), (0.35, (246, 200, 84)), (1, (214, 162, 52))])
+    else:
+        gold = vgradient(W, H, [(0, (236, 190, 84)), (0.35, (218, 166, 58)), (1, (184, 132, 40))])
     band = ImageChops.subtract(mask, black)
-    glow = band.filter(ImageFilter.GaussianBlur(g * 0.6)).point(lambda v: int(v * 0.75))
+    glow = band.filter(ImageFilter.GaussianBlur(g * 0.6)).point(lambda v: int(v * (0.95 if hover else 0.75)))
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     layer.paste(gold, (0, 0), glow)
     img.alpha_composite(layer)
     # The black, see-through, so the grid shows in it (clipped to the casing:
     # the ring's foot stops at its bottom edge).
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    layer.paste((6, 6, 10, 205), (0, 0), ImageChops.multiply(black, mask).filter(ImageFilter.GaussianBlur(SS * 2)))
+    window = (86, 60, 6, 215) if hover else (6, 6, 10, 205)
+    layer.paste(window, (0, 0), ImageChops.multiply(black, mask).filter(ImageFilter.GaussianBlur(SS * 2)))
     img.alpha_composite(layer)
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     layer.paste(gold, (0, 0), band.filter(ImageFilter.GaussianBlur(SS * 5)))
@@ -245,7 +252,7 @@ def draw_arrow(direction, colour):
 
 def sprites():
     """One sheet. The rectangles here are the ones launcher.rcss names."""
-    sheet = Image.new("RGBA", (1024, 512), (0, 0, 0, 0))
+    sheet = Image.new("RGBA", (1024, 640), (0, 0, 0, 0))
     y = 0
     sheet.alpha_composite(draw_plate(PLATE_H, False), (0, y))
     sheet.alpha_composite(draw_plate(PLATE_H, True), (512, y))
@@ -258,6 +265,7 @@ def sprites():
     for i, (direction, colour) in enumerate(
             [(-1, GOLD), (1, GOLD), (-1, (24, 18, 4)), (1, (24, 18, 4))]):
         sheet.alpha_composite(draw_arrow(direction, colour), (x + i * (ARROW_W + 8), y))
+    sheet.alpha_composite(draw_plate(SMALL_H, False, hover=True), (0, HOVER_Y))
     return sheet
 
 
@@ -357,6 +365,9 @@ def main():
         for suffix, ox in [("", 0), ("-on", 512)]:
             lines.append(f"{name}{suffix}: {ox}px {y}px {PLATE_W}px {h}px;")
             lines.append(f"{name}{suffix}-inner: {ox + x}px {y + iy}px {iw}px {ih}px;")
+        if name == "small":
+            lines.append(f"{name}-hover: 0px {HOVER_Y}px {PLATE_W}px {h}px;")
+            lines.append(f"{name}-hover-inner: {x}px {HOVER_Y + iy}px {iw}px {ih}px;")
         lines.append(f"/* {name} edges: {edges} */")
     lines.append(f"disc: 0px {disc_y}px {DISC_SIZE}px {DISC_SIZE}px;")
     lines.append(f"disc-plate: 0px {disc_y}px {DISC_SIZE + DISC_PAD}px {DISC_SIZE}px;")

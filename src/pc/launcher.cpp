@@ -213,6 +213,20 @@ constexpr const char* disc_note = "Drop a disc image here, or use Choose Disc.";
 /* Melee colours the menu frame after the entry under the cursor. */
 constexpr const char* themes[] = {"play", "choose", "verify", "settings", "discord", "quit"};
 
+/* The launcher's settings categories (launcher.rml); the F1 menu keeps its
+ * own, above. */
+constexpr const char* launcher_tab_ids[] = {
+    "tab-graphics", "tab-audio", "tab-cheats", "tab-controls", "tab-online", "tab-launcher"};
+constexpr const char* launcher_page_ids[] = {
+    "page-graphics", "page-audio", "page-cheats", "page-controls", "page-online", "page-launcher"};
+constexpr int launcher_tab_count = 6;
+int launcher_tab_index(const Rml::String& id) {
+    for (int i = 0; i < launcher_tab_count; ++i)
+        if (id == launcher_tab_ids[i])
+            return i;
+    return -1;
+}
+
 class Launcher final : public Rml::EventListener {
     SDL_Window* window;
     Rml::ElementDocument* document;
@@ -290,14 +304,15 @@ class Launcher final : public Rml::EventListener {
         switch (tab) {
         case 0:
             return {"display", "sync", "resolution", "aspect", "hud-mode", "aa", "filter",
-                "filter-mode", "custom-textures", "backend", "performance"};
+                "filter-mode", "fps", "custom-textures", "backend", "performance"};
         case 1:
-            return {"volume", "music-volume", "sfx-volume", "mute", "reverb", "fps", "scale",
-                "check-updates", "check-now", "settings-discord"};
+            return {"volume", "music-volume", "sfx-volume", "mute", "reverb"};
         case 2:
             return {"unlock-all", "frozen-stadium", "free-camera", "ucf"};
         case 4:
             return {"net-name", "net-target", "net-delay"};
+        case 5:
+            return {"scale", "check-updates", "check-now", "settings-discord"};
         default:
             return {};
         }
@@ -306,12 +321,13 @@ class Launcher final : public Rml::EventListener {
     static bool typing(Rml::Element* e) {
         return e && e->GetTagName() == "input" && !is_slider(e->GetId());
     }
-    bool in_rows(Rml::Element* e) const {
+    bool within(Rml::Element* e, const char* id) const {
         for (; e && e != document; e = e->GetParentNode())
-            if (e->GetId() == "settings-content")
+            if (e->GetId() == id)
                 return true;
         return false;
     }
+    bool in_rows(Rml::Element* e) const { return within(e, "settings-content"); }
     /* What Up and Down walk through: the main menu's plates, or in the
      * settings whichever column holds the focus, the categories or the rows
      * of the open page. */
@@ -320,7 +336,7 @@ class Launcher final : public Rml::EventListener {
             return focus_ids;
         if (in_rows(document->GetContext()->GetFocusElement()))
             return page_focus();
-        std::vector<std::string> ids(std::begin(tab_ids), std::end(tab_ids));
+        std::vector<std::string> ids(std::begin(launcher_tab_ids), std::end(launcher_tab_ids));
         ids.push_back("back");
         return ids;
     }
@@ -356,7 +372,7 @@ class Launcher final : public Rml::EventListener {
             for (const char* t : themes)
                 if (e->GetId() == t)
                     set_theme(t);
-        } else if (const int i = tab_index(e->GetId()); i >= 0 && i != tab)
+        } else if (const int i = launcher_tab_index(e->GetId()); i >= 0 && i != tab)
             select_tab(i);  // the cursor on a category opens it, as Melee previews
     }
     /* A pointer moving onto a control moves the cursor there, so the mouse,
@@ -364,7 +380,10 @@ class Launcher final : public Rml::EventListener {
      * layout shifts under a resting pointer (a fullscreen toggle, a page
      * change) RmlUi hovers whatever is now beneath it, and taking that as
      * pointing pulled the focus away from the keys. Not while a text field
-     * holds the focus either: that would pull it out from under the typing. */
+     * holds the focus either: that would pull it out from under the typing.
+     * Not onto the settings categories: focusing one opens its page, so the
+     * pointer crossing them on its way to the rows flipped pages. They only
+     * light up under it (launcher.rcss), and a click opens one. */
     void hover(Rml::Event& event) {
         const int x = event.GetParameter<int>("mouse_x", -1);
         const int y = event.GetParameter<int>("mouse_y", -1);
@@ -377,6 +396,8 @@ class Launcher final : public Rml::EventListener {
                !(e->GetTagName() == "input" && is_slider(e->GetId())))
             e = e->GetParentNode();
         if (!e || e == document || e->IsPseudoClassSet("disabled"))
+            return;
+        if (settings && within(e, "categories"))
             return;
         auto* focus = document->GetContext()->GetFocusElement();
         if (e != focus && !typing(focus))
@@ -402,11 +423,11 @@ class Launcher final : public Rml::EventListener {
     // Opens a page without moving the focus (describe() calls it whenever a
     // category takes the focus, by keys or by pointer).
     void select_tab(int next) {
-        tab = (next + tab_count) % tab_count;
-        for (int i = 0; i < tab_count; ++i) {
-            if (auto* e = element(tab_ids[i]))
+        tab = (next + launcher_tab_count) % launcher_tab_count;
+        for (int i = 0; i < launcher_tab_count; ++i) {
+            if (auto* e = element(launcher_tab_ids[i]))
                 e->SetClass("selected", i == tab);
-            if (auto* e = element(page_ids[i]))
+            if (auto* e = element(launcher_page_ids[i]))
                 e->SetClass("selected", i == tab);
         }
         if (auto* e = element("settings-content"))
@@ -414,7 +435,7 @@ class Launcher final : public Rml::EventListener {
     }
     void show_tab(int next) {
         select_tab(next);
-        if (auto* e = element(tab_ids[tab])) {
+        if (auto* e = element(launcher_tab_ids[tab])) {
             e->Focus();
             e->ScrollIntoView();
         }
@@ -464,8 +485,8 @@ class Launcher final : public Rml::EventListener {
         if (!e || e == document || e->IsPseudoClassSet("disabled"))
             return;
         const auto id = e->GetId();
-        if (settings && tab_index(id) >= 0) {
-            show_tab(tab_index(id));
+        if (settings && launcher_tab_index(id) >= 0) {
+            show_tab(launcher_tab_index(id));
             enter_rows();
         } else if (e->GetTagName() == "button" || is_slider(id))
             action(id);
@@ -477,7 +498,7 @@ class Launcher final : public Rml::EventListener {
         if (!focus || focus->IsPseudoClassSet("disabled"))
             return;
         const auto id = focus->GetId();
-        if (settings && tab_index(id) >= 0) {
+        if (settings && launcher_tab_index(id) >= 0) {
             if (direction > 0)
                 enter_rows();
         } else if (is_slider(id))
@@ -660,8 +681,8 @@ class Launcher final : public Rml::EventListener {
             SDL_OpenURL("https://discord.gg/aurt34svq");
             return;
         }
-        if (tab_index(id) >= 0) {
-            show_tab(tab_index(id));
+        if (launcher_tab_index(id) >= 0) {
+            show_tab(launcher_tab_index(id));
             return;
         }
         if (id == "verify" && verification.valid()) {
@@ -958,8 +979,8 @@ public:
             } else if (key == Rml::Input::KI_RETURN) {
                 // Stopping it here also stops RmlUi's own click on Enter.
                 auto* focus = document->GetContext()->GetFocusElement();
-                if (focus &&
-                    (is_slider(focus->GetId()) || (settings && tab_index(focus->GetId()) >= 0)))
+                if (focus && (is_slider(focus->GetId()) ||
+                                 (settings && launcher_tab_index(focus->GetId()) >= 0)))
                 {
                     activate_focus();
                     event.StopPropagation();

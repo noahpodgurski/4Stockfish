@@ -144,10 +144,8 @@ def settings(win, proc, config):
     key(win, "Down")
     key(win, "Return")
     time.sleep(0.5)
-    key(win, "Down")   # categories: Graphics -> Audio, which opens its page
-    key(win, "Right")  # into the rows: Master volume
-    for _ in range(6):
-        key(win, "Down")  # music -> sfx -> mute -> reverb -> fps -> scale
+    key(win, "Down", 5)  # categories: Graphics -> ... -> Launcher, which opens its page
+    key(win, "Right")    # into the rows: Interface size
     time.sleep(0.5)
     screenshot(win, "settings")
     key(win, "Return")

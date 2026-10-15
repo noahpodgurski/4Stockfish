@@ -15,7 +15,7 @@
         <button id="play" class="plate" data-desc="Start Melee from this disc."><span>Play</span></button>
         <button id="choose" class="plate" data-desc="Pick a Melee disc image: ISO, GCM, CISO, RVZ, GCZ or WIA."><span>Choose Disc</span></button>
         <button id="verify" class="plate" data-desc="Check the disc image against the original NTSC-U 1.02 disc."><span id="verify-label">Verify Disc</span></button>
-        <button id="settings" class="plate" data-desc="Graphics, audio, gameplay, controls and online play."><span>Settings</span></button>
+        <button id="settings" class="plate" data-desc="Graphics, audio, gameplay, controls, online play and the launcher itself."><span>Settings</span></button>
         <button id="discord" class="plate" data-desc="Join the community Discord server in your browser."><span>Discord</span></button>
         <button id="quit" class="plate" data-desc="Close Melee PC."><span>Quit</span></button>
       </div>
@@ -52,10 +52,11 @@
     <div id="preferences">
       <div id="categories">
         <button id="tab-graphics" class="plate small" data-desc="How the game looks."><span>Graphics</span></button>
-        <button id="tab-audio" class="plate small" data-desc="Volume, reverb and the interface."><span>Audio</span></button>
+        <button id="tab-audio" class="plate small" data-desc="Volume and reverb."><span>Audio</span></button>
         <button id="tab-cheats" class="plate small" data-desc="Unlocks, stage hazards and controller fixes."><span>Gameplay</span></button>
         <button id="tab-controls" class="plate small" data-desc="The keyboard layout and controller setup."><span>Controls</span></button>
         <button id="tab-online" class="plate small" data-desc="Your player name, connect codes and input delay."><span>Online</span></button>
+        <button id="tab-launcher" class="plate small" data-desc="The size of these menus, updates and the community."><span>Launcher</span></button>
         <button id="back" class="plate small back" data-desc="Back to the main menu."><span>Back</span></button>
       </div>
       <div id="settings-content">
@@ -69,6 +70,7 @@
           <div class="row" data-desc="Smooth polygon edges with multisampling. Applies after a restart."><span class="name">Anti-aliasing <span class="badge">RESTART</span></span><button id="aa" class="value">Anti-aliasing</button></div>
           <div class="row" data-desc="Sharper textures seen at an angle, where the texture allows it. Applies after a restart."><span class="name">Anisotropic filtering <span class="badge">RESTART</span></span><button id="filter" class="value">Filtering</button></div>
           <div class="row" data-desc="A filter over the finished frame. Off presents it as rendered."><span class="name">Post-processing</span><button id="filter-mode" class="value">Off</button></div>
+          <div class="row" data-desc="Show the frame rate in a corner of the screen."><span class="name">FPS counter</span><button id="fps" class="value">FPS counter</button></div>
           <div class="row" data-desc="Load replacement textures from the textures folder."><span class="name">Custom HD textures</span><button id="custom-textures" class="value">Enabled</button></div>
           <div class="row" data-desc="Auto, or a specific graphics API this platform provides. Applies after a restart."><span class="name">Graphics backend <span class="badge">RESTART</span></span><button id="backend" class="value">Auto</button></div>
           <div class="row" data-desc="For slow devices: 1x internal resolution, no anti-aliasing, 1x filtering and reverb off."><span class="name">Performance preset</span><button id="performance" class="value action">Apply</button></div>
@@ -82,12 +84,6 @@
             <div class="slider-control"><input type="range" class="range" id="sfx-volume" min="0" max="100" step="5" value="100" /><span id="sfx-volume-val" class="slider-value">100%</span></div></div>
           <div class="row" data-desc="Silence the game without changing the volumes."><span class="name">Mute</span><button id="mute" class="value">Mute</button></div>
           <div class="row" data-desc="Stage reverb and echo. Off saves audio CPU on slow devices."><span class="name">Reverb</span><button id="reverb" class="value">On</button></div>
-          <div class="row" data-desc="Show the frame rate in a corner of the screen."><span class="name">FPS counter</span><button id="fps" class="value">FPS counter</button></div>
-          <div class="row" data-desc="The size of these menus."><span class="name">Interface size</span>
-            <div class="slider-control"><input type="range" class="range" id="scale" min="75" max="150" step="25" value="100" /><span id="scale-val" class="slider-value">100%</span></div></div>
-          <div class="row" data-desc="Look for a new release on GitHub at each start."><span class="name">Check for updates</span><button id="check-updates" class="value">On</button></div>
-          <div class="row" id="check-row" data-desc="Look for a new release now."><span class="name">Updates <span id="check-status" class="detail">Melee-PC is up to date.</span></span><button id="check-now" class="value action">Check now</button></div>
-          <div class="row" data-desc="Join the community Discord server in your browser."><span class="name">Discord community</span><button id="settings-discord" class="value action">Join Discord</button></div>
         </div>
         <div id="page-cheats" class="page">
           <div class="row" data-desc="Unlock all 26 characters, the 11 secret stages and All-Star mode."><span class="name">Unlock everything</span><button id="unlock-all" class="value">Off</button></div>
@@ -111,6 +107,13 @@
           <div class="row" data-desc="Leave blank to host your code. Open Online, then Direct Connect, in the game."><span class="name">Friend's connect code</span><input type="text" id="net-target" maxlength="17" value="" /></div>
           <div class="row" data-desc="Automatic adapts to your connection. Changes apply next match."><span class="name">Input delay</span><button id="net-delay" class="value">Auto</button></div>
           <p class="note">Internet discovery can take a few minutes. Some home networks cannot connect without a relay.</p>
+        </div>
+        <div id="page-launcher" class="page">
+          <div class="row" data-desc="The size of these menus."><span class="name">Interface size</span>
+            <div class="slider-control"><input type="range" class="range" id="scale" min="75" max="150" step="25" value="100" /><span id="scale-val" class="slider-value">100%</span></div></div>
+          <div class="row" data-desc="Look for a new release on GitHub at each start."><span class="name">Check for updates</span><button id="check-updates" class="value">On</button></div>
+          <div class="row" id="check-row" data-desc="Look for a new release now."><span class="name">Updates <span id="check-status" class="detail">Melee-PC is up to date.</span></span><button id="check-now" class="value action">Check now</button></div>
+          <div class="row" data-desc="Join the community Discord server in your browser."><span class="name">Discord community</span><button id="settings-discord" class="value action">Join Discord</button></div>
         </div>
         <p id="settings-status" style="display: none;"></p>
       </div>
