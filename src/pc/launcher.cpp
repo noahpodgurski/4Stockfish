@@ -958,8 +958,8 @@ public:
             } else if (key == Rml::Input::KI_RETURN) {
                 // Stopping it here also stops RmlUi's own click on Enter.
                 auto* focus = document->GetContext()->GetFocusElement();
-                if (focus && (is_slider(focus->GetId()) ||
-                                 (settings && tab_index(focus->GetId()) >= 0)))
+                if (focus &&
+                    (is_slider(focus->GetId()) || (settings && tab_index(focus->GetId()) >= 0)))
                 {
                     activate_focus();
                     event.StopPropagation();
