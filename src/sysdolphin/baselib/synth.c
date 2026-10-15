@@ -114,7 +114,7 @@ static void HSD_SynthSFXSampleLoadCallback(int result, uintptr_t length,
              * voice blocks }, copied behind the node's next/id words. */
             n = HSD_Synth_804D7734->v;
             nbytes = SfxLoadStreamDataSize(n << 6);
-            memcpy((u8*) e + 8, HSD_Synth_804D7734, nbytes);
+            memmove((u8*) e + 8, HSD_Synth_804D7734, nbytes);
             for (k = 0; k < n; k++) {
                 struct SfxVoiceAddr* a =
                     (struct SfxVoiceAddr*) ((u8*) e + 0x10 + k * 0x40);

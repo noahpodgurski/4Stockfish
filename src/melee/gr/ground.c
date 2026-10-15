@@ -707,8 +707,8 @@ void Ground_OnLoad(StageIdPair* pair)
 
 struct Ground_801C0FB8_cur {
     void* unk0;
-    s32 unk4;
-    void (*unk8)(s32);
+    HSD_GObj* unk4;
+    HSD_GObjEvent unk8;
 };
 
 void Ground_801C0FB8(StageIdPair* pair)
