@@ -1,9 +1,9 @@
 <rml>
 <head><title>Melee-PC</title><link type="text/rcss" href="launcher.rcss" /></head>
 <!-- The body's classes are set by src/pc/launcher.cpp: the platform
-     (desktop or mobile) hides what that platform has no use
+     (mobile) hides what that platform has no use
      for, and theme-* colours the frame after the focused main-menu plate. -->
-<body class="desktop theme-choose">
+<body class="theme-choose">
   <div id="frame">
     <div id="titlebar">
       <span id="title">Melee PC</span><span id="title-sub">/ Settings</span>

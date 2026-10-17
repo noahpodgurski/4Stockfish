@@ -178,6 +178,14 @@ def settings_live(win, proc, config):
     assert "widescreen 2" in config.read_text(), "Left did not step the aspect ratio back"
     key(win, "Right")    # and forward again
     assert "widescreen 0" in config.read_text(), "Right did not step the aspect ratio"
+    key(win, "Down", 7)  # Aspect ratio -> Graphics backend
+    if "MELEE_BACKEND" not in os.environ:
+        key(win, "Left")
+        assert "backend 2\n" in config.read_text(), "Left did not wrap Auto to Vulkan"
+        key(win, "Right")
+        assert "backend 0\n" in config.read_text(), "Right did not wrap Vulkan to Auto"
+        key(win, "Return")
+        assert "backend 2\n" in config.read_text(), "Click did not advance the backend"
     close(win, proc)
 
 
@@ -218,6 +226,33 @@ try:
     run_case("missing-saved", [], saved_disc="/nonexistent/disc with spaces.iso")
     run_case("settings-live", [], interact=settings_live)
     if args.disc:
+        def tab_wrap(win, proc, config):
+            time.sleep(12)
+            key(win, "F1")
+            time.sleep(1)
+            for page in ("audio", "gameplay", "controls", "online", "graphics"):
+                key(win, "Right")
+                time.sleep(0.5)
+                screenshot(win, "f1-" + page)
+            key(win, "Down")  # Graphics: Display mode
+            key(win, "Return")
+            assert "fullscreen 1\n" in config.read_text(), "F1 did not save the requested fullscreen mode"
+            key(win, "Return")
+            assert "fullscreen 0\n" in config.read_text(), "F1 did not save the requested windowed mode"
+            key(win, "Down", 2)  # sync -> resolution
+            key(win, "Return")
+            assert "render_scale 1\n" in config.read_text(), "F1 did not wrap its five pages to Graphics"
+            key(win, "Escape")
+            key(win, "F1")
+            resize(win, 720, 760)
+            screenshot(win, "f1-small")
+            key(win, "Up")  # wrap from the category to Resume
+            screenshot(win, "f1-resume")
+            key(win, "Return")
+            assert proc.poll() is None, "game failed after resuming from F1"
+            close(win, proc)
+        run_case("f1-tab-wrap", [str(args.disc.resolve())], interact=tab_wrap)
+
         def port_menu(win, proc, config):
             time.sleep(12)
             key(win, "F1")

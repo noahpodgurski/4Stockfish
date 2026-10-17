@@ -19,7 +19,6 @@
     small-hover: 0px 488px 480px 124px;
     small-hover-inner: 56px 518px 346px 69px;
     disc: 0px 304px 184px 184px;
-    disc-plate: 0px 304px 184px 184px;
     arrow-l: 192px 304px 28px 40px;
     arrow-r: 228px 304px 28px 40px;
     arrow-l-dark: 264px 304px 28px 40px;
@@ -147,7 +146,7 @@ button {
 .plate:focus {
     color: #141008;
     font-effect: none;
-    decorator: image(disc-plate none scale-none right center) border-box,
+    decorator: image(disc none scale-none right center) border-box,
                ninepatch(plate-on, plate-on-inner, 20dp 55.5dp 16dp 39dp);
 }
 /* Every plate's name leans a little, selected or not, as Melee's do. */
@@ -187,7 +186,7 @@ button {
 .plate.small:focus {
     color: #141008;
     font-effect: none;
-    decorator: image(disc-plate none contain right center) border-box,
+    decorator: image(disc none contain right center) border-box,
                ninepatch(small-on, small-on-inner, 15dp 39dp 12.5dp 28dp);
 }
 
