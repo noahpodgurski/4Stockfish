@@ -1,75 +1,321 @@
-<rml><head><title>PC enhancements</title><link type="text/rcss" href="port-menu.rcss" /></head>
-<body>
-<div id="toolbar"><span class="wordmark">MELEE <span class="muted">/ PC</span></span><span class="toolbar-tab">SETTINGS</span><span class="toolbar-note">F1 TO CLOSE</span></div>
-<div id="window">
-<div id="heading"><h1>PC settings</h1><span class="version"><span id="menu-version">v0.1.8-beta</span> · NTSC-U 1.02</span></div>
-<div id="tabstrip"><button id="tab-graphics" class="tab">Graphics</button><button id="tab-audio" class="tab">Audio &amp; interface</button><button id="tab-cheats" class="tab">Cheats</button><button id="tab-controls" class="tab">Controls</button><button id="tab-online" class="tab">Online</button></div>
-<div id="content">
-<div id="page-graphics" class="page">
-<div class="setting"><div class="description"><h3>Display mode</h3></div><button id="display">Display</button></div>
-<div class="setting"><div class="description"><h3>Vertical sync</h3></div><button id="sync">VSync</button></div>
-<div class="setting"><div class="description"><h3>Internal resolution</h3><p>Auto follows the window size. Applied when the menu closes.</p></div><div class="slider-control"><input type="range" id="resolution" min="0" max="10" step="1" value="0" /><span id="resolution-val" class="slider-value">Auto</span></div></div>
-<div class="setting"><div class="description"><h3>Aspect ratio</h3><p>Applies to fights. Menus and cutscenes keep the original aspect. Applied when the menu closes.</p></div><button id="aspect">Original (73:60)</button></div>
-<div class="setting"><div class="description"><h3>HUD layout</h3><p>Classic keeps 4:3 safe margins; Wide anchors damage/stocks to 16:9 edges.</p></div><button id="hud-mode">Classic (4:3)</button></div>
-<div class="setting"><div class="description"><h3>Anti-aliasing <span class="badge">RESTART</span></h3></div><button id="aa">Anti-aliasing</button></div>
-<div class="setting"><div class="description"><h3>Anisotropic filtering <span class="badge">RESTART</span></h3></div><button id="filter">Filtering</button></div>
-<div class="setting"><div class="description"><h3>Post-processing filter</h3><p>Off presents the frame as rendered.</p></div><button id="filter-mode">Off</button></div>
-<div class="setting"><div class="description"><h3>Custom HD textures</h3><p>Load replacement textures from the textures directory.</p></div><button id="custom-textures">Enabled</button></div>
-<div class="setting"><div class="description"><h3>Graphics backend <span class="badge">RESTART</span></h3></div><button id="backend">Auto</button></div>
-</div>
-<div id="page-cheats" class="page">
-<div class="setting"><div class="description"><h3>Unlock everything</h3><p>Unlock all 26 characters, 11 secret stages, and All-Star mode.</p></div><button id="unlock-all">Off</button></div>
-<div class="setting"><div class="description"><h3>Hazardless stages</h3><p>Lock Pokémon Stadium in neutral mode without transformations.</p></div><button id="frozen-stadium">Off</button></div>
-<div class="setting"><div class="description"><h3>Free camera</h3><p>Unlock 360° orbital rotation and zoom distance in pause mode.</p></div><button id="free-camera">Normal</button></div>
-<div class="setting"><div class="description"><h3>Universal Controller Fix</h3><p>UCF 0.8x dashback and shield-drop consistency on any controller.</p></div><button id="ucf">Off</button></div>
-</div>
-<div id="page-audio" class="page">
-<div class="setting"><div class="description"><h3>Master volume</h3><p>Left/right or drag to adjust.</p></div><div class="slider-control"><input type="range" id="volume" min="0" max="100" step="5" value="100" /><span id="volume-val" class="slider-value">100%</span></div></div>
-<div class="setting"><div class="description"><h3>Music volume</h3><p>Background music volume.</p></div><div class="slider-control"><input type="range" id="music-volume" min="0" max="100" step="5" value="100" /><span id="music-volume-val" class="slider-value">100%</span></div></div>
-<div class="setting"><div class="description"><h3>SFX volume</h3><p>Sound effects and combat audio volume.</p></div><div class="slider-control"><input type="range" id="sfx-volume" min="0" max="100" step="5" value="100" /><span id="sfx-volume-val" class="slider-value">100%</span></div></div>
-<div class="setting"><div class="description"><h3>Mute audio</h3></div><button id="mute">Mute</button></div>
-<div class="setting"><div class="description"><h3>Reverb</h3><p>Stage reverb and echo.</p></div><button id="reverb">On</button></div>
-<div class="setting"><div class="description"><h3>Performance display</h3></div><button id="fps">FPS counter</button></div>
-<div class="setting"><div class="description"><h3>UI scale</h3><p>Scale launcher and overlay elements.</p></div><div class="slider-control"><input type="range" id="scale" min="75" max="150" step="25" value="100" /><span id="scale-val" class="slider-value">100%</span></div></div>
-<div class="setting"><div class="description"><h3>Check for updates</h3><p id="port-update-status">Up to date</p></div><button id="port-check-update">Check now</button></div>
-</div>
-<div id="page-online" class="page">
-<div class="setting"><div class="description"><h3>Player name</h3><p>1–8 letters or digits. Changes apply to the next search.</p></div><input type="text" id="net-name" maxlength="8" value="PLAYER" /></div>
-<div class="setting"><div class="description"><h3>Your connect code</h3><p id="net-code"></p></div></div>
-<div class="setting"><div class="description"><h3>Friend's connect code</h3><p>Leave blank to host your code. Open Online → Direct Connect in-game.</p></div><input type="text" id="net-target" maxlength="17" value="" /></div>
-<div class="setting"><div class="description"><h3>Input delay</h3><p>Automatic adapts to your connection. Changes apply next match.</p></div><button id="net-delay">Auto</button></div>
-<div class="setting"><div class="description"><p>Internet discovery can take a few minutes. Some home networks cannot connect without a relay.</p></div></div>
-</div>
-<div id="page-controls" class="page">
-<div class="setting"><div class="description"><h3>Controller</h3><p id="pad-name">No controller connected.</p></div><button id="pad-port">Port 1</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-0">-</h3></div><button id="bind-0">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-1">-</h3></div><button id="bind-1">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-2">-</h3></div><button id="bind-2">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-3">-</h3></div><button id="bind-3">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-4">-</h3></div><button id="bind-4">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-5">-</h3></div><button id="bind-5">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-6">-</h3></div><button id="bind-6">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-7">-</h3></div><button id="bind-7">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-8">-</h3></div><button id="bind-8">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-9">-</h3></div><button id="bind-9">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-10">-</h3></div><button id="bind-10">-</button></div>
-<div class="setting"><div class="description"><h3 id="bind-name-11">-</h3></div><button id="bind-11">-</button></div>
-<div class="section-heading"><h2>Sticks and triggers</h2></div>
-<div class="setting"><div class="description"><h3 id="axis-name-0">-</h3></div><button id="axis-0">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-1">-</h3></div><button id="axis-1">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-2">-</h3></div><button id="axis-2">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-3">-</h3></div><button id="axis-3">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-4">-</h3><p>C-stick</p></div><button id="axis-4">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-5">-</h3><p>C-stick</p></div><button id="axis-5">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-6">-</h3><p>C-stick</p></div><button id="axis-6">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-7">-</h3><p>C-stick</p></div><button id="axis-7">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-8">-</h3></div><button id="axis-8">-</button></div>
-<div class="setting"><div class="description"><h3 id="axis-name-9">-</h3></div><button id="axis-9">-</button></div>
-<div class="setting"><div class="description"><h3>Restore defaults</h3><p>Put this port back on its default mapping.</p></div><button id="bind-reset">Restore</button></div>
-<div class="section controls"><h2>Keyboard</h2><p>WASD / arrows Move · X Attack · Z Special · C / V Jump · Q / E Shield<br/>Tab Grab · Enter Start · IJKL C-stick</p></div>
-</div>
-</div>
-<div id="bottom"><p id="menu-status">Saved automatically.</p><button id="resume">Return to game</button></div>
-<div id="hints">ARROWS / D-PAD Navigate <span>ENTER / A Select</span><span>ESC / B / F1 Close</span><span>BACK Opens this menu</span></div>
-</div>
-</body></rml>
+<rml>
+  <head>
+    <title>Melee PC / Settings</title>
+    <link type="text/rcss" href="launcher.rcss" />
+    <link type="text/rcss" href="port-menu.rcss" />
+  </head>
+  <body class="in-settings theme-settings port-menu">
+    <div id="frame">
+      <div id="titlebar">
+        <span id="title">Melee PC</span>
+        <span id="title-sub">/ Settings</span>
+        <span class="stripes">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
+        <span id="edition">
+          <span id="menu-version">Melee PC</span>
+          <span> · F1 to close</span>
+        </span>
+      </div>
+      <div id="preferences">
+        <div id="categories">
+          <button id="tab-graphics" class="plate small" data-desc="Graphics settings.">
+            <span>Graphics</span>
+          </button>
+          <button id="tab-audio" class="plate small" data-desc="Audio settings.">
+            <span>Audio</span>
+          </button>
+          <button id="tab-cheats" class="plate small" data-desc="Gameplay settings.">
+            <span>Gameplay</span>
+          </button>
+          <button id="tab-controls" class="plate small" data-desc="Controls settings.">
+            <span>Controls</span>
+          </button>
+          <button id="tab-online" class="plate small" data-desc="Online settings.">
+            <span>Online</span>
+          </button>
+          <button id="resume" class="plate small back" data-desc="Close settings and return to the game.">
+            <span>Resume</span>
+          </button>
+        </div>
+        <div id="settings-content">
+          <div id="page-graphics" class="page">
+            <div class="row" data-desc="Display mode">
+              <span class="name">Display mode</span>
+              <button id="display" class="value">Display</button>
+            </div>
+            <div class="row" data-desc="Vertical sync">
+              <span class="name">Vertical sync</span>
+              <button id="sync" class="value">VSync</button>
+            </div>
+            <div class="row" data-desc="Auto follows the window size. Applied when the menu closes.">
+              <span class="name">Internal resolution<span class="detail">Auto follows the window size. Applied when the menu closes.</span>
+              </span>
+              <div class="slider-control">
+                <input type="range" id="resolution" min="0" max="10" step="1" value="0" class="range" />
+                <span id="resolution-val" class="slider-value">Auto</span>
+              </div>
+            </div>
+            <div class="row" data-desc="Applies to fights. Menus and cutscenes keep the original aspect. Applied when the menu closes.">
+              <span class="name">Aspect ratio<span class="detail">Applies to fights. Menus and cutscenes keep the original aspect. Applied when the menu closes.</span>
+              </span>
+              <button id="aspect" class="value">Original (73:60)</button>
+            </div>
+            <div class="row" data-desc="Classic keeps 4:3 safe margins; Wide anchors damage/stocks to 16:9 edges.">
+              <span class="name">HUD layout<span class="detail">Classic keeps 4:3 safe margins; Wide anchors damage/stocks to 16:9 edges.</span>
+              </span>
+              <button id="hud-mode" class="value">Classic (4:3)</button>
+            </div>
+            <div class="row" data-desc="Anti-aliasing RESTART">
+              <span class="name">Anti-aliasing <span class="badge">RESTART</span>
+              </span>
+              <button id="aa" class="value">Anti-aliasing</button>
+            </div>
+            <div class="row" data-desc="Anisotropic filtering RESTART">
+              <span class="name">Anisotropic filtering <span class="badge">RESTART</span>
+              </span>
+              <button id="filter" class="value">Filtering</button>
+            </div>
+            <div class="row" data-desc="Off presents the frame as rendered.">
+              <span class="name">Post-processing filter<span class="detail">Off presents the frame as rendered.</span>
+              </span>
+              <button id="filter-mode" class="value">Off</button>
+            </div>
+            <div class="row" data-desc="Load replacement textures from the textures directory.">
+              <span class="name">Custom HD textures<span class="detail">Load replacement textures from the textures directory.</span>
+              </span>
+              <button id="custom-textures" class="value">Enabled</button>
+            </div>
+            <div class="row" data-desc="Graphics backend RESTART">
+              <span class="name">Graphics backend <span class="badge">RESTART</span>
+              </span>
+              <button id="backend" class="value">Auto</button>
+            </div>
+          </div>
+          <div id="page-cheats" class="page">
+            <div class="row" data-desc="Unlock all 26 characters, 11 secret stages, and All-Star mode.">
+              <span class="name">Unlock everything<span class="detail">Unlock all 26 characters, 11 secret stages, and All-Star mode.</span>
+              </span>
+              <button id="unlock-all" class="value">Off</button>
+            </div>
+            <div class="row" data-desc="Lock Pokémon Stadium in neutral mode without transformations.">
+              <span class="name">Hazardless stages<span class="detail">Lock Pokémon Stadium in neutral mode without transformations.</span>
+              </span>
+              <button id="frozen-stadium" class="value">Off</button>
+            </div>
+            <div class="row" data-desc="Unlock 360° orbital rotation and zoom distance in pause mode.">
+              <span class="name">Free camera<span class="detail">Unlock 360° orbital rotation and zoom distance in pause mode.</span>
+              </span>
+              <button id="free-camera" class="value">Normal</button>
+            </div>
+            <div class="row" data-desc="UCF 0.8x dashback and shield-drop consistency on any controller.">
+              <span class="name">Universal Controller Fix<span class="detail">UCF 0.8x dashback and shield-drop consistency on any controller.</span>
+              </span>
+              <button id="ucf" class="value">Off</button>
+            </div>
+          </div>
+          <div id="page-audio" class="page">
+            <div class="row" data-desc="Left/right or drag to adjust.">
+              <span class="name">Master volume<span class="detail">Left/right or drag to adjust.</span>
+              </span>
+              <div class="slider-control">
+                <input type="range" id="volume" min="0" max="100" step="5" value="100" class="range" />
+                <span id="volume-val" class="slider-value">100%</span>
+              </div>
+            </div>
+            <div class="row" data-desc="Background music volume.">
+              <span class="name">Music volume<span class="detail">Background music volume.</span>
+              </span>
+              <div class="slider-control">
+                <input type="range" id="music-volume" min="0" max="100" step="5" value="100" class="range" />
+                <span id="music-volume-val" class="slider-value">100%</span>
+              </div>
+            </div>
+            <div class="row" data-desc="Sound effects and combat audio volume.">
+              <span class="name">SFX volume<span class="detail">Sound effects and combat audio volume.</span>
+              </span>
+              <div class="slider-control">
+                <input type="range" id="sfx-volume" min="0" max="100" step="5" value="100" class="range" />
+                <span id="sfx-volume-val" class="slider-value">100%</span>
+              </div>
+            </div>
+            <div class="row" data-desc="Mute audio">
+              <span class="name">Mute audio</span>
+              <button id="mute" class="value">Mute</button>
+            </div>
+            <div class="row" data-desc="Stage reverb and echo.">
+              <span class="name">Reverb<span class="detail">Stage reverb and echo.</span>
+              </span>
+              <button id="reverb" class="value">On</button>
+            </div>
+            <div class="row" data-desc="Performance display">
+              <span class="name">Performance display</span>
+              <button id="fps" class="value">FPS counter</button>
+            </div>
+            <div class="row" data-desc="Scale launcher and overlay elements.">
+              <span class="name">UI scale<span class="detail">Scale launcher and overlay elements.</span>
+              </span>
+              <div class="slider-control">
+                <input type="range" id="scale" min="75" max="150" step="25" value="100" class="range" />
+                <span id="scale-val" class="slider-value">100%</span>
+              </div>
+            </div>
+            <div class="row" data-desc="Up to date">
+              <span class="name">Check for updates<span id="port-update-status" class="detail">Up to date</span>
+              </span>
+              <button id="port-check-update" class="value action">Check now</button>
+            </div>
+          </div>
+          <div id="page-online" class="page">
+            <div class="row" data-desc="1–8 letters or digits. Changes apply to the next search.">
+              <span class="name">Player name<span class="detail">1–8 letters or digits. Changes apply to the next search.</span>
+              </span>
+              <input type="text" id="net-name" maxlength="8" value="PLAYER" />
+            </div>
+            <div class="row" data-desc="Your connect code">
+              <span class="name">Your connect code<span id="net-code" class="detail" />
+              </span>
+            </div>
+            <div class="row" data-desc="Leave blank to host your code. Open Online → Direct Connect in-game.">
+              <span class="name">Friend's connect code<span class="detail">Leave blank to host your code. Open Online → Direct Connect in-game.</span>
+              </span>
+              <input type="text" id="net-target" maxlength="17" value="" />
+            </div>
+            <div class="row" data-desc="Automatic adapts to your connection. Changes apply next match.">
+              <span class="name">Input delay<span class="detail">Automatic adapts to your connection. Changes apply next match.</span>
+              </span>
+              <button id="net-delay" class="value">Auto</button>
+            </div>
+            <div class="row">
+              <div class="note">
+                <p>Internet discovery can take a few minutes. Some home networks cannot connect without a relay.</p>
+              </div>
+            </div>
+          </div>
+          <div id="page-controls" class="page">
+            <div class="row" data-desc="No controller connected.">
+              <span class="name">Controller<span id="pad-name" class="detail">No controller connected.</span>
+              </span>
+              <button id="pad-port" class="value">Port 1</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-0" class="name">-</span>
+              <button id="bind-0" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-1" class="name">-</span>
+              <button id="bind-1" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-2" class="name">-</span>
+              <button id="bind-2" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-3" class="name">-</span>
+              <button id="bind-3" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-4" class="name">-</span>
+              <button id="bind-4" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-5" class="name">-</span>
+              <button id="bind-5" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-6" class="name">-</span>
+              <button id="bind-6" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-7" class="name">-</span>
+              <button id="bind-7" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-8" class="name">-</span>
+              <button id="bind-8" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-9" class="name">-</span>
+              <button id="bind-9" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-10" class="name">-</span>
+              <button id="bind-10" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="bind-name-11" class="name">-</span>
+              <button id="bind-11" class="value action">-</button>
+            </div>
+            <div class="info">
+              <h2>Sticks and triggers</h2>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="axis-name-0" class="name">-</span>
+              <button id="axis-0" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="axis-name-1" class="name">-</span>
+              <button id="axis-1" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="axis-name-2" class="name">-</span>
+              <button id="axis-2" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="axis-name-3" class="name">-</span>
+              <button id="axis-3" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="C-stick">
+              <span id="axis-name-4" class="name">-<span class="detail">C-stick</span>
+              </span>
+              <button id="axis-4" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="C-stick">
+              <span id="axis-name-5" class="name">-<span class="detail">C-stick</span>
+              </span>
+              <button id="axis-5" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="C-stick">
+              <span id="axis-name-6" class="name">-<span class="detail">C-stick</span>
+              </span>
+              <button id="axis-6" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="C-stick">
+              <span id="axis-name-7" class="name">-<span class="detail">C-stick</span>
+              </span>
+              <button id="axis-7" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="axis-name-8" class="name">-</span>
+              <button id="axis-8" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="-">
+              <span id="axis-name-9" class="name">-</span>
+              <button id="axis-9" class="value action">-</button>
+            </div>
+            <div class="row" data-desc="Put this port back on its default mapping.">
+              <span class="name">Restore defaults<span class="detail">Put this port back on its default mapping.</span>
+              </span>
+              <button id="bind-reset" class="value action">Restore</button>
+            </div>
+            <div class="info">
+              <h2>Keyboard</h2>
+              <p>WASD / arrows Move · X Attack · Z Special · C / V Jump · Q / E Shield<br />Tab Grab · Enter Start · IJKL C-stick</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="descbar">
+        <p id="menu-status">Settings save automatically. F1 or Escape returns to the game.</p>
+      </div>
+    </div>
+    <div id="hints">ARROWS / D-PAD Navigate <span>ENTER / A Select</span>
+      <span>ESC / B Back · F1 Close</span>
+      <span>BACK Opens this menu</span>
+    </div>
+  </body>
+</rml>

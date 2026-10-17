@@ -54,19 +54,15 @@ DISC_RING = (215, 211, 85)
 PLATE_W, PLATE_H = 480, 180
 SMALL_H = 124
 DISC_SIZE = 184
-# The disc as it sits on a plate's tab: the tab's centre is this far in from
-# the plate's right edge, more than the disc's half width, so the plate's
-# rectangle carries transparent room on the right.
-DISC_PAD = 0
 ARROW_W, ARROW_H = 28, 40
-ARROWS_X = DISC_SIZE + DISC_PAD + 8
+ARROWS_X = DISC_SIZE + 8
 HOVER_Y = PLATE_H + SMALL_H + DISC_SIZE  # the small plate's hover variant
 
 
 def vgradient(w, h, stops):
     """A vertical gradient through (position, colour) stops."""
     img = Image.new("RGBA", (w, h))
-    px = img.load()
+    draw = ImageDraw.Draw(img)
     for y in range(h):
         t = y / max(1, h - 1)
         for i in range(len(stops) - 1):
@@ -76,8 +72,7 @@ def vgradient(w, h, stops):
                 f = (t - p0) / max(1e-6, p1 - p0)
                 c = tuple(int(c0[k] + (c1[k] - c0[k]) * f) for k in range(3)) + (255,)
                 break
-        for x in range(w):
-            px[x, y] = c
+        draw.line((0, y, w - 1, y), fill=c)
     return img
 
 
@@ -370,7 +365,6 @@ def main():
             lines.append(f"{name}-hover-inner: {x}px {HOVER_Y + iy}px {iw}px {ih}px;")
         lines.append(f"/* {name} edges: {edges} */")
     lines.append(f"disc: 0px {disc_y}px {DISC_SIZE}px {DISC_SIZE}px;")
-    lines.append(f"disc-plate: 0px {disc_y}px {DISC_SIZE + DISC_PAD}px {DISC_SIZE}px;")
     for name, h in [("plate", PLATE_H), ("small", SMALL_H)]:
         right, top = tab_centre(h)
         lines.append(f"/* {name} ring centre: {right / 2:g}dp from the right, {top / 2:g}dp down */")

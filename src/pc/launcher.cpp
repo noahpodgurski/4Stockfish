@@ -115,29 +115,43 @@ const char* backend_name(int mode) {
 #endif
 }
 
+bool load_menu_fonts(const std::filesystem::path& resources) {
+    if (!Rml::LoadFontFace((resources / "font.ttf").string(), true)) {
+        SDL_Log("Menus: could not load font from %s", resources.c_str());
+        return false;
+    }
+    Rml::LoadFontFace((resources / "font-bold.ttf").string());
+    /* The menus' face (Noto Sans SemiCondensed, cut to Latin), with its
+     * ExtraBold for the plates' names. Liberation covers what it lacks. */
+    for (const char* face : {"menu.ttf", "menu-bold.ttf"})
+        if (!Rml::LoadFontFace((resources / face).string()))
+            SDL_Log("Menus: could not load %s", face);
+    if (!Rml::LoadFontFace((resources / "menu-heavy.ttf").string(), false,
+            static_cast<Rml::Style::FontWeight>(800)))
+        SDL_Log("Menus: could not load menu-heavy.ttf");
+    return true;
+}
+
 /* The two Direct3D entries only exist on Windows, so elsewhere the cycle goes
  * straight from Auto to Vulkan: offering a backend that can only ever fail
  * over leaves the button showing a label for something the run is not using.
  * ponytail: indices stay identical on every platform so the prefs file and
  * the BACKEND_* mapping below need no per-platform cases. */
-int backend_next(int mode) {
+int backend_next(int mode, int direction = 1) {
 #if defined(_WIN32)
-    return (mode + 1) % 4;
+    return (mode + direction + 4) % 4;
 #else
     return mode == 0 ? 2 : 0;
 #endif
 }
 
 constexpr const char* tab_ids[] = {
-    "tab-graphics", "tab-audio", "tab-cheats", "tab-controls", "tab-online"};
-constexpr const char* page_ids[] = {
-    "page-graphics", "page-audio", "page-cheats", "page-controls", "page-online"};
-constexpr int tab_count = 5;
-int tab_index(const Rml::String& id) {
-    for (int i = 0; i < tab_count; ++i)
-        if (id == tab_ids[i])
-            return i;
-    return -1;
+    "tab-graphics", "tab-audio", "tab-cheats", "tab-controls", "tab-online", "tab-launcher"};
+
+template <size_t N>
+int index_of(const char* const (&ids)[N], const Rml::String& id) {
+    const auto it = std::find(std::begin(ids), std::end(ids), id);
+    return it == std::end(ids) ? -1 : static_cast<int>(it - std::begin(ids));
 }
 std::string resolution_name(float scale) {
     return scale == 0 ? std::string("Auto") : std::to_string(int(scale)) + "x";
@@ -198,9 +212,9 @@ static uint32_t pending_pipelines() {
 /* The platform, as a class on the launcher's <body>: launcher.rcss hides
  * what it has no use for (.no-mobile: the window mode, the keyboard). */
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-constexpr const char* platform_class = "mobile";
+constexpr bool is_mobile = true;
 #else
-constexpr const char* platform_class = "desktop";
+constexpr bool is_mobile = false;
 #endif
 #if defined(__APPLE__) && TARGET_OS_IPHONE
 constexpr const char* disc_note =
@@ -211,21 +225,7 @@ constexpr const char* disc_note = "Use Choose Disc to pick a disc image.";
 constexpr const char* disc_note = "Drop a disc image here, or use Choose Disc.";
 #endif
 /* Melee colours the menu frame after the entry under the cursor. */
-constexpr const char* themes[] = {"play", "choose", "verify", "settings", "discord", "quit"};
-
-/* The launcher's settings categories (launcher.rml); the F1 menu keeps its
- * own, above. */
-constexpr const char* launcher_tab_ids[] = {
-    "tab-graphics", "tab-audio", "tab-cheats", "tab-controls", "tab-online", "tab-launcher"};
-constexpr const char* launcher_page_ids[] = {
-    "page-graphics", "page-audio", "page-cheats", "page-controls", "page-online", "page-launcher"};
-constexpr int launcher_tab_count = 6;
-int launcher_tab_index(const Rml::String& id) {
-    for (int i = 0; i < launcher_tab_count; ++i)
-        if (id == launcher_tab_ids[i])
-            return i;
-    return -1;
-}
+constexpr const char* main_ids[] = {"play", "choose", "verify", "settings", "discord", "quit"};
 
 class Launcher final : public Rml::EventListener {
     SDL_Window* window;
@@ -336,12 +336,12 @@ class Launcher final : public Rml::EventListener {
             return focus_ids;
         if (in_rows(document->GetContext()->GetFocusElement()))
             return page_focus();
-        std::vector<std::string> ids(std::begin(launcher_tab_ids), std::end(launcher_tab_ids));
+        std::vector<std::string> ids(std::begin(tab_ids), std::end(tab_ids));
         ids.push_back("back");
         return ids;
     }
     void set_theme(const char* name) {
-        for (const char* t : themes)
+        for (const char* t : main_ids)
             document->SetClass(std::string("theme-") + t, std::strcmp(t, name) == 0);
     }
     /* The description bar says what the focused thing does, as Melee's does,
@@ -369,10 +369,10 @@ class Launcher final : public Rml::EventListener {
         // Only one plate lit: the open page's gives way to Back's.
         document->SetClass("on-back", e->GetId() == "back");
         if (!settings) {
-            for (const char* t : themes)
+            for (const char* t : main_ids)
                 if (e->GetId() == t)
                     set_theme(t);
-        } else if (const int i = launcher_tab_index(e->GetId()); i >= 0 && i != tab)
+        } else if (const int i = index_of(tab_ids, e->GetId()); i >= 0 && i != tab)
             select_tab(i);  // the cursor on a category opens it, as Melee previews
     }
     /* A pointer moving onto a control moves the cursor there, so the mouse,
@@ -410,7 +410,7 @@ class Launcher final : public Rml::EventListener {
         enabled("settings", !busy());
         enabled("discord", !busy());
         text("verify-label", verification.valid() ? "Cancel Verify" : "Verify Disc");
-        focus_ids = {"play", "choose", "verify", "settings", "discord", "quit"};
+        focus_ids.assign(std::begin(main_ids), std::end(main_ids));
         auto ustate = pc::updater::get_state();
         if ((ustate.status == pc::updater::Status::UpdateAvailable ||
                 ustate.status == pc::updater::Status::Downloaded) &&
@@ -423,11 +423,13 @@ class Launcher final : public Rml::EventListener {
     // Opens a page without moving the focus (describe() calls it whenever a
     // category takes the focus, by keys or by pointer).
     void select_tab(int next) {
-        tab = (next + launcher_tab_count) % launcher_tab_count;
-        for (int i = 0; i < launcher_tab_count; ++i) {
-            if (auto* e = element(launcher_tab_ids[i]))
+        const int count = std::size(tab_ids);
+        tab = (next + count) % count;
+        for (int i = 0; i < count; ++i) {
+            if (auto* e = element(tab_ids[i]))
                 e->SetClass("selected", i == tab);
-            if (auto* e = element(launcher_page_ids[i]))
+            const auto page_id = "page-" + Rml::String(tab_ids[i]).substr(4);
+            if (auto* e = element(page_id.c_str()))
                 e->SetClass("selected", i == tab);
         }
         if (auto* e = element("settings-content"))
@@ -435,7 +437,7 @@ class Launcher final : public Rml::EventListener {
     }
     void show_tab(int next) {
         select_tab(next);
-        if (auto* e = element(launcher_tab_ids[tab])) {
+        if (auto* e = element(tab_ids[tab])) {
             e->Focus();
             e->ScrollIntoView();
         }
@@ -485,8 +487,8 @@ class Launcher final : public Rml::EventListener {
         if (!e || e == document || e->IsPseudoClassSet("disabled"))
             return;
         const auto id = e->GetId();
-        if (settings && launcher_tab_index(id) >= 0) {
-            show_tab(launcher_tab_index(id));
+        if (settings && index_of(tab_ids, id) >= 0) {
+            show_tab(index_of(tab_ids, id));
             enter_rows();
         } else if (e->GetTagName() == "button" || is_slider(id))
             action(id);
@@ -498,7 +500,7 @@ class Launcher final : public Rml::EventListener {
         if (!focus || focus->IsPseudoClassSet("disabled"))
             return;
         const auto id = focus->GetId();
-        if (settings && launcher_tab_index(id) >= 0) {
+        if (settings && index_of(tab_ids, id) >= 0) {
             if (direction > 0)
                 enter_rows();
         } else if (is_slider(id))
@@ -512,7 +514,10 @@ class Launcher final : public Rml::EventListener {
     /* The settings with more than two values, stepped either way. */
     bool cycle(const std::string& id, int direction) {
         auto wrap = [](int value, int count) { return (value % count + count) % count; };
-        if (id == "aspect")
+        if (id == "backend") {
+            action(id, direction);
+            return true;
+        } else if (id == "aspect")
             prefs.widescreen = wrap(prefs.widescreen + direction, 3);
         else if (id == "filter") {
             int power = 0;
@@ -666,7 +671,7 @@ class Launcher final : public Rml::EventListener {
             std::async(std::launch::async, [path] { return launcher::inspect_disc(path); });
         controls();
     }
-    void action(const std::string& id) {
+    void action(const std::string& id, int direction = 1) {
         if (id == "net-delay" || id == "aspect" || id == "filter" || id == "filter-mode") {
             cycle(id, 1);
             return;
@@ -681,8 +686,8 @@ class Launcher final : public Rml::EventListener {
             SDL_OpenURL("https://discord.gg/aurt34svq");
             return;
         }
-        if (launcher_tab_index(id) >= 0) {
-            show_tab(launcher_tab_index(id));
+        if (index_of(tab_ids, id) >= 0) {
+            show_tab(index_of(tab_ids, id));
             return;
         }
         if (id == "verify" && verification.valid()) {
@@ -763,7 +768,7 @@ class Launcher final : public Rml::EventListener {
             if (std::getenv("MELEE_BACKEND")) {
                 status("Backend is controlled by the MELEE_BACKEND environment setting.");
             } else {
-                prefs.backend = backend_next(prefs.backend);
+                prefs.backend = backend_next(prefs.backend, direction);
                 save();
                 refresh_settings();
                 status("Graphics backend set to " + std::string(backend_name(prefs.backend)) +
@@ -890,11 +895,12 @@ public:
         // Focus does not bubble; the capture pass still reaches the document.
         document->AddEventListener(Rml::EventId::Focus, this, true);
         document->AddEventListener(Rml::EventId::Mousemove, this);
-        /* MELEE_LAUNCHER_PLATFORM=desktop|mobile lays the launcher out as
+        /* MELEE_LAUNCHER_PLATFORM=mobile lays the launcher out as
          * another platform does, to check a phone's from a desktop. Only the
          * layout follows it. */
         const char* platform = std::getenv("MELEE_LAUNCHER_PLATFORM");
-        document->SetClass(platform && *platform ? platform : platform_class, true);
+        if (is_mobile || (platform && std::strcmp(platform, "mobile") == 0))
+            document->SetClass("mobile", true);
         document->Show();
         text("app-version", pc::get_app_version());
         text("check-status", "Current version: " + pc::get_app_version());
@@ -980,7 +986,7 @@ public:
                 // Stopping it here also stops RmlUi's own click on Enter.
                 auto* focus = document->GetContext()->GetFocusElement();
                 if (focus && (is_slider(focus->GetId()) ||
-                                 (settings && launcher_tab_index(focus->GetId()) >= 0)))
+                                 (settings && index_of(tab_ids, focus->GetId()) >= 0)))
                 {
                     activate_focus();
                     event.StopPropagation();
@@ -1365,20 +1371,8 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
             return -1;
         }
         auto resources = pc_resources_path();
-        if (!Rml::LoadFontFace((resources / "font.ttf").string())) {
-            SDL_Log("Launcher: could not load font from %s", resources.c_str());
+        if (!load_menu_fonts(resources))
             return -1;
-        }
-        Rml::LoadFontFace((resources / "font-bold.ttf").string());
-        /* The menus' face (Noto Sans SemiCondensed, cut to Latin), with its
-         * ExtraBold for the plates' names. Liberation covers what it lacks. */
-        for (const char* face : {"menu.ttf", "menu-bold.ttf"})
-            if (!Rml::LoadFontFace((resources / face).string()))
-                SDL_Log("Launcher: could not load %s", face);
-        if (!Rml::LoadFontFace((resources / "menu-heavy.ttf").string(), false,
-                static_cast<Rml::Style::FontWeight>(800)))
-            SDL_Log("Launcher: could not load menu-heavy.ttf");
-        Rml::LoadFontFace((resources / "font.ttf").string(), true);
         aurora::rmlui::set_ui_scale(prefs.scale);
         aurora_set_resampler(static_cast<AuroraSampler>(prefs.filter_mode));
         auto* document = context->LoadDocument((resources / "launcher.rml").string());
@@ -1425,6 +1419,7 @@ public:
     // that selected the row binds itself immediately.
     bool binding_armed = false;
     std::vector<std::string> focus_ids;
+    Rml::Element* current_row = nullptr;
     // Resizing the framebuffer allocates a fresh, empty texture. While the
     // overlay pauses the game nothing redraws it, so the frozen frame behind
     // the menu would go black: hold the change until the menu closes.
@@ -1470,11 +1465,14 @@ public:
         }
     }
     void show_tab(int next) {
-        tab = (next + tab_count) % tab_count;
-        for (int i = 0; i < tab_count; ++i) {
+        // The Launcher category only exists before starting the game.
+        const int count = std::size(tab_ids) - 1;
+        tab = (next + count) % count;
+        for (int i = 0; i < count; ++i) {
             if (auto* e = document->GetElementById(tab_ids[i]))
                 e->SetClass("selected", i == tab);
-            if (auto* e = document->GetElementById(page_ids[i]))
+            const auto page_id = "page-" + Rml::String(tab_ids[i]).substr(4);
+            if (auto* e = document->GetElementById(page_id))
                 e->SetClass("selected", i == tab);
         }
         focus_ids = {tab_ids[tab]};
@@ -1488,8 +1486,37 @@ public:
         }
         quiet = false;
     }
+    void enter_rows() {
+        document->UpdateDocument();
+        for (const auto& id : page_focus()) {
+            auto* e = document->GetElementById(id);
+            if (e && e->IsVisible(true)) {
+                e->Focus();
+                e->ScrollIntoView();
+                return;
+            }
+        }
+    }
+    void back() {
+        auto* focus = document->GetContext()->GetFocusElement();
+        if (focus && index_of(tab_ids, focus->GetId()) < 0 && focus->GetId() != "resume")
+            show_tab(tab);
+        else
+            toggle();
+    }
     void focus_step(int direction) {
         auto* focus = document->GetContext()->GetFocusElement();
+        const auto id = focus ? focus->GetId() : Rml::String();
+        if (index_of(tab_ids, id) >= 0 || id == "resume") {
+            const int count = std::size(tab_ids) - 1;
+            const int current = id == "resume" ? count : tab;
+            const int next = (current + direction + count + 1) % (count + 1);
+            if (next < count)
+                show_tab(next);
+            else if (auto* e = document->GetElementById("resume"))
+                e->Focus();
+            return;
+        }
         int index = direction > 0 ? -1 : 0;
         for (size_t i = 0; i < focus_ids.size(); ++i)
             if (document->GetElementById(focus_ids[i]) == focus)
@@ -1503,7 +1530,9 @@ public:
     }
     void activate_focus() {
         auto* focus = document->GetContext()->GetFocusElement();
-        if (focus)
+        if (focus && index_of(tab_ids, focus->GetId()) >= 0)
+            enter_rows();
+        else if (focus)
             apply(focus->GetId());
     }
     bool is_back_bound() const {
@@ -1727,9 +1756,9 @@ public:
         label("menu-status", "Canceled.");
         refresh_bindings();
     }
-    void apply(const Rml::String& id) {
+    void apply(const Rml::String& id, int direction = 1) {
         if (id == "net-delay") {
-            prefs.net_delay = prefs.net_delay == 4 ? -1 : prefs.net_delay + 1;
+            prefs.net_delay = (prefs.net_delay + 1 + direction + 6) % 6 - 1;
             saved();
             refresh();
             return;
@@ -1738,13 +1767,13 @@ public:
             toggle();
             return;
         }
-        if (tab_index(id) >= 0) {
+        if (index_of(tab_ids, id) >= 0) {
             lbAudioAx_80024030(SFX_CONFIRM);
-            show_tab(tab_index(id));
+            show_tab(index_of(tab_ids, id));
             return;
         }
         if (id == "pad-port") {
-            pad_port = (pad_port + 1) % 4;
+            pad_port = (pad_port + direction + 4) % 4;
             binding = -1;
             lbAudioAx_80024030(SFX_CONFIRM);
             refresh_bindings();
@@ -1765,11 +1794,13 @@ public:
             return;
         }
         if (id == "display") {
-            if (!SDL_SetWindowFullscreen(window, !VIGetWindowFullscreen())) {
+            const bool fullscreen = !VIGetWindowFullscreen();
+            if (!SDL_SetWindowFullscreen(window, fullscreen)) {
                 label("menu-status", SDL_GetError());
                 return;
             }
-            prefs.fullscreen = VIGetWindowFullscreen();
+            // SDL applies the window change asynchronously; save the requested mode.
+            prefs.fullscreen = fullscreen;
         } else if (id == "sync" && !std::getenv("MELEE_VSYNC")) {
             prefs.vsync = !prefs.vsync;
             aurora_enable_vsync(prefs.vsync);
@@ -1777,14 +1808,15 @@ public:
             prefs.render_scale = prefs.render_scale >= 10 ? 0 : int(prefs.render_scale) + 1;
             resize_pending = true;
         } else if (id == "aspect") {
-            prefs.widescreen = (prefs.widescreen + 1) % 3;
+            prefs.widescreen = (prefs.widescreen + direction + 3) % 3;
             resize_pending = true;
         } else if (id == "aa")
             prefs.msaa = prefs.msaa == 1 ? 4 : 1;
         else if (id == "filter")
-            prefs.anisotropy = prefs.anisotropy >= 16 ? 1 : prefs.anisotropy * 2;
+            prefs.anisotropy = direction > 0 ? (prefs.anisotropy >= 16 ? 1 : prefs.anisotropy * 2) :
+                                               (prefs.anisotropy <= 1 ? 16 : prefs.anisotropy / 2);
         else if (id == "filter-mode") {
-            prefs.filter_mode = (prefs.filter_mode + 1) % 4;
+            prefs.filter_mode = (prefs.filter_mode + direction + 4) % 4;
             aurora_set_resampler(static_cast<AuroraSampler>(prefs.filter_mode));
         } else if (id == "custom-textures") {
             prefs.custom_textures = !prefs.custom_textures;
@@ -1806,7 +1838,7 @@ public:
             if (std::getenv("MELEE_BACKEND")) {
                 label("menu-status", "Backend set by MELEE_BACKEND environment.");
             } else {
-                prefs.backend = backend_next(prefs.backend);
+                prefs.backend = backend_next(prefs.backend, direction);
                 label("menu-status", "Backend set to " + std::string(backend_name(prefs.backend)) +
                                          " (restart required).");
             }
@@ -1865,14 +1897,21 @@ public:
         lbAudioAx_80024030(SFX_MOVE);
         saved();
     }
-    // Left/right: pages the tab strip, otherwise nudges the focused slider.
+    // Right enters a category; within a page, the arrows adjust its values.
     void step(int direction) {
         auto* focus = document->GetContext()->GetFocusElement();
         if (!focus)
             return;
         const auto id = focus->GetId();
-        if (tab_index(id) >= 0) {
-            show_tab(tab + direction);
+        if (index_of(tab_ids, id) >= 0) {
+            if (direction > 0)
+                enter_rows();
+            return;
+        }
+        if (focus->GetTagName() == "input" && !is_slider(id))
+            return;  // Leave the caret's arrow keys to the text field.
+        if (focus->IsClassSet("value") && !focus->IsClassSet("action")) {
+            apply(id, direction);
             return;
         }
         if (id == "volume")
@@ -1887,8 +1926,11 @@ public:
         } else if (id == "scale") {
             prefs.scale = std::clamp(prefs.scale + direction * 0.25f, 0.75f, 1.5f);
             aurora::rmlui::set_ui_scale(prefs.scale);
-        } else
+        } else {
+            if (direction < 0)
+                show_tab(tab);
             return;
+        }
         pc_audio_set_volume(prefs.mute ? 0 : prefs.volume);
         pc_audio_set_music_volume(prefs.music_volume);
         pc_audio_set_sfx_volume(prefs.sfx_volume);
@@ -1934,6 +1976,8 @@ public:
                 activate_focus();
                 break;
             case SDL_GAMEPAD_BUTTON_EAST:
+                back();
+                break;
             case SDL_GAMEPAD_BUTTON_START:
                 toggle();
                 break;
@@ -1963,6 +2007,23 @@ public:
         if (!open)
             return;
         if (event.GetId() == Rml::EventId::Focus) {
+            auto* target = event.GetTargetElement();
+            Rml::Element* row = nullptr;
+            Rml::String description;
+            for (auto* e = target; e && e != document; e = e->GetParentNode()) {
+                if (!row && e->IsClassSet("row"))
+                    row = e;
+                if (description.empty())
+                    description = e->GetAttribute<Rml::String>("data-desc", "");
+            }
+            if (current_row)
+                current_row->SetClass("current", false);
+            current_row = row;
+            if (current_row)
+                current_row->SetClass("current", true);
+            document->SetClass("on-back", target && target->GetId() == "resume");
+            if (!description.empty())
+                label("menu-status", description);
             if (!quiet)
                 lbAudioAx_80024030(SFX_MOVE);
             return;
@@ -1973,7 +2034,8 @@ public:
                 if (binding >= 0)
                     cancel_binding();
                 else
-                    toggle();
+                    back();
+                event.StopPropagation();
                 return;
             }
             if (binding >= 0)
@@ -1983,13 +2045,15 @@ public:
             if (key == Rml::Input::KI_UP || key == Rml::Input::KI_DOWN) {
                 focus_step(key == Rml::Input::KI_UP ? -1 : 1);
                 event.StopPropagation();
-            } else if (key == Rml::Input::KI_RETURN && focus && is_slider(id)) {
-                apply(id);
-                event.StopPropagation();
-            } else if ((key == Rml::Input::KI_LEFT || key == Rml::Input::KI_RIGHT) &&
-                       tab_index(id) >= 0)
+            } else if (key == Rml::Input::KI_RETURN && focus &&
+                       (is_slider(id) || index_of(tab_ids, id) >= 0))
             {
-                show_tab(tab + (key == Rml::Input::KI_LEFT ? -1 : 1));
+                activate_focus();
+                event.StopPropagation();
+            } else if ((key == Rml::Input::KI_LEFT || key == Rml::Input::KI_RIGHT) && focus &&
+                       (index_of(tab_ids, id) >= 0 || is_slider(id) || focus->IsClassSet("value")))
+            {
+                step(key == Rml::Input::KI_LEFT ? -1 : 1);
                 event.StopPropagation();
             }
             return;
@@ -2033,8 +2097,8 @@ extern "C" void pc_menu_init(SDL_Window* window) {
         return;
     }
     auto resources = pc_resources_path();
-    Rml::LoadFontFace((resources / "font.ttf").string());
-    Rml::LoadFontFace((resources / "font-bold.ttf").string());
+    if (!load_menu_fonts(resources))
+        return;
     aurora::rmlui::set_ui_scale(prefs.scale);
     port_menu.window = window;
     port_menu.document = context->LoadDocument((resources / "port-menu.rml").string());
