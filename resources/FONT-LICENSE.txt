@@ -1,3 +1,8 @@
+font.ttf, font-bold.ttf: Liberation Sans.
+menu.ttf, menu-bold.ttf, menu-heavy.ttf: Noto Sans SemiCondensed, cut to Latin
+(tools/launcher_art/make_launcher_art.py).
+
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts/latin-greek-cyrillic)
 Digitized data copyright (c) 2010 Google Corporation
 	with Reserved Font Arimo, Tinos and Cousine.
 Copyright (c) 2012 Red Hat, Inc.

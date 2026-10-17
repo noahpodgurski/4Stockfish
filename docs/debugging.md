@@ -58,6 +58,7 @@ only; none of them fixes anything. User-facing knobs (`MELEE_BACKEND`,
 | `MELEE_FPS=1` | Print frame rate once a second. |
 | `MELEE_HEAP_CHECK=1` | Canaries on every heap allocation, checked each frame; aborts at the first stomp. |
 | `MELEE_SEED=<n>` | Deterministic RNG for the attract demo. |
+| `MELEE_LAUNCHER_PLATFORM=desktop\|mobile` | Lay the launcher out as that platform does (what it hides), to check the phone layout from a desktop. |
 | `MELEE_AUDIO_DUMP=<file>` | Also write the mix as raw f32 stereo 32 kHz. |
 | `MELEE_SFX_STATS=1` | Sound-effect request/accept/reject counts. |
 | `MELEE_AUDIO_STATS=1` | Per-0.5s voice census. |

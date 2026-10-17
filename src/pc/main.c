@@ -523,7 +523,7 @@ MELEE_EXPORT int main(int argc, char* argv[]) {
         }
     }
 
-    /* RmlUi resolves a document's relative assets (launcher.rml's discord.png)
+    /* RmlUi resolves a document's relative assets (the launcher's art under launcher/)
      * against this. Aurora otherwise defaults it to the executable's own
      * directory, where those files are not: they ship under resources/. The
      * trailing separator matters, the path is concatenated as-is. */
