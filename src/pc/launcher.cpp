@@ -1486,8 +1486,37 @@ public:
         }
         quiet = false;
     }
+    void enter_rows() {
+        document->UpdateDocument();
+        for (const auto& id : page_focus()) {
+            auto* e = document->GetElementById(id);
+            if (e && e->IsVisible(true)) {
+                e->Focus();
+                e->ScrollIntoView();
+                return;
+            }
+        }
+    }
+    void back() {
+        auto* focus = document->GetContext()->GetFocusElement();
+        if (focus && index_of(tab_ids, focus->GetId()) < 0 && focus->GetId() != "resume")
+            show_tab(tab);
+        else
+            toggle();
+    }
     void focus_step(int direction) {
         auto* focus = document->GetContext()->GetFocusElement();
+        const auto id = focus ? focus->GetId() : Rml::String();
+        if (index_of(tab_ids, id) >= 0 || id == "resume") {
+            const int count = std::size(tab_ids) - 1;
+            const int current = id == "resume" ? count : tab;
+            const int next = (current + direction + count + 1) % (count + 1);
+            if (next < count)
+                show_tab(next);
+            else if (auto* e = document->GetElementById("resume"))
+                e->Focus();
+            return;
+        }
         int index = direction > 0 ? -1 : 0;
         for (size_t i = 0; i < focus_ids.size(); ++i)
             if (document->GetElementById(focus_ids[i]) == focus)
@@ -1501,7 +1530,9 @@ public:
     }
     void activate_focus() {
         auto* focus = document->GetContext()->GetFocusElement();
-        if (focus)
+        if (focus && index_of(tab_ids, focus->GetId()) >= 0)
+            enter_rows();
+        else if (focus)
             apply(focus->GetId());
     }
     bool is_back_bound() const {
@@ -1725,9 +1756,9 @@ public:
         label("menu-status", "Canceled.");
         refresh_bindings();
     }
-    void apply(const Rml::String& id) {
+    void apply(const Rml::String& id, int direction = 1) {
         if (id == "net-delay") {
-            prefs.net_delay = prefs.net_delay == 4 ? -1 : prefs.net_delay + 1;
+            prefs.net_delay = (prefs.net_delay + 1 + direction + 6) % 6 - 1;
             saved();
             refresh();
             return;
@@ -1742,7 +1773,7 @@ public:
             return;
         }
         if (id == "pad-port") {
-            pad_port = (pad_port + 1) % 4;
+            pad_port = (pad_port + direction + 4) % 4;
             binding = -1;
             lbAudioAx_80024030(SFX_CONFIRM);
             refresh_bindings();
@@ -1777,14 +1808,15 @@ public:
             prefs.render_scale = prefs.render_scale >= 10 ? 0 : int(prefs.render_scale) + 1;
             resize_pending = true;
         } else if (id == "aspect") {
-            prefs.widescreen = (prefs.widescreen + 1) % 3;
+            prefs.widescreen = (prefs.widescreen + direction + 3) % 3;
             resize_pending = true;
         } else if (id == "aa")
             prefs.msaa = prefs.msaa == 1 ? 4 : 1;
         else if (id == "filter")
-            prefs.anisotropy = prefs.anisotropy >= 16 ? 1 : prefs.anisotropy * 2;
+            prefs.anisotropy = direction > 0 ? (prefs.anisotropy >= 16 ? 1 : prefs.anisotropy * 2) :
+                                               (prefs.anisotropy <= 1 ? 16 : prefs.anisotropy / 2);
         else if (id == "filter-mode") {
-            prefs.filter_mode = (prefs.filter_mode + 1) % 4;
+            prefs.filter_mode = (prefs.filter_mode + direction + 4) % 4;
             aurora_set_resampler(static_cast<AuroraSampler>(prefs.filter_mode));
         } else if (id == "custom-textures") {
             prefs.custom_textures = !prefs.custom_textures;
@@ -1806,7 +1838,7 @@ public:
             if (std::getenv("MELEE_BACKEND")) {
                 label("menu-status", "Backend set by MELEE_BACKEND environment.");
             } else {
-                prefs.backend = backend_next(prefs.backend);
+                prefs.backend = backend_next(prefs.backend, direction);
                 label("menu-status", "Backend set to " + std::string(backend_name(prefs.backend)) +
                                          " (restart required).");
             }
@@ -1865,14 +1897,21 @@ public:
         lbAudioAx_80024030(SFX_MOVE);
         saved();
     }
-    // Left/right: pages the tab strip, otherwise nudges the focused slider.
+    // Right enters a category; within a page, the arrows adjust its values.
     void step(int direction) {
         auto* focus = document->GetContext()->GetFocusElement();
         if (!focus)
             return;
         const auto id = focus->GetId();
         if (index_of(tab_ids, id) >= 0) {
-            show_tab(tab + direction);
+            if (direction > 0)
+                enter_rows();
+            return;
+        }
+        if (focus->GetTagName() == "input" && !is_slider(id))
+            return;  // Leave the caret's arrow keys to the text field.
+        if (focus->IsClassSet("value") && !focus->IsClassSet("action")) {
+            apply(id, direction);
             return;
         }
         if (id == "volume")
@@ -1887,8 +1926,11 @@ public:
         } else if (id == "scale") {
             prefs.scale = std::clamp(prefs.scale + direction * 0.25f, 0.75f, 1.5f);
             aurora::rmlui::set_ui_scale(prefs.scale);
-        } else
+        } else {
+            if (direction < 0)
+                show_tab(tab);
             return;
+        }
         pc_audio_set_volume(prefs.mute ? 0 : prefs.volume);
         pc_audio_set_music_volume(prefs.music_volume);
         pc_audio_set_sfx_volume(prefs.sfx_volume);
@@ -1934,6 +1976,8 @@ public:
                 activate_focus();
                 break;
             case SDL_GAMEPAD_BUTTON_EAST:
+                back();
+                break;
             case SDL_GAMEPAD_BUTTON_START:
                 toggle();
                 break;
@@ -1990,7 +2034,8 @@ public:
                 if (binding >= 0)
                     cancel_binding();
                 else
-                    toggle();
+                    back();
+                event.StopPropagation();
                 return;
             }
             if (binding >= 0)
@@ -2000,13 +2045,15 @@ public:
             if (key == Rml::Input::KI_UP || key == Rml::Input::KI_DOWN) {
                 focus_step(key == Rml::Input::KI_UP ? -1 : 1);
                 event.StopPropagation();
-            } else if (key == Rml::Input::KI_RETURN && focus && is_slider(id)) {
-                apply(id);
-                event.StopPropagation();
-            } else if ((key == Rml::Input::KI_LEFT || key == Rml::Input::KI_RIGHT) &&
-                       index_of(tab_ids, id) >= 0)
+            } else if (key == Rml::Input::KI_RETURN && focus &&
+                       (is_slider(id) || index_of(tab_ids, id) >= 0))
             {
-                show_tab(tab + (key == Rml::Input::KI_LEFT ? -1 : 1));
+                activate_focus();
+                event.StopPropagation();
+            } else if ((key == Rml::Input::KI_LEFT || key == Rml::Input::KI_RIGHT) && focus &&
+                       (index_of(tab_ids, id) >= 0 || is_slider(id) || focus->IsClassSet("value")))
+            {
+                step(key == Rml::Input::KI_LEFT ? -1 : 1);
                 event.StopPropagation();
             }
             return;

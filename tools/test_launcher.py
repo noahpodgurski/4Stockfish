@@ -226,15 +226,44 @@ try:
     run_case("missing-saved", [], saved_disc="/nonexistent/disc with spaces.iso")
     run_case("settings-live", [], interact=settings_live)
     if args.disc:
+        def category_navigation(win, proc, config):
+            time.sleep(12)
+            key(win, "F1")
+            time.sleep(1)
+            key(win, "Down")  # Graphics -> Audio in the vertical category list
+            key(win, "Right")  # enter Master volume
+            key(win, "Left")
+            assert "volume 0.95\n" in config.read_text(), "Down did not select Audio and Right enter its settings"
+            screenshot(win, "f1-keyboard-audio")
+            key(win, "Escape")  # rows -> Audio category
+            key(win, "Down")    # Gameplay
+            key(win, "Return")  # enter Unlock everything
+            key(win, "Return")
+            assert "unlock_all 1\n" in config.read_text(), "Down did not select Gameplay and Enter enter its settings"
+            screenshot(win, "f1-keyboard-gameplay")
+            key(win, "Escape")
+            key(win, "Down")  # Controls
+            key(win, "Right")
+            screenshot(win, "f1-keyboard-controls")
+            key(win, "Escape")
+            key(win, "Up", 2)  # Controls -> Gameplay -> Audio
+            key(win, "Right")
+            key(win, "Right")
+            assert "volume 1\n" in config.read_text(), "Up did not return to Audio"
+            key(win, "Escape")
+            key(win, "Escape")  # category -> game
+            close(win, proc)
+        run_case("f1-category-navigation", [str(args.disc.resolve())], interact=category_navigation)
+
         def tab_wrap(win, proc, config):
             time.sleep(12)
             key(win, "F1")
             time.sleep(1)
-            for page in ("audio", "gameplay", "controls", "online", "graphics"):
-                key(win, "Right")
+            for page in ("audio", "gameplay", "controls", "online", "resume", "graphics"):
+                key(win, "Down")
                 time.sleep(0.5)
                 screenshot(win, "f1-" + page)
-            key(win, "Down")  # Graphics: Display mode
+            key(win, "Right")  # Graphics: enter Display mode
             key(win, "Return")
             assert "fullscreen 1\n" in config.read_text(), "F1 did not save the requested fullscreen mode"
             key(win, "Return")
@@ -242,7 +271,7 @@ try:
             key(win, "Down", 2)  # sync -> resolution
             key(win, "Return")
             assert "render_scale 1\n" in config.read_text(), "F1 did not wrap its five pages to Graphics"
-            key(win, "Escape")
+            key(win, "F1")
             key(win, "F1")
             resize(win, 720, 760)
             screenshot(win, "f1-small")
@@ -257,31 +286,31 @@ try:
             time.sleep(12)
             key(win, "F1")
             time.sleep(1)
-            # Focus opens on the tab strip; Down walks the Graphics page.
-            key(win, "Down", 3)  # display -> sync -> resolution
+            key(win, "Right")  # enter Graphics: Display mode
+            key(win, "Down", 2)  # sync -> resolution
             key(win, "Return")
             assert "render_scale 1\n" in config.read_text(), "F1 resolution change was not saved"
             key(win, "Down")  # Aspect ratio
             key(win, "Return")
             assert "widescreen 1\n" in config.read_text(), "widescreen choice was not saved"
-            key(win, "Down")  # Anti-aliasing
+            key(win, "Down", 2)  # HUD layout -> Anti-aliasing
             key(win, "Return")
             assert "msaa 4\n" in config.read_text(), "MSAA preference was not saved"
-            key(win, "Up", 5)  # back up to the tab strip
-            key(win, "Right")  # Audio & interface
-            key(win, "Down")   # Master volume
+            key(win, "Escape")  # Graphics category
+            key(win, "Down")    # Audio
+            key(win, "Right")   # Master volume
             key(win, "Return")
             assert "volume 0\n" in config.read_text(), "master volume was not saved"
-            key(win, "Down", 2)  # Mute -> FPS counter
+            key(win, "Down", 5)  # music, SFX, mute, reverb -> FPS counter
             key(win, "Return")
             assert "fps 1\n" in config.read_text(), "FPS preference was not saved"
-            key(win, "Up", 3)  # back to the tab strip
-            key(win, "Right")  # Controls
+            key(win, "Escape")
+            key(win, "Down", 2)  # Gameplay -> Controls
             time.sleep(0.5)
             screenshot(win, "f1-controls")
-            key(win, "Left")
+            key(win, "Up")
             screenshot(win, "f1-enhancements")
-            key(win, "Escape")
+            key(win, "F1")
             key(win, "F1")
             key(win, "F1")
             time.sleep(2)
@@ -292,7 +321,8 @@ try:
             time.sleep(12)
             key(win, "F1")
             time.sleep(1)
-            key(win, "Down", 3)  # display -> sync -> resolution
+            key(win, "Right")
+            key(win, "Down", 2)  # display -> sync -> resolution
             key(win, "Return")
             assert "render_scale 3\n" in config.read_text(), "F1 menu failed after loading saved renderer settings: " + config.read_text()
             screenshot(win, "f1-msaa-restart")
