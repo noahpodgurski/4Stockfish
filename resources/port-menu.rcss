@@ -1,5 +1,9 @@
 /* In-game settings share the launcher's artwork, palette and controls.
  * Keep only overlay-specific layout here; launcher.rcss owns the design. */
+/* The game keeps its last frame while paused; tint it rather than covering
+ * it with the launcher's opaque backdrop. */
+body.port-menu { background-color: #07071a38; decorator: none; }
+.port-menu #settings-content { background-color: #0a0c26b8; }
 #resume { margin-top: 22dp; margin-left: 6%; }
 #menu-status {
     font-size: 18dp;
