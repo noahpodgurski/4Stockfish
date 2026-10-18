@@ -7,7 +7,7 @@ BUILD_DIR="${BUILD_DIR:-${ROOT_DIR}/build/macos}"
 DIST_DIR="${ROOT_DIR}/dist"
 APP="${BUILD_DIR}/Melee.app"
 ARCH="$(uname -m)"
-MELEE_VERSION="${MELEE_VERSION:-0.0.0}"
+export MELEE_VERSION="${MELEE_VERSION:-$(cat "${ROOT_DIR}/VERSION")}"
 
 # Apple's clang builds the C++ (aurora, Dawn glue, launcher); the decomp's C
 # goes through Homebrew GCC via tools/gcc_launcher.py. See CMakeLists.txt.
@@ -25,7 +25,9 @@ ninja -C "${BUILD_DIR}" melee
 echo "=== Staging ${APP} ==="
 rm -rf "${APP}"
 mkdir -p "${APP}/Contents/MacOS" "${APP}/Contents/Resources" "${APP}/Contents/Frameworks"
-sed "s/@MELEE_VERSION@/${MELEE_VERSION#v}/g" "${ROOT_DIR}/platforms/macos/Info.plist" \
+BUNDLE_VERSION="${MELEE_VERSION#v}"
+BUNDLE_VERSION="${BUNDLE_VERSION%%-*}"
+sed "s/@MELEE_VERSION@/${BUNDLE_VERSION}/g" "${ROOT_DIR}/platforms/macos/Info.plist" \
     > "${APP}/Contents/Info.plist"
 cp "${ROOT_DIR}/platforms/macos/melee.icns" "${APP}/Contents/Resources/"
 cp "${BUILD_DIR}/melee" "${APP}/Contents/MacOS/melee"

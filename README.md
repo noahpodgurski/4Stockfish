@@ -171,6 +171,13 @@ low-power E-cores, using about a third of one core in total.
   is required.
 - Settings, memory cards, `music/` and `textures/` live in the `melee-pc`
   preference directory above.
+- For portable desktop installs, create an empty `portable.txt` beside the
+  executable. Settings, saves, caches, logs, music and textures then use its
+  `user/` directory. Existing preferences are not moved automatically; copy
+  your existing data there if wanted. The install directory must be writable.
+  In a macOS app bundle, the marker and `user/` go in `Contents/Resources/`.
+- Texture packs can also go in `textures/` beside the executable; enable custom
+  textures in Settings and use the F1 reload action after changing a pack.
 
 ## Controls
 
@@ -182,9 +189,10 @@ official GameCube adapter is read directly instead (see the status table).
 |---|---|---|
 | Navigate | Up/Down, Tab | D-pad or left stick |
 | Adjust | Left/Right | D-pad left/right |
-| Change tab | Left/Right on the tab strip | L/R shoulders |
+| Choose category | Up/Down in the sidebar | D-pad up/down |
+| Enter category | Right or Enter | Right or A |
 | Select | Enter | A |
-| Close overlay | Escape, F1 | B, Start, Back |
+| Back / close overlay | Escape goes back, F1 closes | B goes back; Start or menu button closes |
 
 ## Settings overlay
 
@@ -198,13 +206,21 @@ is open.
 - Anti-aliasing and anisotropic filtering apply on the next launch. MSAA offers
   only off and 4x because WebGPU guarantees sample counts 1 and 4.
 - Audio: master volume, mute, FPS counter, all immediate.
-- Controls remaps a gamepad. Pick the port, select a GameCube button, then press
-  the physical button. Escape cancels, Restore resets the port. Back cannot be
-  bound since it opens the menu. Sticks and triggers remap the same way, and a
-  direction accepts either a stick axis or a button.
+- Controls remaps gamepads and the player-one keyboard. Cycle the port selector
+  to Keyboard to edit keys. Select a binding, then press the desired input;
+  Escape cancels, Delete clears, and Restore defaults resets that device.
+  Controller buttons accept stick directions, and stick directions accept
+  either an axis or a button. Menu button changes the gamepad shortcut;
+  F1 and Guide remain available. Keyboard F1 and Escape are reserved.
+- Quit game in the sidebar exits through normal save and shutdown handling.
+- On Android, launcher Settings → Launcher → Diagnostics → Export logs saves
+  device details and recent app logs to a document you choose. Attach it to a
+  crash report after reopening the app. Logs may be lost after reboot or when
+  Android rotates its log buffer.
 
 Melee's own menu sounds play in the overlay. Bindings are stored in aurora's
-per-device `.controller` files; everything else shares `launcher.cfg`.
+per-device `.controller` files; keyboard bindings and the menu shortcut share
+`launcher.cfg` with the other preferences.
 
 ## Environment variables
 
@@ -388,3 +404,7 @@ the property of its copyright holders; the port code in `src/pc`, `tools`,
 bundled third-party components keep their own licenses. Because the game code
 cannot be relicensed, the repository as a whole is not distributable under the
 GPL. No game assets are in this repository.
+
+Builds read their release version from the root `VERSION` file. Release tag
+builds use the tag; `MELEE_VERSION` overrides the default for packaging, and
+`-DMELEE_VERSION=<version>` overrides it in CMake.

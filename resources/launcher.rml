@@ -114,6 +114,7 @@
           <div class="row" data-desc="Look for a new release on GitHub at each start."><span class="name">Check for updates</span><button id="check-updates" class="value">On</button></div>
           <div class="row" id="check-row" data-desc="Look for a new release now."><span class="name">Updates <span id="check-status" class="detail">Melee-PC is up to date.</span></span><button id="check-now" class="value action">Check now</button></div>
           <div class="row" data-desc="Join the community Discord server in your browser."><span class="name">Discord community</span><button id="settings-discord" class="value action">Join Discord</button></div>
+          <div class="row android-only" data-desc="Save recent startup and crash logs to attach to a bug report. No PC is needed."><span class="name">Diagnostics</span><button id="export-logs" class="value action">Export logs</button></div>
         </div>
         <p id="settings-status" style="display: none;"></p>
       </div>

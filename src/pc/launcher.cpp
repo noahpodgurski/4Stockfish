@@ -9,6 +9,7 @@
 #include "net_match.h"
 #include "net.h"
 #include "pc.h"
+#include "android_hooks.h"
 #include <RmlUi/Core/Elements/ElementFormControl.h>
 #include <aurora/dvd.h>
 #include <aurora/event.h>
@@ -312,7 +313,7 @@ class Launcher final : public Rml::EventListener {
         case 4:
             return {"net-name", "net-target", "net-delay"};
         case 5:
-            return {"scale", "check-updates", "check-now", "settings-discord"};
+            return {"scale", "check-updates", "check-now", "settings-discord", "export-logs"};
         default:
             return {};
         }
@@ -672,6 +673,10 @@ class Launcher final : public Rml::EventListener {
         controls();
     }
     void action(const std::string& id, int direction = 1) {
+        if (id == "export-logs") {
+            pc_android_export_logs();
+            return;
+        }
         if (id == "net-delay" || id == "aspect" || id == "filter" || id == "filter-mode") {
             cycle(id, 1);
             return;
@@ -901,6 +906,9 @@ public:
         const char* platform = std::getenv("MELEE_LAUNCHER_PLATFORM");
         if (is_mobile || (platform && std::strcmp(platform, "mobile") == 0))
             document->SetClass("mobile", true);
+#if defined(__ANDROID__)
+        document->SetClass("android", true);
+#endif
         document->Show();
         text("app-version", pc::get_app_version());
         text("check-status", "Current version: " + pc::get_app_version());
@@ -1425,6 +1433,9 @@ public:
     // the menu would go black: hold the change until the menu closes.
     bool resize_pending = false;
 
+    static bool is_sidebar(const Rml::String& id) {
+        return index_of(tab_ids, id) >= 0 || id == "resume" || id == "quit-game";
+    }
     static bool is_slider(const Rml::String& id) {
         return id == "volume" || id == "resolution" || id == "scale" || id == "music-volume" ||
                id == "sfx-volume";
@@ -1460,6 +1471,7 @@ public:
             for (int i = 0; i < PAD_AXIS_COUNT; ++i)
                 ids.push_back("axis-" + std::to_string(i));
             ids.push_back("bind-reset");
+            ids.push_back("menu-binding");
             return ids;
         }
         }
@@ -1479,6 +1491,7 @@ public:
         for (const auto& id : page_focus())
             focus_ids.push_back(id);
         focus_ids.push_back("resume");
+        focus_ids.push_back("quit-game");
         quiet = true;
         if (auto* e = document->GetElementById(tab_ids[tab])) {
             e->Focus();
@@ -1499,7 +1512,7 @@ public:
     }
     void back() {
         auto* focus = document->GetContext()->GetFocusElement();
-        if (focus && index_of(tab_ids, focus->GetId()) < 0 && focus->GetId() != "resume")
+        if (focus && !is_sidebar(focus->GetId()))
             show_tab(tab);
         else
             toggle();
@@ -1507,13 +1520,13 @@ public:
     void focus_step(int direction) {
         auto* focus = document->GetContext()->GetFocusElement();
         const auto id = focus ? focus->GetId() : Rml::String();
-        if (index_of(tab_ids, id) >= 0 || id == "resume") {
+        if (is_sidebar(id)) {
             const int count = std::size(tab_ids) - 1;
-            const int current = id == "resume" ? count : tab;
-            const int next = (current + direction + count + 1) % (count + 1);
+            const int current = id == "quit-game" ? count + 1 : id == "resume" ? count : tab;
+            const int next = (current + direction + count + 2) % (count + 2);
             if (next < count)
                 show_tab(next);
-            else if (auto* e = document->GetElementById("resume"))
+            else if (auto* e = document->GetElementById(next == count ? "resume" : "quit-game"))
                 e->Focus();
             return;
         }
@@ -1552,7 +1565,34 @@ public:
         }
         return false;
     }
+    static constexpr u16 key_buttons[] = {PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_X, PAD_BUTTON_Y,
+        PAD_BUTTON_START, PAD_TRIGGER_Z, PAD_TRIGGER_L, PAD_TRIGGER_R, PAD_BUTTON_UP,
+        PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT};
+    void refresh_keyboard() {
+        label("pad-port", "Keyboard");
+        label("pad-name", "Player 1 · Escape cancels · Delete clears a binding");
+        for (int i = 0; i < int(prefs.keys.size()); ++i) {
+            const bool axis = i >= PAD_BUTTON_COUNT;
+            const int slot = axis ? i - PAD_BUTTON_COUNT : i;
+            const std::string prefix = axis ? "axis-" : "bind-";
+            const char* name = axis ? PADGetAxisName(slot) : PADGetButtonName(key_buttons[i]);
+            label((prefix + "name-" + std::to_string(slot)).c_str(), name ? name : "-");
+            const char* key =
+                prefs.keys[i] ? SDL_GetScancodeName(SDL_Scancode(prefs.keys[i])) : "Unbound";
+            label((prefix + std::to_string(slot)).c_str(),
+                binding == slot && binding_axis == axis ? "Press a key..." : key);
+        }
+    }
     void refresh_bindings() {
+        label("menu-binding",
+            pad_port == 4 ? "F1 (keyboard)" :
+            binding == PAD_BUTTON_COUNT && !binding_axis ?
+                            "Press a button..." :
+                            SDL_GetGamepadStringForButton(SDL_GamepadButton(prefs.menu_button)));
+        if (pad_port == 4) {
+            refresh_keyboard();
+            return;
+        }
         label("pad-port", "Port " + std::to_string(pad_port + 1));
         const char* name = PADGetName(pad_port);
         label("pad-name", name && *name ? name : "No controller in this port.");
@@ -1681,34 +1721,41 @@ public:
     }
     void start_binding(int slot, bool axis) {
         u32 count = 0;
-        if (!PADGetButtonMappings(pad_port, &count) || count == 0) {
+        if (pad_port != 4 && (!PADGetButtonMappings(pad_port, &count) || count == 0)) {
             label("menu-status", "No controller in port " + std::to_string(pad_port + 1) + ".");
             return;
         }
         binding = slot;
         binding_axis = axis;
         binding_armed = false;
-        label("menu-status", axis ? "Move a stick or press a button. Escape cancels." :
-                                    "Press a button on the controller. Escape cancels.");
+        label("menu-status",
+            pad_port == 4 ? "Press a key. Escape cancels; Delete clears." :
+            axis          ? "Move a stick or press a button. Escape cancels; Delete clears." :
+                            "Press a button on the controller. Escape cancels; Delete clears.");
         refresh_bindings();
     }
     // Runs once a frame while a bind prompt is up.
     void poll_binding() {
-        if (binding < 0)
+        if (binding < 0 || pad_port == 4)
             return;
         constexpr uint32_t kNativeButtonAxisBit = 0x40000000u;
         const int native = PADGetNativeButtonPressed(pad_port);
-        const PADSignedNativeAxis pulled = PADGetNativeAxisPulled(pad_port);
-        const bool triggerPulled = pulled.nativeAxis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER ||
-                                   pulled.nativeAxis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER;
-        const PADSignedNativeAxis axis =
-            (binding_axis || triggerPulled) ? pulled : PADSignedNativeAxis{-1, AXIS_SIGN_POSITIVE};
+        const PADSignedNativeAxis axis = PADGetNativeAxisPulled(pad_port);
         if (!binding_armed) {
             binding_armed = native < 0 && axis.nativeAxis < 0;
             return;
         }
         if (native < 0 && axis.nativeAxis < 0)
             return;
+        if (binding == PAD_BUTTON_COUNT && !binding_axis) {
+            if (native < 0)
+                return;
+            prefs.menu_button = native;
+            binding = -1;
+            saved();
+            refresh_bindings();
+            return;
+        }
         u32 count = 0;
         if (binding_axis) {
             const PADAxisMapping* map = PADGetAxisMappings(pad_port, &count);
@@ -1728,7 +1775,8 @@ public:
             if (map && u32(binding) < count) {
                 const u32 encoded =
                     native >= 0 ? u32(native) :
-                                  (kNativeButtonAxisBit | static_cast<uint32_t>(axis.nativeAxis));
+                                  (kNativeButtonAxisBit | static_cast<uint32_t>(axis.nativeAxis) |
+                                      (axis.sign == AXIS_SIGN_NEGATIVE ? 0x20000000u : 0));
                 PADSetButtonMapping(pad_port, {encoded, map[binding].padButton});
                 if (native < 0 && axis.nativeAxis >= 0 &&
                     (map[binding].padButton == PAD_TRIGGER_L ||
@@ -1756,11 +1804,46 @@ public:
         label("menu-status", "Canceled.");
         refresh_bindings();
     }
+    void clear_binding() {
+        if (binding < 0 || pad_port == 4)
+            return;
+        if (binding == PAD_BUTTON_COUNT && !binding_axis) {
+            label("menu-status", "The menu button must remain bound. Escape cancels.");
+            return;
+        }
+        u32 count = 0;
+        if (binding_axis) {
+            const auto* map = PADGetAxisMappings(pad_port, &count);
+            if (map && u32(binding) < count)
+                PADSetAxisMapping(pad_port,
+                    {{-1, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, map[binding].padAxis});
+        } else {
+            const auto* map = PADGetButtonMappings(pad_port, &count);
+            if (map && u32(binding) < count) {
+                const auto button = map[binding].padButton;
+                PADSetButtonMapping(pad_port, {PAD_NATIVE_BUTTON_INVALID, button});
+                if (button == PAD_TRIGGER_L || button == PAD_TRIGGER_R)
+                    PADSetAxisMapping(pad_port,
+                        {{-1, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID,
+                            button == PAD_TRIGGER_L ? PAD_AXIS_TRIGGER_L : PAD_AXIS_TRIGGER_R});
+            }
+        }
+        PADSerializeMappings();
+        binding = -1;
+        label("menu-status", "Binding cleared.");
+        refresh_bindings();
+    }
     void apply(const Rml::String& id, int direction = 1) {
         if (id == "net-delay") {
             prefs.net_delay = (prefs.net_delay + 1 + direction + 6) % 6 - 1;
             saved();
             refresh();
+            return;
+        }
+        if (id == "quit-game") {
+            // Leave through the same shutdown path as a normal window close.
+            pc_exit_requested = true;
+            toggle();
             return;
         }
         if (id == "resume") {
@@ -1772,15 +1855,31 @@ public:
             show_tab(index_of(tab_ids, id));
             return;
         }
+        if (id == "menu-binding") {
+            if (pad_port == 4)
+                label("menu-status", "F1 opens settings on the keyboard.");
+            else
+                start_binding(PAD_BUTTON_COUNT, false);
+            return;
+        }
         if (id == "pad-port") {
-            pad_port = (pad_port + direction + 4) % 4;
+            pad_port = (pad_port + direction + 5) % 5;
             binding = -1;
             lbAudioAx_80024030(SFX_CONFIRM);
             refresh_bindings();
             return;
         }
         if (id == "bind-reset") {
+            if (pad_port == 4) {
+                prefs.keys = launcher::default_keys;
+                saved();
+                binding = -1;
+                refresh_bindings();
+                return;
+            }
             PADRestoreDefaultMapping(pad_port);
+            prefs.menu_button = SDL_GAMEPAD_BUTTON_BACK;
+            saved();
             PADSerializeMappings();
             binding = -1;
             lbAudioAx_80024030(SFX_CONFIRM);
@@ -1942,11 +2041,41 @@ public:
     void gamepad(const SDL_Event& e) {
         if (!document)
             return;
+        if (open && binding >= 0 && pad_port != 4 && e.type == SDL_EVENT_KEY_DOWN &&
+            e.key.scancode == SDL_SCANCODE_DELETE)
+        {
+            clear_binding();
+            return;
+        }
+        if (pad_port == 4 && open && binding >= 0 &&
+            (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP))
+        {
+            if (e.type == SDL_EVENT_KEY_UP) {
+                binding_armed = true;
+                return;
+            }
+            if (!binding_armed || e.key.repeat || e.key.scancode == SDL_SCANCODE_ESCAPE ||
+                e.key.scancode == SDL_SCANCODE_F1)
+                return;
+            const int slot = binding + (binding_axis ? PAD_BUTTON_COUNT : 0);
+            const int code = e.key.scancode == SDL_SCANCODE_DELETE ? 0 : e.key.scancode;
+            prefs.keys[slot] = code;
+            // Digital and analog trigger rows describe the same keyboard key.
+            if (slot == 6 || slot == 7)
+                prefs.keys[slot + 14] = code;
+            if (slot == 20 || slot == 21)
+                prefs.keys[slot - 14] = code;
+            binding = -1;
+            saved();
+            refresh_bindings();
+            return;
+        }
         if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
             const auto button = e.gbutton.button;
-            if (binding < 0 &&
-                (button == SDL_GAMEPAD_BUTTON_GUIDE ||
-                    (button == SDL_GAMEPAD_BUTTON_BACK && (open || !is_back_bound()))))
+            if (binding < 0 && (button == SDL_GAMEPAD_BUTTON_GUIDE ||
+                                   (button == prefs.menu_button &&
+                                       (open || prefs.menu_button != SDL_GAMEPAD_BUTTON_BACK ||
+                                           !is_back_bound()))))
             {
                 toggle();
                 return;
@@ -2021,7 +2150,8 @@ public:
             current_row = row;
             if (current_row)
                 current_row->SetClass("current", true);
-            document->SetClass("on-back", target && target->GetId() == "resume");
+            document->SetClass("on-back",
+                target && (target->GetId() == "resume" || target->GetId() == "quit-game"));
             if (!description.empty())
                 label("menu-status", description);
             if (!quiet)
@@ -2229,4 +2359,8 @@ extern "C" int pc_get_net_port(void) {
 }
 extern "C" int pc_get_net_delay(void) {
     return prefs.net_delay;
+}
+
+extern "C" int pc_get_key_binding(int slot) {
+    return slot >= 0 && slot < int(prefs.keys.size()) ? prefs.keys[slot] : 0;
 }

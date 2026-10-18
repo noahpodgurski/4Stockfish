@@ -244,6 +244,19 @@ void pc_android_set_launcher_active(bool active) {
     env->DeleteLocalRef(activity);
 }
 
+void pc_android_export_logs(void) {
+    JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    if (env == nullptr || env->PushLocalFrame(8) != JNI_OK)
+        return;
+    jobject activity = (jobject)SDL_GetAndroidActivity();
+    jclass cls = activity != nullptr ? env->GetObjectClass(activity) : nullptr;
+    jmethodID method = cls != nullptr ? env->GetMethodID(cls, "exportLogs", "()V") : nullptr;
+    if (method != nullptr)
+        env->CallVoidMethod(activity, method);
+    threw(env, "exportLogs");
+    env->PopLocalFrame(nullptr);
+}
+
 const char* pc_android_device_name(void) {
     static char s_label[64];
     static bool s_done;
@@ -269,6 +282,7 @@ const char* pc_android_device_name(void) {
 
 #else
 
+void pc_android_export_logs(void) {}
 void pc_android_multicast_lock_acquire(void) {}
 void pc_android_multicast_lock_release(void) {}
 
