@@ -1825,7 +1825,8 @@ public:
                 if (button == PAD_TRIGGER_L || button == PAD_TRIGGER_R)
                     PADSetAxisMapping(pad_port,
                         {{-1, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID,
-                            button == PAD_TRIGGER_L ? PAD_AXIS_TRIGGER_L : PAD_AXIS_TRIGGER_R});
+                            static_cast<PADAxis>(button == PAD_TRIGGER_L ? PAD_AXIS_TRIGGER_L :
+                                                                           PAD_AXIS_TRIGGER_R)});
             }
         }
         PADSerializeMappings();
