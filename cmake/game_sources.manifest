@@ -898,6 +898,7 @@ src/melee/pl/plbonus.c
 src/melee/pl/plbonuslib.c
 src/melee/pl/plstale.c
 src/melee/pl/pltrick.c
+src/melee/sf/stockfish.c
 src/melee/sfx/crowdsfx.c
 src/melee/sfx/crowdsfx_1.c
 src/melee/sfx/sfx_unk.c

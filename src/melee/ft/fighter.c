@@ -94,6 +94,7 @@
 #include <sysdolphin/baselib/random.h>
 #ifdef TARGET_PC
 #include "pc/slp.h"
+#include <melee/sf/stockfish.h>
 #endif
 
 extern MotionState* ftData_CharacterStateTables[Ft_Kind_Max];
@@ -2174,6 +2175,10 @@ void Fighter_procUpdate(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     Vec3 windOffset;
+
+#ifdef TARGET_PC
+    Stockfish_OnFighterUpdate(gobj); /* PORT: 4stockfish pause menu */
+#endif
 
     if (fp->is_sleeping) {
         return;

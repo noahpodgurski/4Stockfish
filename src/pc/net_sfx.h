@@ -87,6 +87,7 @@ bool net_sfx_is_handle(int32_t handle);
  * playing" about one is asked by audio-only code, so the engine may answer
  * it. They play when asked, re-run or not, like the offline game. */
 void net_sfx_private(bool on);
+bool net_sfx_private_active(void); /* inside such an update right now */
 bool net_sfx_is_private(int32_t handle);
 /* The engine voice behind a handle, or -1 (still waiting, or never played). */
 int32_t net_sfx_resolve(int32_t handle);

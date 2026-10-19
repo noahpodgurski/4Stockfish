@@ -161,6 +161,70 @@ GameModeState gm_Mode_DebugVs_States[] = {
     { GM_GAMEMODESTATE_TERMINATE },
 };
 
+#ifdef TARGET_PC
+/* MELEE_DEBUG_VS_P1 / P2: a character name or a CKind number. Unknown names
+ * leave the default (Link and Mario). */
+static CharacterKind debug_ckind(const char* s, CharacterKind fallback)
+{
+    static const struct {
+        const char* name;
+        CharacterKind kind;
+    } names[] = {
+        { "falcon", CKind_Captain },   { "captain", CKind_Captain },
+        { "dk", CKind_Donkey },        { "donkey", CKind_Donkey },
+        { "fox", CKind_Fox },          { "gnw", CKind_GameWatch },
+        { "gamewatch", CKind_GameWatch }, { "kirby", CKind_Kirby },
+        { "bowser", CKind_Koopa },     { "koopa", CKind_Koopa },
+        { "link", CKind_Link },        { "luigi", CKind_Luigi },
+        { "mario", CKind_Mario },      { "marth", CKind_Mars },
+        { "mars", CKind_Mars },        { "mewtwo", CKind_Mewtwo },
+        { "ness", CKind_Ness },        { "peach", CKind_Peach },
+        { "pikachu", CKind_Pikachu },  { "pika", CKind_Pikachu },
+        { "ics", CKind_PopoNana },     { "climbers", CKind_PopoNana },
+        { "puff", CKind_Purin },       { "jigglypuff", CKind_Purin },
+        { "samus", CKind_Samus },      { "yoshi", CKind_Yoshi },
+        { "zelda", CKind_Zelda },      { "sheik", CKind_Seak },
+        { "falco", CKind_Falco },      { "younglink", CKind_CLink },
+        { "ylink", CKind_CLink },      { "doc", CKind_DrMario },
+        { "drmario", CKind_DrMario },  { "roy", CKind_Emblem },
+        { "pichu", CKind_Pichu },      { "ganon", CKind_Ganon },
+        { "ganondorf", CKind_Ganon },
+    };
+    char buf[32];
+    int i, n;
+
+    if (s == NULL || s[0] == '\0') {
+        return fallback;
+    }
+    if (s[0] >= '0' && s[0] <= '9') {
+        int k = atoi(s);
+        if (k >= 0 && k < CKind_Playable_Count) {
+            return (CharacterKind) k;
+        }
+        return fallback;
+    }
+    n = 0;
+    for (i = 0; s[i] != '\0' && n < (int) sizeof buf - 1; i++) {
+        char c = s[i];
+        if (c >= 'A' && c <= 'Z') {
+            c = (char) (c - 'A' + 'a');
+        }
+        if (c == ' ' || c == '_' || c == '-') {
+            continue;
+        }
+        buf[n++] = c;
+    }
+    buf[n] = '\0';
+    for (i = 0; i < (int) (sizeof names / sizeof names[0]); i++) {
+        if (strcmp(buf, names[i].name) == 0) {
+            return names[i].kind;
+        }
+    }
+    OSReport("MELEE_DEBUG_VS: unknown character '%s'\n", s);
+    return fallback;
+}
+#endif
+
 void onEnterDebugVs(GameModeState* state)
 {
     StartMeleeData* start = gm_GetGameModeStateEnterData(state);
@@ -222,6 +286,14 @@ void onEnterDebugVs(GameModeState* state)
                 start->players[i].stocks = stocks;
             }
         }
+    }
+    if (getenv("MELEE_DEBUG_VS_P1") != NULL) {
+        start->players[0].ckind =
+            debug_ckind(getenv("MELEE_DEBUG_VS_P1"), start->players[0].ckind);
+    }
+    if (getenv("MELEE_DEBUG_VS_P2") != NULL) {
+        start->players[1].ckind =
+            debug_ckind(getenv("MELEE_DEBUG_VS_P2"), start->players[1].ckind);
     }
 #endif
 

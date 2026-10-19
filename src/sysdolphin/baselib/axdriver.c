@@ -14,6 +14,7 @@
 #ifdef TARGET_PC
 #include "pc/net.h"
 #include "pc/net_sfx.h"
+#include "pc/sf_search.h"
 #endif
 
 /* Cached once: the .sem interpreter below runs this guard for every opcode
@@ -122,6 +123,11 @@ bool HSD_AudioSFXKeyOff(int vid)
     PAD_STACK(8);
 
 #ifdef TARGET_PC
+    /* A 4stockfish search tick touches no real voice: the sounds paused
+     * under the menu belong to the frame it searches from. */
+    if (pc_sf_searching()) {
+        return false;
+    }
     if (net_sfx_is_handle(vid)) {
         vid = net_sfx_keyoff(vid); /* -1: waiting or gone, nothing to cut */
     }
@@ -152,6 +158,9 @@ bool HSD_AudioSFXKeyOff(int vid)
 void HSD_AudioSFXKeyOffAll(void)
 {
 #ifdef TARGET_PC
+    if (pc_sf_searching()) {
+        return;
+    }
     if (pc_net_sfx_on()) {
         net_sfx_keyoff_track(0, true);
     }
@@ -174,6 +183,9 @@ void HSD_AudioSFXKeyOffAll(void)
 void HSD_AudioSFXKeyOffTrack(int track)
 {
 #ifdef TARGET_PC
+    if (pc_sf_searching()) {
+        return;
+    }
     if (pc_net_sfx_on()) {
         net_sfx_keyoff_track(track, false);
     }
@@ -775,6 +787,9 @@ bool HSD_AudioSFXSetPan(int vid, u8 pan)
     u8 clamped;
 
 #ifdef TARGET_PC
+    if (pc_sf_searching()) {
+        return false;
+    }
     if (net_sfx_is_handle(vid)) {
         vid = net_sfx_set(vid, NET_SFX_PAN, pan);
     }
@@ -807,6 +822,9 @@ bool HSD_AudioSFXSetVolumeEx(s32 vid, u8 volume)
     s32 voice_id;
 
 #ifdef TARGET_PC
+    if (pc_sf_searching()) {
+        return false;
+    }
     if (net_sfx_is_handle(vid)) {
         vid = net_sfx_set(vid, NET_SFX_VOLUME, volume);
     }
@@ -840,6 +858,9 @@ bool HSD_AudioSFXSetPitchFid(s32 vid, s16 pitch)
     int clamped;
 
 #ifdef TARGET_PC
+    if (pc_sf_searching()) {
+        return false;
+    }
     if (net_sfx_is_handle(vid)) {
         vid = net_sfx_set(vid, NET_SFX_PITCH, pitch);
     }

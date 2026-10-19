@@ -157,6 +157,14 @@ bool lb_80019A30(int index)
     return lb_804329F0.x0[index].x10;
 }
 
+#ifdef TARGET_PC
+bool lb_EveryPeriodTicks(void)
+{
+    return lb_804329F0.x0[0].x0 == lb_804329F0.x40 &&
+           lb_804329F0.x0[1].x0 == lb_804329F0.x40;
+}
+#endif
+
 void lb_80019A48(void)
 {
     int enabled = OSDisableInterrupts();

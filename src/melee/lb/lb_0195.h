@@ -15,4 +15,11 @@
 /* 019A48 */ void lb_80019A48(void);
 /* 019AAC */ void lb_80019AAC(Event);
 
+#ifdef TARGET_PC
+/// Every pad period runs exactly one frame of both clocks (game speed 1), so
+/// lb_80019900 leaves its accumulators where it found them and a re-run tick
+/// advances the same way. The accumulators are outside every snapshot.
+bool lb_EveryPeriodTicks(void);
+#endif
+
 #endif

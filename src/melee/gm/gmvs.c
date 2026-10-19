@@ -48,7 +48,22 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <stdlib.h>
 #ifdef TARGET_PC
+#include "pc/sf_search.h"
 #include "pc/slp.h"
+
+/* PORT: a 4stockfish trial or replay that takes the last stock must not end
+ * the match; the advisor scores it as a KO and rewinds. */
+static MatchOutcome gm_SfMatchOutcome(void)
+{
+    MatchOutcome outcome = gm_GetMatchOutcome();
+    if (outcome != OUTCOME_NONE && pc_sf_hold_outcome()) {
+        return OUTCOME_NONE;
+    }
+    return outcome;
+}
+#define GM_TICK_OUTCOME() gm_SfMatchOutcome()
+#else
+#define GM_TICK_OUTCOME() gm_GetMatchOutcome()
 #endif
 
 static u32 lbl_803D5620[] = {
@@ -1400,7 +1415,7 @@ void fn_8016CFE0(void)
         }
         goto block_50;
     } else {
-        tmp->state.match_result = gm_GetMatchOutcome();
+        tmp->state.match_result = GM_TICK_OUTCOME();
         if (tmp->state.match_result == OUTCOME_NONE) {
             gm_DoPauseChecksAndRoutine(tmp, 1);
             if (tmp->state.unpause_timer != 0) {
@@ -1411,7 +1426,7 @@ void fn_8016CFE0(void)
         }
     block_50:
         fn_8016B918();
-        tmp->state.match_result = gm_GetMatchOutcome();
+        tmp->state.match_result = GM_TICK_OUTCOME();
     }
     if (tmp->state.match_result != OUTCOME_NONE) {
     block_51:
@@ -1474,7 +1489,7 @@ void gm_Scene_Training_OnFrame(void)
         }
     }
     fn_8016CD98(tmp);
-    tmp->state.match_result = gm_GetMatchOutcome();
+    tmp->state.match_result = GM_TICK_OUTCOME();
     if (tmp->state.match_result != OUTCOME_NONE) {
         fn_8016C7F0();
         gm_801A4B60();

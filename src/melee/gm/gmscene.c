@@ -2,6 +2,7 @@
 #ifdef TARGET_PC
 #include "pc/net.h"
 #include "pc/pc.h"
+#include "pc/sf_search.h"
 #include "pc/slp.h"
 #include "pc/widescreen.h"
 #endif
@@ -321,16 +322,29 @@ static bool gm_RunSimTick(void (*on_frame)(void), struct gm_80479D58_t* temp_r25
     if (DbLevel >= DbLKind_DebugRom) {
         db_CheckScreenshot();
     }
+#ifdef TARGET_PC
+    /* PORT: a 4stockfish search tick leaves the audio engine's own state
+     * (outside every snapshot) alone, and no advisor tick is recorded. */
+    if (!pc_sf_searching()) {
+        lbAudioAx_80027DF8();
+    }
+#else
     lbAudioAx_80027DF8();
+#endif
     if (temp_r25->unk_10.pre_gobj_proc != NULL) {
         temp_r25->unk_10.pre_gobj_proc();
     }
 #ifdef TARGET_PC
-    pc_slp_tick_begin();
+    bool sf_tick = pc_sf_sim_tick();
+    if (!sf_tick) {
+        pc_slp_tick_begin();
+    }
 #endif
     HSD_GObj_RunProcs();
 #ifdef TARGET_PC
-    pc_slp_tick_end(temp_r25->unk_10.unk_28);
+    if (!sf_tick) {
+        pc_slp_tick_end(temp_r25->unk_10.unk_28);
+    }
 #endif
     if (temp_r25->unk_0 != -2) {
         temp_r25->unk_0++;
@@ -372,6 +386,14 @@ static bool scene_end_gate(struct gm_80479D58_t* st)
         return true;
     }
     return false;
+}
+
+static void (*s_sf_frame_fn)(void);
+static struct gm_80479D58_t* s_sf_st;
+
+static void sf_run_tick(void)
+{
+    gm_RunSimTick(s_sf_frame_fn, s_sf_st);
 }
 #endif
 
@@ -430,6 +452,21 @@ void gm_801A4D34(void (*on_frame)(void), GameSceneInfo* info)
              * from one hand-off). The tick still runs, so pads are consumed
              * and GObjs animate, but the decision is made once. */
             void (*frame_fn)(void) = s_scene_end_held != 0 ? NULL : on_frame;
+            /* PORT: 4stockfish (src/pc/sf_search.c). While it searches or
+             * replays a line, the advisor runs this tick slot itself: its
+             * ticks never move net.frame and it is off in netplay. */
+            s_sf_frame_fn = frame_fn;
+            s_sf_st = temp_r25;
+            int sf = pc_sf_slice(sf_run_tick);
+            if (sf == PC_SF_YIELD) {
+                break;
+            }
+            if (sf == PC_SF_TICKED) {
+                if (scene_end_gate(temp_r25)) {
+                    break;
+                }
+                continue;
+            }
             pc_net_sync();
             gm_RunSimTick(frame_fn, temp_r25);
             /* Finish rollback / sync-test re-simulation before gating the exit,

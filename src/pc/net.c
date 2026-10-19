@@ -30,6 +30,7 @@
 #include "pc/file_cache.h"
 #include "pc/net_internal.h"
 #include "pc/net_sfx.h"
+#include "pc/sf_search.h"
 
 #include <dolphin/ar.h>
 #include <dolphin/os.h>
@@ -225,6 +226,7 @@ static void barrier_raise(int32_t f) {
  * snapshot covers, so those do not count. */
 void pc_net_note_io(void) {
     if (SDL_GetCurrentThreadID() == s_game_thread) {
+        pc_sf_note_io();
         int lead = in_fight() ? 2 : IO_QUIET;
         barrier_raise(net.frame + lead);
     }
@@ -902,7 +904,8 @@ static bool packet_shape(const void* buf, int n) {
  * the last command actually emitted, not the interpreter's rewound status. */
 void pc_net_rumble_command(unsigned port, unsigned command) {
     static int motor[4] = {-1, -1, -1, -1};
-    if (port >= 4 || net.resim || motor[port] == (int)command)
+    /* A 4stockfish search runs thousands of trial ticks between presents. */
+    if (port >= 4 || net.resim || pc_sf_state() == PC_SF_SEARCH || motor[port] == (int)command)
         return;
     PADControlMotor(port, command);
     motor[port] = (int)command;
@@ -2376,7 +2379,14 @@ bool pc_net_audio_deaf(bool* answer) {
         const char* e = getenv("MELEE_NET_AUDIO_DEAF");
         s_deaf_off = e != NULL && strcmp(e, "off") == 0;
     }
-    if (s_deaf_off != 0 || !net.active || SDL_GetCurrentThreadID() != s_game_thread) {
+    if (s_deaf_off != 0 || SDL_GetCurrentThreadID() != s_game_thread) {
+        return false;
+    }
+    /* 4stockfish: its trials and the replay of a line hear the same thing,
+     * whatever the real audio clock says; lbaudio_ax.c asking about its own
+     * loop still gets the engine's answer. */
+    bool advisor = pc_sf_sim_tick() && !net_sfx_private_active();
+    if (!net.active && !advisor) {
         return false;
     }
     s_deaf_asks++;
@@ -2425,7 +2435,7 @@ bool pc_net_resim(void) {
         const char* e = getenv("MELEE_NET_RESIM_SFX");
         choke = e != NULL && e[0] == '1' ? 0 : 1;
     }
-    return choke != 0 && (net.resim || net.synctest);
+    return (choke != 0 && (net.resim || net.synctest)) || pc_sf_searching();
 }
 
 /* Every input wait, including a failed snapshot, has the same disconnect

@@ -2,6 +2,7 @@
 
 #include <Runtime/platform.h>
 #include <pc/pc.h>
+#include <pc/sf_search.h>
 
 #include <melee/ft/forward.h>
 #include <sysdolphin/baselib/forward.h>
@@ -2474,6 +2475,12 @@ void Camera_8002CB0C(CameraBounds* bounds)
 void Camera_8002CDDC(void* unused)
 {
     s8* slot_ptr;
+
+    /* The line list uses the stick and L/R, which are also the pause
+     * camera's orbit and zoom. Hold the view still while a line is chosen. */
+    if (pc_sf_state() == PC_SF_MENU) {
+        return;
+    }
     CameraTransformState* transform;
     HSD_GObj* gobj;
     CmSubject* subject;

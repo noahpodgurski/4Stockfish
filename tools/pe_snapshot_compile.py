@@ -19,6 +19,7 @@ import subprocess
 import struct
 import sys
 import tempfile
+import time
 
 
 def exclusions(script: Path) -> set[str]:
@@ -31,6 +32,22 @@ def exclusions(script: Path) -> set[str]:
     if any(not name.startswith("*") or not name.endswith(".c.o") for name in result):
         raise ValueError("unsupported snapshot exclusion pattern")
     return {name[1:-2] for name in result}
+
+
+def replace_snapshot(source: str, destination: Path) -> None:
+    """Swap in the sectioned object. Windows often returns ACCESS_DENIED while
+    Defender or the indexer still has the compiler output open."""
+    target = os.fspath(destination)
+    delay = 0.02
+    for attempt in range(12):
+        try:
+            os.replace(source, target)
+            return
+        except PermissionError:
+            if os.name != "nt" or attempt == 11:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 1.5, 0.25)
 
 
 def rewrite(obj: Path, objcopy: str, objdump: str) -> None:
@@ -66,7 +83,7 @@ def rewrite(obj: Path, objcopy: str, objdump: str) -> None:
     os.close(descriptor)
     try:
         subprocess.run([objcopy, *arguments, str(obj), temporary], check=True, env=env)
-        os.replace(temporary, obj)
+        replace_snapshot(temporary, obj)
     finally:
         Path(temporary).unlink(missing_ok=True)
 

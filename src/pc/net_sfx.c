@@ -365,6 +365,10 @@ void net_sfx_private(bool on) {
     s_private = on;
 }
 
+bool net_sfx_private_active(void) {
+    return s_private;
+}
+
 int32_t net_sfx_resolve(int32_t handle) {
     for (int i = 0; handle != 0 && i < SLOTS; i++) {
         if (s_bind[i].handle == handle) {
