@@ -53,9 +53,11 @@ gfx::CompiledPipeline create_pipeline(const PipelineConfig& config, const gfx::R
     }
   }
   pipeline.main = create(options, "main");
+#ifndef __EMSCRIPTEN__
   if (!pipeline.main) {
     return {};
   }
+#endif
   return pipeline;
 }
 
