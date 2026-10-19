@@ -503,3 +503,6 @@ input.range sliderarrowdec, input.range sliderarrowinc { width: 0; height: 0; }
     .row .name { font-size: 16dp; }
     #descbar { width: 92%; }
 }
+
+.android-only { display: none; }
+.android .android-only { display: flex; }

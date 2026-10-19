@@ -39,6 +39,8 @@ const char* pc_android_device_name(void);
  * unreachable on a phone with no other input. Inert (all touches pass
  * through, nothing is drawn) while active. Safe to call from any thread. */
 void pc_android_set_launcher_active(bool active);
+/* Open Android's document picker to save recent app logs without adb. */
+void pc_android_export_logs(void);
 
 #ifdef __cplusplus
 }

@@ -25,6 +25,79 @@ public class MeleeActivity extends SDLActivity {
         return new dev.encounter.aurora.AuroraSurface(context);
     }
 
+    private static final int EXPORT_LOGS_REQUEST = 7124;
+
+    public void exportLogs() {
+        runOnUiThread(() -> {
+            android.content.Intent intent = new android.content.Intent(
+                android.content.Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+            intent.setType("text/plain");
+            intent.putExtra(android.content.Intent.EXTRA_TITLE, "melee-pc-diagnostics.txt");
+            try {
+                startActivityForResult(intent, EXPORT_LOGS_REQUEST);
+            } catch (android.content.ActivityNotFoundException e) {
+                android.widget.Toast.makeText(this, "No document picker is available.",
+                    android.widget.Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != EXPORT_LOGS_REQUEST || resultCode != RESULT_OK || data == null ||
+                data.getData() == null) {
+            return;
+        }
+        final android.net.Uri destination = data.getData();
+        new Thread(() -> {
+            String result = "Diagnostics saved. Attach this file to your issue.";
+            Process capture = null;
+            try (java.io.OutputStream output = getContentResolver().openOutputStream(destination, "wt")) {
+                if (output == null) {
+                    throw new java.io.IOException("The selected document could not be opened.");
+                }
+                String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                String header = "Melee PC " + version + "\nDevice: " + android.os.Build.MANUFACTURER +
+                    " " + android.os.Build.MODEL + "\nAndroid: " + android.os.Build.VERSION.RELEASE +
+                    " (API " + android.os.Build.VERSION.SDK_INT + ")\nABI: " +
+                    java.util.Arrays.toString(android.os.Build.SUPPORTED_ABIS) +
+                    "\nRecent app logs (including previous launches still in the log buffer):\n\n";
+                output.write(header.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                // Android permits reading this app's own UID without READ_LOGS.
+                // Keep previous-process messages, and exclude other apps' logs.
+                capture = new ProcessBuilder("logcat", "-d", "-v", "threadtime",
+                    "--uid=" + android.os.Process.myUid(), "Aurora:V", "Melee:V", "melee:V",
+                    "AndroidRuntime:V", "libc:V", "*:S").redirectErrorStream(true).start();
+                try (java.io.InputStream input = capture.getInputStream()) {
+                    byte[] buffer = new byte[8192];
+                    int remaining = 4 * 1024 * 1024;
+                    int count;
+                    while (remaining > 0 && (count = input.read(buffer, 0,
+                            Math.min(buffer.length, remaining))) != -1) {
+                        output.write(buffer, 0, count);
+                        remaining -= count;
+                    }
+                    if (remaining == 0) {
+                        capture.destroy();
+                    } else if (capture.waitFor() != 0) {
+                        throw new java.io.IOException("Android could not read the app log buffer.");
+                    }
+                }
+            } catch (Exception e) {
+                result = "Could not export diagnostics: " + e.getMessage();
+            } finally {
+                if (capture != null) {
+                    capture.destroy();
+                }
+            }
+            final String message = result;
+            runOnUiThread(() -> android.widget.Toast.makeText(this, message,
+                android.widget.Toast.LENGTH_LONG).show());
+        }, "melee-log-export").start();
+    }
+
     private TouchOverlayView mTouchOverlay;
 
     @Override

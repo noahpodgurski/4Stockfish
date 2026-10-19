@@ -6,6 +6,23 @@ endif ()
 
 project(melee-pc LANGUAGES C CXX)
 
+# Native UI, updater and package metadata use the same release version.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" _melee_version LIMIT_COUNT 1)
+if (DEFINED ENV{MELEE_VERSION} AND NOT "$ENV{MELEE_VERSION}" STREQUAL "")
+    set(_melee_version "$ENV{MELEE_VERSION}")
+elseif ("$ENV{GITHUB_REF_TYPE}" STREQUAL "tag")
+    set(_melee_version "$ENV{GITHUB_REF_NAME}")
+endif ()
+if (NOT DEFINED MELEE_VERSION OR MELEE_VERSION STREQUAL "")
+    set(MELEE_VERSION "${_melee_version}")
+endif ()
+if (NOT MELEE_VERSION MATCHES "^v?[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?$")
+    message(FATAL_ERROR "Invalid MELEE_VERSION: ${MELEE_VERSION}")
+endif ()
+set_source_files_properties(src/pc/version.cpp PROPERTIES
+        COMPILE_DEFINITIONS MELEE_APP_VERSION="${MELEE_VERSION}")
+
 if (APPLE)
     enable_language(OBJC)
 endif ()
@@ -197,6 +214,7 @@ set(PC_SOURCES
         src/pc/input_poll.c
         src/pc/keyboard.c
         src/pc/main.c
+        src/pc/paths.c
         src/pc/misc.c
         src/pc/os.c
         src/pc/region.c
@@ -592,6 +610,9 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
         endforeach()
         add_dependencies(unit_tests pad_adapter_tests)
         add_test(NAME pad_adapter COMMAND pad_adapter_tests)
+        add_test(NAME f1_bindings COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tools/test_f1_bindings.py)
+        set_tests_properties(f1_bindings PROPERTIES LABELS melee TIMEOUT 30)
         add_test(NAME gcadapter COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_gcadapter.py --build ${CMAKE_BINARY_DIR})
         set_tests_properties(pad_adapter gcadapter PROPERTIES LABELS melee TIMEOUT 60)
