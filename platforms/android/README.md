@@ -67,6 +67,9 @@ release/main and pinned Android dependencies against this port.
 See [profiling and trial results](PERFORMANCE_RESULTS.md) for measured timings,
 the installed build and the limits of the current experiments.
 
+See [laptop and tablet thread profiling](THREAD_PROFILING_RESULTS.md) for the
+measured CPU headroom, shader-related stalls and expanded starter inventory.
+
 ## First-launch shader preparation
 
 The APK includes a starter inventory of pipeline configurations, not

@@ -97,3 +97,9 @@ no GPU model allowlist. Adreno 750/Odin2, Mali, other drivers, 16 KB runtime,
 macOS and Windows still require hardware validation. Linux and Android builds
 and host regression tests are checked locally; desktop package scripts already
 include the desktop inventory.
+
+## Profiling follow-up
+
+The subsequent [laptop/tablet thread trial](THREAD_PROFILING_RESULTS.md) expanded
+the inventory from 6,283 to 6,480 configurations after recording additional
+four-player Pokémon Stadium effects. Counts above describe the earlier build.
