@@ -60,12 +60,12 @@ echo "=== Staging assets and native libraries ==="
 mkdir -p "${ANDROID_DIR}/app/src/main/assets/resources"
 cp -r "${ROOT_DIR}/resources/"* "${ANDROID_DIR}/app/src/main/assets/"
 cp -r "${ROOT_DIR}/resources/"* "${ANDROID_DIR}/app/src/main/assets/resources/"
-# No initial_pipeline_cache.db: the seed is recorded on desktop GPUs, and
-# Android builds at boot only pipelines this device has built before
-# (DeviceBuiltRowsOnly, extern/aurora/lib/gfx/pipeline_cache.cpp), so shipping
-# it would only have it merged into pipeline_cache.db and dropped again.
+# Keep the unrestricted desktop inventory out of Android. The separate starter
+# is checked for the current version and structure size again by the native loader before any driver compilation.
 rm -f "${ANDROID_DIR}/app/src/main/assets/initial_pipeline_cache.db" \
     "${ANDROID_DIR}/app/src/main/assets/resources/initial_pipeline_cache.db"
+gzip -dc "${ROOT_DIR}/tools/android_initial_pipeline_cache.db.gz" \
+    > "${ANDROID_DIR}/app/src/main/assets/android_initial_pipeline_cache.db"
 
 mkdir -p "${ANDROID_DIR}/app/src/main/jniLibs/arm64-v8a"
 "${STRIP_TOOL}" --strip-unneeded -o "${ANDROID_DIR}/app/src/main/jniLibs/arm64-v8a/libmelee.so" "${BUILD_DIR}/libmelee.so"

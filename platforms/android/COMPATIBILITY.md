@@ -39,7 +39,9 @@ frame drop has this cause. The subsequent launch queued 512 cached configs.
 
 The patch preserves Android's existing driver workaround: pipeline compilation
 stays inline on the drawing path. It does not re-enable worker compilation on
-Adreno or ship desktop-generated pipeline seeds. Newly encountered shaders can
+Adreno or ship the unrestricted desktop pipeline seed. A separate
+Android starter inventory is checked for current version/size before local compilation; this is not a
+guarantee that every driver accepts every pipeline. Newly encountered shaders can
 still stall a frame or have draws skipped after the per-frame budget is spent.
 
 ## Compatibility boundaries and follow-up

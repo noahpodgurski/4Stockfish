@@ -264,7 +264,7 @@ class Launcher final : public Rml::EventListener {
     // draining: the game starts by itself when the queue empties, and a second
     // press starts it immediately.
     bool shaders_waited = false;
-    uint32_t last_pending = 0;
+    uint32_t last_pending = 0, last_shader_pending = 0;
     // The settings row holding the focus, lit as Melee lights its options.
     Rml::Element* current_row = nullptr;
     // Where the pointer last moved, so only a real move steers the cursor.
@@ -1033,7 +1033,7 @@ public:
             }
         }
     }
-    int run(const std::string& initial_error) {
+    int run(const std::string& initial_error, bool start_requested = false) {
         if (!prefs.disc.empty())
             inspect(prefs.disc);
         if (!initial_error.empty())
@@ -1142,6 +1142,11 @@ public:
                 }
                 controls();
                 element(supported ? "play" : "choose")->Focus();
+                if (start_requested) {
+                    start_requested = false;
+                    if (supported)
+                        action("play");
+                }
             }
             if (verification.valid()) {
                 auto percent = progress.load();
@@ -1242,6 +1247,15 @@ public:
                     }
                 }
                 refresh_settings();
+            }
+            {
+                const uint32_t pending = pending_pipelines();
+                if (pending != last_shader_pending) {
+                    last_shader_pending = pending;
+                    text("shader-status", pending ?
+                        "Preparing cached shaders (" + std::to_string(pending) + " left)..." :
+                        "Cached shaders ready. New effects may compile during play.");
+                }
             }
             if (shaders_waited && result == -2) {
                 const uint32_t pending = pending_pipelines();
@@ -1382,6 +1396,7 @@ static std::filesystem::path pc_resources_path() {
 extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window) {
     try {
         std::string error;
+        bool start_requested = false;
         if (command_line_disc) {
             auto info = launcher::inspect_disc(command_line_disc);
             if (info.supported && aurora_dvd_open(command_line_disc)) {
@@ -1391,11 +1406,13 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
                                  std::filesystem::absolute(command_line_disc).string();
                 if (!launcher::save_preferences(config_path, prefs, error))
                     SDL_Log("%s", error.c_str());
-                return 1;
+                // Direct disc launches must use the same shader wait as Play.
+                start_requested = true;
+            } else {
+                aurora_dvd_close();
+                error = info.supported ? "Could not load the requested disc. Choose another image." :
+                                         info.message;
             }
-            aurora_dvd_close();
-            error = info.supported ? "Could not load the requested disc. Choose another image." :
-                                     info.message;
         }
         ensure_rmlui_input_layer();
         auto* context = aurora::rmlui::get_context();
@@ -1414,7 +1431,7 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
             return -1;
         }
         Launcher launcher(window, document);
-        return launcher.run(error);
+        return launcher.run(error, start_requested);
     } catch (const std::exception& e) {
         SDL_Log("Launcher failed: %s", e.what());
         return -1;

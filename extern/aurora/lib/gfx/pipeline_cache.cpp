@@ -30,6 +30,7 @@ EM_JS(void, browser_graphics_progress, (unsigned done, unsigned total), {
 #include <functional>
 #include <limits>
 #include <mutex>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <variant>
@@ -50,7 +51,11 @@ namespace aurora::gfx {
 static Module Log("aurora::gfx::pipeline_cache");
 
 constexpr int PipelineCacheSchema = 1;
+#ifdef __ANDROID__
+constexpr const char* InitialPipelineCacheName = "android_initial_pipeline_cache.db";
+#else
 constexpr const char* InitialPipelineCacheName = "initial_pipeline_cache.db";
+#endif
 constexpr const char* SdlVfsName = "aurora_pipeline_cache_sdl_vfs";
 
 using NewPipelineCallback = std::function<CompiledPipeline()>;
@@ -110,15 +115,9 @@ static absl::flat_hash_set<PipelineRef> g_pendingPipelines;
 static uint64_t g_pipelineScene = 0; // guarded by g_pipelineMutex
 static absl::flat_hash_map<uint64_t, absl::flat_hash_set<HashType>> g_scenePipelines;
 static std::atomic_bool g_gpuCachePrunePending = false;
-/* Android warms only pipelines this device has already built. The seed is
- * recorded on desktop GPUs and is not shipped in the APK
- * (tools/build_android.sh): an Adreno 750 driver (OnePlus Pad 2) fails one of
- * its configs with VK_ERROR_UNKNOWN, which aborted the app on every launch
- * once a worker walked the whole queue. A row is marked in pipeline_device
- * once a pipeline for it has been created here, so building it again at boot
- * asks nothing of the driver it has not already done; unmarked rows (a seed
- * merged by an older build, a config asked for but not built before exit) are
- * dropped at load. */
+/* Android accepts device-built rows and the portable starter inventory.
+ * The unrestricted desktop seed previously failed on Adreno; it stays excluded.
+ * Only actual successful local compilation marks a row in pipeline_device. */
 #if defined(__ANDROID__)
 constexpr bool DeviceBuiltRowsOnly = true;
 #else
@@ -681,14 +680,42 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
   return runtimeKey;
 }
 
+#ifdef __ANDROID__
+static CompiledPipeline checked_android_pipeline(const NewPipelineCallback& create) {
+  // create_timed serializes Android calls, including the device's error-scope stack.
+  for (auto filter : {wgpu::ErrorFilter::Validation, wgpu::ErrorFilter::Internal, wgpu::ErrorFilter::OutOfMemory})
+    webgpu::g_device.PushErrorScope(filter);
+  auto pipeline = create();
+  auto accepted = std::make_shared<bool>(true);
+  for (int i = 0; i < 3; ++i) {
+    const auto future = webgpu::g_device.PopErrorScope(wgpu::CallbackMode::WaitAnyOnly,
+        [accepted](wgpu::PopErrorScopeStatus status, wgpu::ErrorType type, wgpu::StringView message) {
+          if (status != wgpu::PopErrorScopeStatus::Success || type != wgpu::ErrorType::NoError) {
+            *accepted = false;
+            Log.warn("Android pipeline rejected: {}", message);
+          }
+        });
+    if (webgpu::g_instance.WaitAny(future, 5000000000) != wgpu::WaitStatus::Success) {
+      *accepted = false;
+      Log.warn("Android pipeline error check did not complete");
+    }
+  }
+  return *accepted ? pipeline : CompiledPipeline{};
+}
+#endif
+
 static PipelineRef resolve_pipeline(ShaderType type, const gx::PipelineConfig& config, const RenderTargetLayout& layout,
                                     PipelinePriority priority) {
   const auto cacheKey = xxh3_hash(config, static_cast<HashType>(type));
   return find_pipeline_impl(
       xxh3_hash(layout.key, cacheKey),
       [type, cacheKey, config, layout] {
+#ifdef __ANDROID__
+        auto pipeline = checked_android_pipeline([&] { return create_pipeline(config, layout); });
+#else
         auto pipeline = create_pipeline(config, layout);
-        mark_device_built(type, cacheKey);
+#endif
+        if (pipeline.main) mark_device_built(type, cacheKey);
         return pipeline;
       },
       priority);
@@ -812,6 +839,13 @@ static sqlite3* open_pipeline_cache_seed_db(const std::string& path) {
   return seedDb;
 }
 
+static bool portable_starter_config(const uint8_t* bytes, int size) {
+  if (!bytes || size != sizeof(gx::PipelineConfig)) return false;
+  gx::PipelineConfig config;
+  std::memcpy(&config, bytes, sizeof(config));
+  return config.version == gx::GXPipelineConfigVersion;
+}
+
 static void seed_pipeline_cache() {
   if (g_pipelineCacheBroken || g_pipelineCacheDb == nullptr || g_pipelineCacheUpsertStmt == nullptr) {
     return;
@@ -821,7 +855,7 @@ static void seed_pipeline_cache() {
   bool alreadySeeded = false;
   sqlite::exec(g_pipelineCacheDb, "SELECT 1 FROM pipeline_cache LIMIT 1;",
                [&alreadySeeded](int, char**, char**) { alreadySeeded = true; });
-  if (alreadySeeded) {
+  if (alreadySeeded && !DeviceBuiltRowsOnly) {
     return;
   }
 
@@ -839,13 +873,27 @@ static void seed_pipeline_cache() {
   }
 
   sqlite3_stmt* seedStmt = nullptr;
+  sqlite3_stmt* starterStmt = nullptr;
   auto closeSeed = [&] {
     if (seedStmt != nullptr) {
       sqlite3_finalize(seedStmt);
       seedStmt = nullptr;
     }
+    sqlite3_finalize(starterStmt);
     sqlite3_close(seedDb);
   };
+
+  if constexpr (DeviceBuiltRowsOnly) {
+    bool portable = false;
+    sqlite::exec(seedDb, "SELECT value FROM melee_portable_starter WHERE value = 1;",
+                 [&](int, char**, char**) { portable = true; });
+    if (!portable || sqlite3_prepare_v2(g_pipelineCacheDb,
+        "INSERT OR IGNORE INTO pipeline_starter(type, hash) VALUES (?, ?)", -1, &starterStmt, nullptr) != SQLITE_OK) {
+      Log.warn("Ignoring unrecognized Android starter shader inventory");
+      closeSeed();
+      return;
+    }
+  }
 
   auto ret = sqlite3_prepare_v3(seedDb,
                                 "SELECT type, hash, config_version, config_size, config, first_frame_used "
@@ -886,6 +934,13 @@ static void seed_pipeline_cache() {
         continue;
       }
 
+      if constexpr (DeviceBuiltRowsOnly) {
+        if (typeValue != underlying(ShaderType::GX) || !portable_starter_config(configBlob, configBlobSize)) {
+          ++skippedRows;
+          continue;
+        }
+      }
+
       PipelineCacheWrite write{
           .type = static_cast<ShaderType>(typeValue),
           .hash = static_cast<PipelineRef>(hashValue),
@@ -900,6 +955,14 @@ static void seed_pipeline_cache() {
       if (!write_pipeline_cache_record(write)) {
         writeFailed = true;
         break;
+      }
+      if (starterStmt) {
+        sqlite3_bind_int(starterStmt, 1, typeValue);
+        sqlite3_bind_int64(starterStmt, 2, hashValue);
+        const bool allowed = sqlite3_step(starterStmt) == SQLITE_DONE;
+        sqlite3_reset(starterStmt);
+        sqlite3_clear_bindings(starterStmt);
+        if (!allowed) { writeFailed = true; break; }
       }
       ++mergedRows;
     }
@@ -1059,6 +1122,9 @@ INSERT INTO aurora_schema VALUES ({});)",
     ret = sqlite::exec(g_pipelineCacheDb,
                        "CREATE TABLE IF NOT EXISTS pipeline_device ("
                        "type INTEGER NOT NULL, hash INTEGER NOT NULL, PRIMARY KEY (type, hash)"
+                       ") WITHOUT ROWID;"
+                       "CREATE TEMP TABLE IF NOT EXISTS pipeline_starter ("
+                       "type INTEGER NOT NULL, hash INTEGER NOT NULL, PRIMARY KEY (type, hash)"
                        ") WITHOUT ROWID;");
     if (ret == SQLITE_OK) {
       ret = sqlite3_prepare_v3(g_pipelineCacheDb, "INSERT OR IGNORE INTO pipeline_device (type, hash) VALUES (?, ?)",
@@ -1114,13 +1180,14 @@ static void prune_old_pipeline_cache_versions() {
 #endif
 
   if constexpr (DeviceBuiltRowsOnly) {
-    /* Marks whose row a version bump just deleted first, then every row
-     * this device has not built. */
+    // Discard obsolete marks and unbuilt rows outside the starter inventory.
     ret = sqlite::exec(g_pipelineCacheDb,
                        "DELETE FROM pipeline_device WHERE NOT EXISTS (SELECT 1 FROM pipeline_cache c "
                        "WHERE c.type = pipeline_device.type AND c.hash = pipeline_device.hash);"
                        "DELETE FROM pipeline_cache WHERE NOT EXISTS (SELECT 1 FROM pipeline_device d "
-                       "WHERE d.type = pipeline_cache.type AND d.hash = pipeline_cache.hash);");
+                       "WHERE d.type = pipeline_cache.type AND d.hash = pipeline_cache.hash) "
+                       "AND NOT EXISTS (SELECT 1 FROM pipeline_starter s "
+                       "WHERE s.type = pipeline_cache.type AND s.hash = pipeline_cache.hash);");
     if (ret != SQLITE_OK) {
       Log.error("Failed to prune pipeline rows this device has not built: {}", sqlite3_errmsg(g_pipelineCacheDb));
       pipeline_cache_abort();
@@ -1349,11 +1416,6 @@ static size_t load_pipeline_cache_entries(ShaderType type, uint32_t configVersio
       if (config.shaderConfig.uberTev && !gx::hybrid_ubershaders_enabled()) continue;
     }
     remember_pipeline_config(type, config, firstFrameUsed, false);
-    if constexpr (DeviceBuiltRowsOnly) {
-      // Every row left after the load-time prune is marked already.
-      std::lock_guard lock{g_deviceBuiltMutex};
-      g_deviceBuilt.insert(xxh3_hash(config, static_cast<HashType>(type)));
-    }
     ++acceptedRows;
   }
 

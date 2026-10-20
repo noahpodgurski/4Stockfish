@@ -14,7 +14,7 @@ class InlinePipeline(unittest.TestCase):
         queues = cache[cache.index('template <typename Queue>'):cache.index('static void notify_pipeline_ready')]
         settings = cache[cache.index('static bool env_flag('):cache.index('/* MELEE_PIPELINE_JOBS=')]
         initialize = cache[cache.index('void initialize_pipeline_cache()'):cache.index('void shutdown_pipeline_cache()')]
-        find = cache[cache.index('static PipelineRef find_pipeline_impl('):cache.index('static PipelineRef resolve_pipeline(')]
+        find = cache[cache.index('static PipelineRef find_pipeline_impl('):cache.index('#ifdef __ANDROID__\nstatic CompiledPipeline checked_android_pipeline(')]
         source = r'''
 #include <algorithm>
 #include <cassert>

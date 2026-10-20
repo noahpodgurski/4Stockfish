@@ -19,11 +19,15 @@ class HybridShaders(unittest.TestCase):
             if arg in ('-o', '-MF', '-MT'): skip = True; continue
             if arg in ('-c','-MD') or arg == command['file']: continue
             cleaned.append(arg)
+        cache_source = (ROOT/'extern/aurora/lib/gfx/pipeline_cache.cpp').read_text()
+        self.assertIn('static bool portable_starter_config(', cache_source)
+        starter = cache_source[cache_source.index('static bool portable_starter_config('):cache_source.index('static void seed_pipeline_cache()')]
         source = r'''
 #include "gx/uber_shader.hpp"
 #include <cassert>
 #include <cstring>
 using namespace aurora::gx;
+''' + 'namespace aurora::gfx {\n' + starter + '}\n' + r'''
 int main() {
   PipelineConfig a{}; a.shaderConfig.tevStageCount = 1;
   auto& stage = a.shaderConfig.tevStages[0];
@@ -32,6 +36,15 @@ int main() {
   a.shaderConfig.tcgs[0].src = GX_TG_TEX0;
   stage.colorPass = {GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO};
   stage.alphaPass = {GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO};
+  assert(aurora::gfx::portable_starter_config(reinterpret_cast<const uint8_t*>(&a),sizeof(a)));
+  assert(!aurora::gfx::portable_starter_config(nullptr,sizeof(a)));
+  assert(!aurora::gfx::portable_starter_config(reinterpret_cast<const uint8_t*>(&a),sizeof(a)-1));
+  auto invalid=a; invalid.version++;
+  assert(!aurora::gfx::portable_starter_config(reinterpret_cast<const uint8_t*>(&invalid),sizeof(invalid)));
+  invalid=a; invalid.shaderConfig.numIndStages=1;
+  assert(aurora::gfx::portable_starter_config(reinterpret_cast<const uint8_t*>(&invalid),sizeof(invalid)));
+  invalid=a; invalid.shaderConfig.uberTev=1;
+  assert(aurora::gfx::portable_starter_config(reinterpret_cast<const uint8_t*>(&invalid),sizeof(invalid)));
   PipelineConfig family{}; assert(make_uber_pipeline_config(a, family));
   assert(family.shaderConfig.uberTev == 1);
   auto b = a; b.shaderConfig.tevStages[0].colorPass.d = GX_CC_C0;

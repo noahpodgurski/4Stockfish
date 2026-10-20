@@ -67,12 +67,26 @@ release/main and pinned Android dependencies against this port.
 See [profiling and trial results](PERFORMANCE_RESULTS.md) for measured timings,
 the installed build and the limits of the current experiments.
 
+## First-launch shader preparation
+
+The APK includes a starter inventory of pipeline configurations, not
+GPU binaries. On first launch, Android filters this inventory and builds it
+locally while the launcher shows the remaining count. Play and direct disc
+launches wait for the queue; pressing Play again can skip the remaining wait.
+Successful pipelines are marked for future warm-up and Dawn keeps local driver
+binaries. Newly encountered effects can still compile during gameplay.
+
+Linux, Windows and macOS packages retain their larger existing inventory and
+use the same launcher wait, including command-line disc launches. Their native
+backends compile for the local GPU. There is no single GPU binary cache shared
+between operating systems. See [startup validation](SHADER_STARTUP_RESULTS.md).
+
 ## Developer performance trials
 
 Android shader history learns the stage/fighter/costume combination from actual
 matches. At a later match entry it prioritizes already-known configurations
 for that combination and spends up to 250 ms warming them (one driver compile
-can overrun the budget). It keeps the device-built-only filter and inline
+can overrun the budget). It keeps the device-built/starter filter and inline
 compiler. Fully warmed launcher caches need no additional match-entry work;
 unseen effects still compile on first use. `MELEE_SCENE_PREWARM=0` disables
 learning and selection for comparison.

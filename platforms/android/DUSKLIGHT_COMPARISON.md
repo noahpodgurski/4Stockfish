@@ -16,12 +16,31 @@ latest source; its origin refs were fetched without changing its files.
 | Odin2/Adreno startup | v2.0.3 explicitly lists a fix for Odin2 and Galaxy S23. Aurora disables Dawn's `use_spirv_reconvergence_mode`. | Already present in `extern/aurora/lib/webgpu/gpu.cpp`. No extra patch or wholesale dependency update is needed for this fix. |
 | Android activity | DuskActivity extends BorealisActivity, which extends SDLActivity. The shared shell owns surface, lifecycle, document and argument handling. | Our SDL activity and SAF picker cover existing requirements. Importing the whole shell is a migration, not a demonstrated FPS optimization. |
 | Display rate | BorealisSurface defaults to 60 Hz, reapplies its request on surface changes and checks API 30, readiness and surface validity. It can accept other target rates. | AuroraSurface already votes 60 Hz. Keep Melee's simulation pacing at 60 Hz. A higher refresh vote alone is not an optimization. |
-| Shader caching | Aurora stores pipeline configurations, orders known rows by first-use frame, uses a compilation worker and presents compilation progress through Dusklight's overlay. | Persistent caches and launcher status already exist. Retain Melee's Android inline-compilation/device-built-only safeguards; test per-match history independently. |
+| Shader caching | Aurora stores pipeline configurations, orders known rows by first-use frame, uses a compilation worker and presents compilation progress through Dusklight's overlay. | Ship a version/size-checked Android starter inventory, compile locally in the launcher and preserve serialized driver calls; desktop packages retain their existing inventory. |
 | Graphics toggles | Release enables `skip_validation` and `disable_robustness`; reconvergence is disabled. | Already present. Do not count these as new improvements. |
 | Game modes | Android XML declares support for performance and battery game modes. | Same declarations already exist. This XML alone does not implement adaptive quality or an ADPF hint session. |
 | Scheduling/thermals | No `PerformanceHintManager`, `APerformanceHint`, thermal-headroom integration or sustained-performance request was found in the inspected Android shell and native runtime paths. | Our proposed hint trial is additional work, not a Dusklight feature being copied. Melee already requests sustained-performance mode where supported. |
 | Device presets | No Adreno/Mali model-to-quality preset table was found in the inspected shell/renderer/settings paths. | Do not infer safe graphics settings from a device model alone. Compare actual driver capabilities and measurements. |
 | Build plumbing | Borealis Gradle reads native CMake output metadata to select ABI/API level, native library and matching SDL/Aurora Java sources. | Useful future build-maintenance pattern; does not establish a gameplay speedup. |
+
+## Release APK inventory
+
+The official v2.0.3 APK contains `assets/initial_pipeline_cache.db` (11,104,256
+bytes), even though that database is absent from the Git tree. Its 2,695 rows
+contain 2,678 GX configurations (version 13, 2,772 bytes each) and 17 Rml
+configurations (version 3, 36 bytes each). These are portable pipeline inputs,
+not precompiled GPU binaries. Aurora orders them by first-use frame and Dawn
+creates binaries for the local device. The overlay reports queued/created
+pipelines; this inspection does not establish that Dusklight blocks gameplay
+until every pipeline finishes.
+
+Melee now follows that inventory/local-compilation pattern. Android ships a
+separate inventory exported from successful Android builds, checked against
+the current configuration version and size before queuing. This does not enable the
+experimental hybrid shader mode. The raw desktop seed remains excluded from APK assets. The larger current
+configuration set was trial-compiled on the tablet with GX error scopes before
+export; that does not validate it on the previously affected Adreno 750 driver.
+See [startup validation](SHADER_STARTUP_RESULTS.md).
 
 ## Exact sources inspected
 
