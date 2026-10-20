@@ -160,7 +160,7 @@ endif ()
 # ---- Game code (decomp, compiled as C) -------------------------------------
 include(cmake/GameSources.cmake)
 
-add_library(melee_game STATIC ${GAME_SOURCES})
+add_library(melee_game STATIC ${GAME_SOURCES} src/pc/widescreen.c)
 target_include_directories(melee_game PUBLIC extern/aurora/include src src/sdk_include)
 target_compile_definitions(melee_game PUBLIC TARGET_PC=1 MELEE_PC=1)
 target_compile_options(melee_game PRIVATE
@@ -204,7 +204,7 @@ endif ()
 # ---- PC platform layer -----------------------------------------------------
 # Explicit, not a glob: this list links straight into the shipped binary, so a
 # stray .c/.cpp dropped into src/pc must not silently join the build.
-# src/pc/vtxarray.c is deliberately absent - it belongs to melee_game.
+# src/pc/vtxarray.c and widescreen.c access disc structs and belong to melee_game.
 set(PC_SOURCES
         src/pc/audio.c
         src/pc/disc_open.c
@@ -224,7 +224,6 @@ set(PC_SOURCES
         src/pc/thp.c
         src/pc/touch.c
         src/pc/vi.c
-        src/pc/widescreen.c
         src/pc/windows_arm64_softfp.c
         src/pc/android_compat.cpp
         src/pc/file_cache.cpp
@@ -571,7 +570,7 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
             set_tests_properties(${case} PROPERTIES LABELS melee TIMEOUT 60)
             add_dependencies(unit_tests ${case}_test)
         endforeach()
-        foreach(case IN ITEMS net_snapshot net_stage net_set_flow net_replay_seed net_scene_timing net_fixture_env net_rank_rules net_match net_magnify net_late_poll snapshot_platforms sim_prefs sis_kerning staffroll_init browser_stubs browser_pipeline inline_pipeline pipeline_scene android_shader_seed android_shader_startup android_ubershader android_signing android_input android_gcc_launcher android_touch android_performance)
+        foreach(case IN ITEMS net_snapshot net_stage net_set_flow net_replay_seed net_scene_timing net_fixture_env net_rank_rules net_match net_magnify widescreen net_late_poll snapshot_platforms sim_prefs sis_kerning staffroll_init browser_stubs browser_pipeline inline_pipeline pipeline_scene android_shader_seed android_shader_startup android_ubershader android_signing android_input android_gcc_launcher android_touch android_performance)
             add_test(NAME ${case} COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_${case}.py)
             set_tests_properties(${case} PROPERTIES LABELS melee TIMEOUT 60)
         endforeach()
