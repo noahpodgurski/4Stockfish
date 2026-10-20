@@ -41,6 +41,21 @@ namespace {
 launcher::Preferences prefs;
 std::filesystem::path config_path;
 
+bool set_fullscreen(SDL_Window* window, bool fullscreen) {
+#ifdef __ANDROID__
+    return pc_android_set_fullscreen(fullscreen);
+#else
+    return SDL_SetWindowFullscreen(window, fullscreen);
+#endif
+}
+const char* display_mode() {
+#ifdef __ANDROID__
+    return prefs.fullscreen ? "Fullscreen" : "System bars shown";
+#else
+    return prefs.fullscreen ? "Fullscreen" : "Windowed";
+#endif
+}
+
 /* Aurora's input router no longer feeds RmlUi itself: the host registers a
  * layer that forwards events to aurora::rmlui::process_input. Without it the
  * launcher and F1 menu get no mouse, touch or keyboard input at all. */
@@ -552,7 +567,7 @@ class Launcher final : public Rml::EventListener {
             return;
         quiet = true;
         refresh_online(document);
-        text("display", prefs.fullscreen ? "Fullscreen" : "Windowed");
+        text("display", display_mode());
         const char* override = std::getenv("MELEE_VSYNC");
         const bool effective_vsync = override ? override[0] != '0' : prefs.vsync;
         text("sync",
@@ -739,7 +754,7 @@ class Launcher final : public Rml::EventListener {
         } else if (id == "settings" || id == "back")
             show_settings(id == "settings");
         else if (id == "display" || id == "fullscreen") {
-            if (SDL_SetWindowFullscreen(window, !prefs.fullscreen))
+            if (set_fullscreen(window, !prefs.fullscreen))
                 prefs.fullscreen = !prefs.fullscreen;
             else
                 status(std::string("Could not change display mode: ") + SDL_GetError(), true);
@@ -845,6 +860,13 @@ class Launcher final : public Rml::EventListener {
             prefs.msaa = 1;
             prefs.anisotropy = 1;
             prefs.reverb = false;
+#if defined(__ANDROID__)
+            // Mailbox reduces presentation stalls; simulation still paces to 60 Hz.
+            if (!std::getenv("MELEE_VSYNC")) {
+                prefs.vsync = false;
+                aurora_enable_vsync(false);
+            }
+#endif
             save();
             refresh_settings();
             note("Performance preset: internal resolution 1x, anti-aliasing off, filtering 1x "
@@ -1318,6 +1340,9 @@ extern "C" void pc_launcher_configure(AuroraConfig* config) {
     }
 #endif
     config->startFullscreen = prefs.fullscreen;
+#ifdef __ANDROID__
+    pc_android_set_fullscreen(prefs.fullscreen);
+#endif
     config->msaa = prefs.msaa;
     config->maxTextureAnisotropy = prefs.anisotropy;
     if (!std::getenv("MELEE_VSYNC"))
@@ -1647,7 +1672,7 @@ public:
     void refresh() {
         quiet = true;
         refresh_online(document);
-        label("display", VIGetWindowFullscreen() ? "Fullscreen" : "Windowed");
+        label("display", display_mode());
         label("sync", std::getenv("MELEE_VSYNC") ? "Environment override" :
                       prefs.vsync                ? "On" :
                                                    "Off");
@@ -1703,6 +1728,7 @@ public:
         open = !open;
         binding = -1;
         PADBlockInput(open);
+        pc_android_set_launcher_active(open);
         lbAudioAx_80024030(open ? SFX_CONFIRM : SFX_BACK);
         if (open) {
             refresh();
@@ -1894,8 +1920,8 @@ public:
             return;
         }
         if (id == "display") {
-            const bool fullscreen = !VIGetWindowFullscreen();
-            if (!SDL_SetWindowFullscreen(window, fullscreen)) {
+            const bool fullscreen = !prefs.fullscreen;
+            if (!set_fullscreen(window, fullscreen)) {
                 label("menu-status", SDL_GetError());
                 return;
             }

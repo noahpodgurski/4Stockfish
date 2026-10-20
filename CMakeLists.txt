@@ -287,9 +287,7 @@ target_include_directories(melee PRIVATE extern/monocypher)
 
 target_compile_options(melee PRIVATE
         ${MELEE_FP_FLAGS}
-        $<$<AND:$<COMPILE_LANGUAGE:C>,$<NOT:$<BOOL:${WIN32}>>,$<NOT:$<BOOL:${ANDROID}>>,$<NOT:$<BOOL:${APPLE}>>>:-fno-pie>
-        $<$<BOOL:${ANDROID}>:-march=armv8-a+crc+crypto>
-        $<$<BOOL:${ANDROID}>:-mtune=cortex-a73>)
+        $<$<AND:$<COMPILE_LANGUAGE:C>,$<NOT:$<BOOL:${WIN32}>>,$<NOT:$<BOOL:${ANDROID}>>,$<NOT:$<BOOL:${APPLE}>>>:-fno-pie>)
 target_link_libraries(melee PRIVATE melee_game aurora::main ${MELEE_CRYPTO_LIBS} ${MELEE_NETWORK_LIBS})
 
 if (IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
@@ -496,6 +494,14 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
 
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         find_package(Python3 REQUIRED COMPONENTS Interpreter)
+        add_executable(input_poll_test EXCLUDE_FROM_ALL tools/test_input_poll.c)
+        target_include_directories(input_poll_test PRIVATE src src/sdk_include)
+        target_compile_definitions(input_poll_test PRIVATE MELEE_PC=1 TARGET_PC=1)
+        target_compile_options(input_poll_test PRIVATE -UNDEBUG)
+        target_link_libraries(input_poll_test PRIVATE ${AURORA_SDL3_TARGET})
+        add_test(NAME input_poll COMMAND input_poll_test)
+        set_tests_properties(input_poll PROPERTIES LABELS melee TIMEOUT 30)
+        add_dependencies(unit_tests input_poll_test)
         foreach(case IN ITEMS net_resume net_handshake net_lan_txt net_reliable)
             if (case STREQUAL "net_reliable")
                 add_executable(${case}_test EXCLUDE_FROM_ALL tools/test_net_chat_transport.c src/pc/net_chat.c)
@@ -565,7 +571,7 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
             set_tests_properties(${case} PROPERTIES LABELS melee TIMEOUT 60)
             add_dependencies(unit_tests ${case}_test)
         endforeach()
-        foreach(case IN ITEMS net_snapshot net_stage net_set_flow net_replay_seed net_scene_timing net_fixture_env net_rank_rules net_match net_magnify net_late_poll snapshot_platforms sim_prefs sis_kerning staffroll_init browser_stubs browser_pipeline)
+        foreach(case IN ITEMS net_snapshot net_stage net_set_flow net_replay_seed net_scene_timing net_fixture_env net_rank_rules net_match net_magnify net_late_poll snapshot_platforms sim_prefs sis_kerning staffroll_init browser_stubs browser_pipeline inline_pipeline pipeline_scene android_signing android_input android_gcc_launcher android_touch android_performance)
             add_test(NAME ${case} COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_${case}.py)
             set_tests_properties(${case} PROPERTIES LABELS melee TIMEOUT 60)
         endforeach()

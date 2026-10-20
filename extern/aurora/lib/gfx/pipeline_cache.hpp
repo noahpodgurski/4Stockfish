@@ -36,6 +36,7 @@ void shutdown_pipeline_cache();
 void begin_pipeline_frame();
 void end_pipeline_frame();
 void rebuild_pipeline_cache();
+uint32_t set_pipeline_scene(uint64_t sceneId, uint32_t maxWaitMs);
 
 PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLayout& layout);
 PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTargetLayout& layout);
