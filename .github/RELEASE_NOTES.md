@@ -16,21 +16,21 @@ English (UK) text.
 
 ## Highlights
 
-- Launcher improvements: version display, portable installs, keyboard remapping
-  and settings available before starting the game.
-- Release checks now include the browser build, both macOS architectures and
-  renderer FIFO, texture-cache, worker and recording tests.
+- Fixed empty off-screen fighter circles on Android and macOS. A byte-order
+  mismatch in the image-copy helper is corrected by building it with the same
+  GCC toolchain as the game code. Verified with Link and Mario on a Samsung
+  tablet; Mac and Pixel hardware confirmation is still pending.
+- Expanded the bundled Android shader coverage and prepare recorded shaders
+  before gameplay to reduce missing effects and first-use compilation.
+- Android compatibility, fullscreen and touch-input improvements since
+  [v0.4.0-beta](https://github.com/999sian/melee-pc/releases/tag/v0.4.0-beta).
 
 ## Fixes
 
-- Fixed uninitialized credits text pointers on 64-bit platforms by clearing the
-  entire allocated staff table (#140).
-- Fixed browser linking after the launcher changes and restored browser default
-  keyboard bindings and the persistent save-directory path.
-- Fixed missing browser rendering on GPUs using the two-pass alpha fallback:
-  the alpha prepass now remains paired with the asynchronously compiled colour pass.
-- Added a credits boot smoke test and regression checks for the credits table,
-  browser platform stubs and alpha-pipeline scheduling.
+- Corrected magnifier copy dimensions and preserved big-endian image
+  descriptors across widescreen copies, also used by Pokémon Stadium.
+- Added regression checks for image-copy byte order and compiler selection.
+- Fixed the Android touch test's SDL include paths in CI.
 
 ## Known issues
 

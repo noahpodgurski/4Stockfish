@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise actual Android touch hooks with a JNI type-only host stub."""
 from pathlib import Path
+from net_test_support import sdl_includes
 import subprocess
 import tempfile
 
@@ -49,5 +50,6 @@ int main(void) {
     subprocess.run(["cc", "-DMELEE_PC=1", "-DTARGET_PC=1", "-I", str(temp),
                     "-I", str(root), "-I", str(root / "extern/aurora/include"),
                     "-I", str(root / "src"), "-I", str(root / "src/sdk_include"),
+                    *[arg for path in sdl_includes(root) for arg in ("-I", str(path))],
                     str(temp / "check.c"), "-pthread", "-o", str(temp / "check")], check=True)
     subprocess.run([str(temp / "check")], check=True)

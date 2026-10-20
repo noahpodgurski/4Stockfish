@@ -306,7 +306,9 @@ const char* pc_android_device_name(void) {
 
 #else
 
-bool pc_android_set_fullscreen(bool) { return false; }
+bool pc_android_set_fullscreen(bool) {
+    return false;
+}
 void pc_android_export_logs(void) {}
 void pc_android_multicast_lock_acquire(void) {}
 void pc_android_multicast_lock_release(void) {}

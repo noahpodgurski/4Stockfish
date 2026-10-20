@@ -1252,9 +1252,10 @@ public:
                 const uint32_t pending = pending_pipelines();
                 if (pending != last_shader_pending) {
                     last_shader_pending = pending;
-                    text("shader-status", pending ?
-                        "Preparing cached shaders (" + std::to_string(pending) + " left)..." :
-                        "Cached shaders ready. New effects may compile during play.");
+                    text("shader-status",
+                        pending ?
+                            "Preparing cached shaders (" + std::to_string(pending) + " left)..." :
+                            "Cached shaders ready. New effects may compile during play.");
                 }
             }
             if (shaders_waited && result == -2) {
@@ -1410,8 +1411,9 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
                 start_requested = true;
             } else {
                 aurora_dvd_close();
-                error = info.supported ? "Could not load the requested disc. Choose another image." :
-                                         info.message;
+                error = info.supported ?
+                            "Could not load the requested disc. Choose another image." :
+                            info.message;
             }
         }
         ensure_rmlui_input_layer();
