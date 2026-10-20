@@ -16,21 +16,25 @@ English (UK) text.
 
 ## Highlights
 
-- Fixed empty off-screen fighter circles on Android and macOS. A byte-order
-  mismatch in the image-copy helper is corrected by building it with the same
-  GCC toolchain as the game code. Verified with Link and Mario on a Samsung
-  tablet; Mac and Pixel hardware confirmation is still pending.
-- Expanded the bundled Android shader coverage and prepare recorded shaders
-  before gameplay to reduce missing effects and first-use compilation.
-- Android compatibility, fullscreen and touch-input improvements since
-  [v0.4.0-beta](https://github.com/999sian/melee-pc/releases/tag/v0.4.0-beta).
+- Fixed the Adventure mode Mushroom Kingdom crash when blocks are hit (#144).
+- Fixed macOS bundles missing transitive `@rpath` libraries, including
+  `libbrotlicommon.1.dylib`, which could prevent the app from launching (#145).
+- Fixed coloured bars at the top left of widescreen fights when off-screen
+  fighter magnifiers are drawn. Verified on Linux/Vulkan in Kongo Jungle and
+  Onett; Windows/Direct3D hardware verification is still pending.
 
 ## Fixes
 
-- Corrected magnifier copy dimensions and preserved big-endian image
-  descriptors across widescreen copies, also used by Pokémon Stadium.
-- Added regression checks for image-copy byte order and compiler selection.
-- Fixed the Android touch test's SDL include paths in CI.
+- Replaced GameCube byte-offset overlays with native field access for
+  Mushroom Kingdom block objects, Multi-Man Melee record initialization, and
+  Super Scope charge resets. This avoids invalid pointers, missing records,
+  and writes into unrelated CPU state on 64-bit hosts (#144).
+- macOS packaging now resolves and bundles transitive `@rpath` dependencies
+  and rejects bundles with missing libraries before publishing (#145).
+- Magnifier capture cameras now copy and clear their whole temporary viewport,
+  preserving fighter proportions and preventing leftover depth from hiding
+  parts of the stage. Added a regression test for original, widescreen and
+  ultrawide framebuffer aspects.
 
 ## Known issues
 
@@ -169,6 +173,7 @@ settings overlay.
 ## Contributors
 
 ### Project Contributors
+- **@forkyfoo** — Mushroom Kingdom, Multi-Man Melee and Super Scope 64-bit fixes (#144), and macOS library bundling fix (#145).
 - **@999sian** — Project Lead, Phase 1 features, multi-core optimizations, file cache, Android & Windows porting, and stability fixes.
 - **@theofficialgman** — Linux aarch64 (ARM64) support, Nod aarch64 prebuilts, 4-core & ARM scheduling optimizations (#44, #47).
 - **@alexscott2718-gif** — Graphics backend selection, command line overrides, and engine logging.
