@@ -12,6 +12,7 @@ EM_JS(void, browser_graphics_progress, (unsigned done, unsigned total), {
 #include "resources.hpp"
 #include "hash.hpp"
 #include "../gx/pipeline.hpp"
+#include "../gx/uber_shader.hpp"
 #include "../io.hpp"
 #ifdef AURORA_ENABLE_RMLUI
 #include "../rmlui/pipeline.hpp"
@@ -422,6 +423,15 @@ static AtomicStatRef createdPipelines{detail::resources().stats.createdPipelines
  * its pipeline not yet built: skipped, or on the inline path built while the
  * frame waited. That number is the stutter a player sees. */
 static std::atomic_uint32_t g_statCreated{0};
+static std::atomic_uint64_t g_hybridGenericDraws{0}, g_hybridSpecializedDraws{0}, g_hybridSkippedDraws{0};
+static std::atomic_uint64_t g_hybridCoveredSelections{0}, g_hybridUnsupportedSelections{0};
+void record_hybrid_draw(bool generic, bool ready) {
+  if (!gx::hybrid_ubershaders_enabled()) return;
+  if (!ready) ++g_hybridSkippedDraws;
+  else if (generic) ++g_hybridGenericDraws;
+  else ++g_hybridSpecializedDraws;
+}
+
 static std::atomic_uint64_t g_statCreateNs{0};
 static std::atomic_uint64_t g_statCreateMaxNs{0};
 static absl::flat_hash_set<PipelineRef> g_demandedPipelines; // guarded by g_pipelineMutex
@@ -462,6 +472,11 @@ static void log_pipeline_stats() {
            created, totalMs, created != 0 ? totalMs / created : 0.0,
            static_cast<double>(g_statCreateMaxNs.load()) / 1e6, demanded, dawn.hits, dawn.hitBytes / 1024,
            dawn.misses, dawn.stores, dawn.storeBytes / 1024);
+  if (gx::hybrid_ubershaders_enabled())
+    Log.info("Hybrid shaders: {} generic draws, {} specialized draws, {} skipped draws; "
+             "{} covered selections, {} unsupported selections", g_hybridGenericDraws.load(),
+             g_hybridSpecializedDraws.load(), g_hybridSkippedDraws.load(),
+             g_hybridCoveredSelections.load(), g_hybridUnsupportedSelections.load());
 }
 
 template <typename PipelineConfig>
@@ -621,7 +636,8 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
         promote_pending_pipeline(runtimeKey, priority);
         notifyWorker = priority != PipelinePriority::Background;
       }
-    } else if (!g_hasPipelineThread && (blocking || g_pipelinesPerFrame < BuildPipelinesPerFrame)) {
+    } else if (!g_hasPipelineThread && priority != PipelinePriority::Background &&
+               (blocking || g_pipelinesPerFrame < BuildPipelinesPerFrame)) {
       auto result = create_timed(cb);
       pipelineCount = result.pipeline_count();
       g_pipelines.try_emplace(runtimeKey, std::move(result));
@@ -1329,6 +1345,9 @@ static size_t load_pipeline_cache_entries(ShaderType type, uint32_t configVersio
       continue;
     }
 
+    if constexpr (std::is_same_v<PipelineConfig, gx::PipelineConfig>) {
+      if (config.shaderConfig.uberTev && !gx::hybrid_ubershaders_enabled()) continue;
+    }
     remember_pipeline_config(type, config, firstFrameUsed, false);
     if constexpr (DeviceBuiltRowsOnly) {
       // Every row left after the load-time prune is marked already.
@@ -1417,6 +1436,20 @@ PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTarge
  * Classic team-intro splash, ten fresh variants in about a second) lost all
  * its tiles; the worker pool makes that window a few frames wide. MELEE_PIPELINE_SYNC
  * restores the blocking behaviour for A/B. */
+void select_hybrid_pipeline(gx::PipelineConfig& config, const RenderTargetLayout& layout) {
+  if (!gx::hybrid_ubershaders_enabled()) return;
+  gx::PipelineConfig family;
+  if (!gx::make_uber_pipeline_config(config, family)) {
+    ++g_hybridUnsupportedSelections;
+    return;
+  }
+  ++g_hybridCoveredSelections;
+  remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
+  const auto specialized = resolve_pipeline(ShaderType::GX, config, layout, PipelinePriority::Background);
+  CompiledPipeline ready;
+  if (!get_pipeline(specialized, ready)) config = family;
+}
+
 PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLayout& layout) {
   remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
   return resolve_pipeline(ShaderType::GX, config, layout,
@@ -1447,7 +1480,17 @@ void rebuild_pipeline_cache() {
       known.push_back(pipeline);
     }
   }
-  std::ranges::sort(known, {}, &KnownPipeline::firstFrameUsed);
+  if (gx::hybrid_ubershaders_enabled()) {
+    std::stable_sort(known.begin(), known.end(), [](const KnownPipeline& a, const KnownPipeline& b) {
+      const auto isUber = [](const KnownPipeline& item) {
+        const auto* config = std::get_if<gx::PipelineConfig>(&item.config);
+        return config && config->shaderConfig.uberTev;
+      };
+      return isUber(a) > isUber(b) || (isUber(a) == isUber(b) && a.firstFrameUsed < b.firstFrameUsed);
+    });
+  } else {
+    std::ranges::sort(known, {}, &KnownPipeline::firstFrameUsed);
+  }
   /* Rare (startup, MSAA or normal-buffer changes) and it re-queues every
    * known config, so it belongs next to the build counts. */
   Log.info("Queueing {} known pipeline configs for render target layout {:016x}", known.size(), scene.key);
@@ -1566,6 +1609,8 @@ void shutdown_pipeline_cache() {
   queuedPipelines = 0;
   createdPipelines = 0;
   g_statCreated = 0;
+  g_hybridGenericDraws = g_hybridSpecializedDraws = g_hybridSkippedDraws = 0;
+  g_hybridCoveredSelections = g_hybridUnsupportedSelections = 0;
   g_statCreateNs = 0;
   g_statCreateMaxNs = 0;
   g_demandedPipelines.clear();

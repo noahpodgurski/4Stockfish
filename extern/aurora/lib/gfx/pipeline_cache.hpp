@@ -42,6 +42,8 @@ PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLa
 PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTargetLayout& layout);
 PipelineRef find_pipeline(const rmlui::PipelineConfig& config);
 
+void record_hybrid_draw(bool generic, bool ready);
+void select_hybrid_pipeline(gx::PipelineConfig& config, const RenderTargetLayout& layout);
 bool get_pipeline(PipelineRef ref, CompiledPipeline& pipeline);
 /* Blocks up to maxWaitMs while queued pipelines compile; returns how many are
  * still pending (queued or mid-compile). */

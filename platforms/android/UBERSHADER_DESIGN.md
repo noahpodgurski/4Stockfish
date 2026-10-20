@@ -1,10 +1,10 @@
 # Hybrid ubershader feasibility
 
-Research date: 20 October 2026. Proposal only; no renderer changes or new APK.
+Research and prototype date: 20 October 2026. An opt-in implementation now exists; see [tablet results](UBERSHADER_TABLET_RESULTS.md).
 
 ## Recommendation
 
-Prototype a small family of generic GX shaders as a fallback for pending specialized
+Keep the small experimental family of generic GX shaders as a fallback for pending specialized
 pipelines. Keep specialized shaders as the normal path. Do not enable exclusive
 ubershaders by default on Android before measuring sustained GPU cost.
 
@@ -87,3 +87,22 @@ include an ubershader and cannot prove it will sustain 60 FPS.
 
 Sources above were read from GitHub raw master on the research date. Dolphin's
 2017 blog URL returned HTTP 403 here; claims above rely on inspected source.
+
+## Implemented experiment
+
+`MELEE_ANDROID_UBERSHADERS=1` enables a bounded family for 1–4 TEV stages with
+ADD/SUB operations, runtime argument/konst selection, bias, scale, clamp, register
+writes and alpha comparison. It reuses existing vertex, texture and fog code.
+Texture routing, vertex format, lighting, fog, swap routing and fixed pipeline
+state remain family variants. Indirect effects, Z texture, post texture matrices
+and emboss/bump texgen retain the specialized path.
+
+Selection happens before shader-info, bindings and uniforms are built. Supported
+specialized requests stay at background priority and compile at existing loading
+boundaries on Android. A ready specialized pipeline wins; otherwise the selected
+generic family gets its matching uniform layout. Previously device-built families
+warm first on the next launch. New families can still compile during gameplay.
+
+The opt-in stays disabled by default. The tablet experiment reduced pipeline count
+only slightly and increased cold compilation time; it does not justify enabling
+this for ordinary users. See the measurement report for coverage and limitations.

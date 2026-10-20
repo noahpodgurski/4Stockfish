@@ -85,6 +85,12 @@ int main() {
     setenv("MELEE_PIPELINE_SYNC", "0", 1);
     initialize_pipeline_cache();
     assert(!g_pipelineSync);
+    reset();
+    find_pipeline_impl(9, create, PipelinePriority::Background);
+    assert(builds == 0 && g_backgroundPipelineQueue.size() == 1);
+    // Re-requesting deferred work must not promote it into the draw queue.
+    find_pipeline_impl(9, create, PipelinePriority::Background);
+    assert(builds == 0 && g_pipelineQueue.empty());
     // A draw must not disappear just because its config was already queued.
     for (bool background : {false, true}) {
         reset();
