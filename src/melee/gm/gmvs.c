@@ -48,6 +48,7 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <stdlib.h>
 #ifdef TARGET_PC
+#include "pc/pc.h"
 #include "pc/sf_search.h"
 #include "pc/slp.h"
 
@@ -55,6 +56,7 @@
  * the match; the advisor scores it as a KO and rewinds. */
 static MatchOutcome gm_SfMatchOutcome(void)
 {
+    // todo: taking last stock (not star KO results in combo not saying "KO")
     MatchOutcome outcome = gm_GetMatchOutcome();
     if (outcome != OUTCOME_NONE && pc_sf_hold_outcome()) {
         return OUTCOME_NONE;
@@ -2022,6 +2024,18 @@ void fn_8016E730(StartMeleeData* arg0)
 
 #ifdef TARGET_PC
     pc_slp_match_start(arg0); /* Slippi's SendGameInfo hooks here too */
+    {
+        /* Hash fields, not struct bytes: rules contain pointers and padding. */
+        u64 key = (14695981039346656037ull ^ arg0->rules.stkind) * 1099511628211ull;
+        int i;
+        for (i = 0; i < GM_MAX_PLAYERS; ++i) {
+            const PlayerInitData* player = &arg0->players[i];
+            u32 value = player->slot_type == Gm_PKind_NA ? 0xFFFFFF :
+                ((u8)player->ckind | ((u32)player->color << 8) | ((u32)player->slot_type << 16));
+            key = (key ^ value) * 1099511628211ull;
+        }
+        pc_gfx_scene(key ? key : 1);
+    }
 #endif
     db_Setup();
     gm_SetDbPauseInputHandlers(gm_AnyControllerPressedStart,

@@ -41,6 +41,21 @@ namespace {
 launcher::Preferences prefs;
 std::filesystem::path config_path;
 
+bool set_fullscreen(SDL_Window* window, bool fullscreen) {
+#ifdef __ANDROID__
+    return pc_android_set_fullscreen(fullscreen);
+#else
+    return SDL_SetWindowFullscreen(window, fullscreen);
+#endif
+}
+const char* display_mode() {
+#ifdef __ANDROID__
+    return prefs.fullscreen ? "Fullscreen" : "System bars shown";
+#else
+    return prefs.fullscreen ? "Fullscreen" : "Windowed";
+#endif
+}
+
 /* Aurora's input router no longer feeds RmlUi itself: the host registers a
  * layer that forwards events to aurora::rmlui::process_input. Without it the
  * launcher and F1 menu get no mouse, touch or keyboard input at all. */
@@ -249,7 +264,7 @@ class Launcher final : public Rml::EventListener {
     // draining: the game starts by itself when the queue empties, and a second
     // press starts it immediately.
     bool shaders_waited = false;
-    uint32_t last_pending = 0;
+    uint32_t last_pending = 0, last_shader_pending = 0;
     // The settings row holding the focus, lit as Melee lights its options.
     Rml::Element* current_row = nullptr;
     // Where the pointer last moved, so only a real move steers the cursor.
@@ -552,7 +567,7 @@ class Launcher final : public Rml::EventListener {
             return;
         quiet = true;
         refresh_online(document);
-        text("display", prefs.fullscreen ? "Fullscreen" : "Windowed");
+        text("display", display_mode());
         const char* override = std::getenv("MELEE_VSYNC");
         const bool effective_vsync = override ? override[0] != '0' : prefs.vsync;
         text("sync",
@@ -739,7 +754,7 @@ class Launcher final : public Rml::EventListener {
         } else if (id == "settings" || id == "back")
             show_settings(id == "settings");
         else if (id == "display" || id == "fullscreen") {
-            if (SDL_SetWindowFullscreen(window, !prefs.fullscreen))
+            if (set_fullscreen(window, !prefs.fullscreen))
                 prefs.fullscreen = !prefs.fullscreen;
             else
                 status(std::string("Could not change display mode: ") + SDL_GetError(), true);
@@ -845,6 +860,13 @@ class Launcher final : public Rml::EventListener {
             prefs.msaa = 1;
             prefs.anisotropy = 1;
             prefs.reverb = false;
+#if defined(__ANDROID__)
+            // Mailbox reduces presentation stalls; simulation still paces to 60 Hz.
+            if (!std::getenv("MELEE_VSYNC")) {
+                prefs.vsync = false;
+                aurora_enable_vsync(false);
+            }
+#endif
             save();
             refresh_settings();
             note("Performance preset: internal resolution 1x, anti-aliasing off, filtering 1x "
@@ -1011,7 +1033,7 @@ public:
             }
         }
     }
-    int run(const std::string& initial_error) {
+    int run(const std::string& initial_error, bool start_requested = false) {
         if (!prefs.disc.empty())
             inspect(prefs.disc);
         if (!initial_error.empty())
@@ -1120,6 +1142,11 @@ public:
                 }
                 controls();
                 element(supported ? "play" : "choose")->Focus();
+                if (start_requested) {
+                    start_requested = false;
+                    if (supported)
+                        action("play");
+                }
             }
             if (verification.valid()) {
                 auto percent = progress.load();
@@ -1221,6 +1248,16 @@ public:
                 }
                 refresh_settings();
             }
+            {
+                const uint32_t pending = pending_pipelines();
+                if (pending != last_shader_pending) {
+                    last_shader_pending = pending;
+                    text("shader-status",
+                        pending ?
+                            "Preparing cached shaders (" + std::to_string(pending) + " left)..." :
+                            "Cached shaders ready. New effects may compile during play.");
+                }
+            }
             if (shaders_waited && result == -2) {
                 const uint32_t pending = pending_pipelines();
                 if (pending == 0) {
@@ -1318,6 +1355,9 @@ extern "C" void pc_launcher_configure(AuroraConfig* config) {
     }
 #endif
     config->startFullscreen = prefs.fullscreen;
+#ifdef __ANDROID__
+    pc_android_set_fullscreen(prefs.fullscreen);
+#endif
     config->msaa = prefs.msaa;
     config->maxTextureAnisotropy = prefs.anisotropy;
     if (!std::getenv("MELEE_VSYNC"))
@@ -1357,6 +1397,7 @@ static std::filesystem::path pc_resources_path() {
 extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window) {
     try {
         std::string error;
+        bool start_requested = false;
         if (command_line_disc) {
             auto info = launcher::inspect_disc(command_line_disc);
             if (info.supported && aurora_dvd_open(command_line_disc)) {
@@ -1366,11 +1407,14 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
                                  std::filesystem::absolute(command_line_disc).string();
                 if (!launcher::save_preferences(config_path, prefs, error))
                     SDL_Log("%s", error.c_str());
-                return 1;
+                // Direct disc launches must use the same shader wait as Play.
+                start_requested = true;
+            } else {
+                aurora_dvd_close();
+                error = info.supported ?
+                            "Could not load the requested disc. Choose another image." :
+                            info.message;
             }
-            aurora_dvd_close();
-            error = info.supported ? "Could not load the requested disc. Choose another image." :
-                                     info.message;
         }
         ensure_rmlui_input_layer();
         auto* context = aurora::rmlui::get_context();
@@ -1389,7 +1433,7 @@ extern "C" int pc_launcher_run(const char* command_line_disc, SDL_Window* window
             return -1;
         }
         Launcher launcher(window, document);
-        return launcher.run(error);
+        return launcher.run(error, start_requested);
     } catch (const std::exception& e) {
         SDL_Log("Launcher failed: %s", e.what());
         return -1;
@@ -1647,7 +1691,7 @@ public:
     void refresh() {
         quiet = true;
         refresh_online(document);
-        label("display", VIGetWindowFullscreen() ? "Fullscreen" : "Windowed");
+        label("display", display_mode());
         label("sync", std::getenv("MELEE_VSYNC") ? "Environment override" :
                       prefs.vsync                ? "On" :
                                                    "Off");
@@ -1703,6 +1747,7 @@ public:
         open = !open;
         binding = -1;
         PADBlockInput(open);
+        pc_android_set_launcher_active(open);
         lbAudioAx_80024030(open ? SFX_CONFIRM : SFX_BACK);
         if (open) {
             refresh();
@@ -1894,8 +1939,8 @@ public:
             return;
         }
         if (id == "display") {
-            const bool fullscreen = !VIGetWindowFullscreen();
-            if (!SDL_SetWindowFullscreen(window, fullscreen)) {
+            const bool fullscreen = !prefs.fullscreen;
+            if (!set_fullscreen(window, fullscreen)) {
                 label("menu-status", SDL_GetError());
                 return;
             }

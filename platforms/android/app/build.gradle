@@ -16,7 +16,7 @@ android {
         applicationId 'dev.melee.game'
         minSdk 26
         targetSdk 34
-        versionCode 13
+        versionCode 14
         versionName System.getenv('MELEE_VERSION') ?: rootProject.file('../../VERSION').text.trim()
 
         ndk {

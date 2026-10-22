@@ -45,6 +45,7 @@
           <p id="disc-info">Melee, USA revision 2 (NTSC-U 1.02).</p>
           <p id="disc-path" class="path">ISO &#183; GCM &#183; CISO &#183; RVZ</p>
           <div id="status">No disc selected.</div>
+          <p id="shader-status">New shaders are cached as you play.</p>
           <p id="disc-note" class="note">Drop a disc image here, or use Choose Disc.</p>
         </div>
       </div>

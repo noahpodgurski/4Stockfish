@@ -129,6 +129,7 @@ const char* pc_textures_get_path(void);
  * shader-pipeline compiles drain, returns how many are still pending. Call
  * from a load screen; 0 only polls. */
 uint32_t pc_gfx_prewarm(uint32_t max_wait_ms);
+void pc_gfx_scene(uint64_t key);
 
 #ifdef __cplusplus
 }

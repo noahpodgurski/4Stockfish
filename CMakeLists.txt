@@ -160,7 +160,7 @@ endif ()
 # ---- Game code (decomp, compiled as C) -------------------------------------
 include(cmake/GameSources.cmake)
 
-add_library(melee_game STATIC ${GAME_SOURCES})
+add_library(melee_game STATIC ${GAME_SOURCES} src/pc/widescreen.c)
 target_include_directories(melee_game PUBLIC extern/aurora/include src src/sdk_include)
 target_compile_definitions(melee_game PUBLIC TARGET_PC=1 MELEE_PC=1)
 target_compile_options(melee_game PRIVATE
@@ -204,7 +204,7 @@ endif ()
 # ---- PC platform layer -----------------------------------------------------
 # Explicit, not a glob: this list links straight into the shipped binary, so a
 # stray .c/.cpp dropped into src/pc must not silently join the build.
-# src/pc/vtxarray.c is deliberately absent - it belongs to melee_game.
+# src/pc/vtxarray.c and widescreen.c access disc structs and belong to melee_game.
 set(PC_SOURCES
         src/pc/audio.c
         src/pc/disc_open.c
@@ -227,7 +227,6 @@ set(PC_SOURCES
         src/pc/thp.c
         src/pc/touch.c
         src/pc/vi.c
-        src/pc/widescreen.c
         src/pc/windows_arm64_softfp.c
         src/pc/android_compat.cpp
         src/pc/file_cache.cpp
@@ -291,9 +290,7 @@ target_include_directories(melee PRIVATE extern/monocypher)
 
 target_compile_options(melee PRIVATE
         ${MELEE_FP_FLAGS}
-        $<$<AND:$<COMPILE_LANGUAGE:C>,$<NOT:$<BOOL:${WIN32}>>,$<NOT:$<BOOL:${ANDROID}>>,$<NOT:$<BOOL:${APPLE}>>>:-fno-pie>
-        $<$<BOOL:${ANDROID}>:-march=armv8-a+crc+crypto>
-        $<$<BOOL:${ANDROID}>:-mtune=cortex-a73>)
+        $<$<AND:$<COMPILE_LANGUAGE:C>,$<NOT:$<BOOL:${WIN32}>>,$<NOT:$<BOOL:${ANDROID}>>,$<NOT:$<BOOL:${APPLE}>>>:-fno-pie>)
 target_link_libraries(melee PRIVATE melee_game aurora::main ${MELEE_CRYPTO_LIBS} ${MELEE_NETWORK_LIBS})
 
 if (IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
@@ -507,6 +504,14 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
 
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         find_package(Python3 REQUIRED COMPONENTS Interpreter)
+        add_executable(input_poll_test EXCLUDE_FROM_ALL tools/test_input_poll.c)
+        target_include_directories(input_poll_test PRIVATE src src/sdk_include)
+        target_compile_definitions(input_poll_test PRIVATE MELEE_PC=1 TARGET_PC=1)
+        target_compile_options(input_poll_test PRIVATE -UNDEBUG)
+        target_link_libraries(input_poll_test PRIVATE ${AURORA_SDL3_TARGET})
+        add_test(NAME input_poll COMMAND input_poll_test)
+        set_tests_properties(input_poll PROPERTIES LABELS melee TIMEOUT 30)
+        add_dependencies(unit_tests input_poll_test)
         foreach(case IN ITEMS net_resume net_handshake net_lan_txt net_reliable)
             if (case STREQUAL "net_reliable")
                 add_executable(${case}_test EXCLUDE_FROM_ALL tools/test_net_chat_transport.c src/pc/net_chat.c)
@@ -576,7 +581,7 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
             set_tests_properties(${case} PROPERTIES LABELS melee TIMEOUT 60)
             add_dependencies(unit_tests ${case}_test)
         endforeach()
-        foreach(case IN ITEMS net_snapshot net_stage net_set_flow net_replay_seed net_scene_timing net_fixture_env net_rank_rules net_match net_magnify net_late_poll snapshot_platforms sim_prefs sis_kerning)
+        foreach(case IN ITEMS net_snapshot net_stage net_set_flow net_replay_seed net_scene_timing net_fixture_env net_rank_rules net_match net_magnify magnify_render gamecube_offsets widescreen net_late_poll snapshot_platforms sim_prefs sis_kerning staffroll_init browser_stubs browser_pipeline inline_pipeline pipeline_scene android_shader_seed android_shader_startup android_ubershader android_signing android_input android_gcc_launcher android_touch android_performance)
             add_test(NAME ${case} COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_${case}.py)
             set_tests_properties(${case} PROPERTIES LABELS melee TIMEOUT 60)
         endforeach()
@@ -620,6 +625,11 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
             add_dependencies(unit_tests ${case}_test)
         endforeach()
         add_dependencies(unit_tests pad_adapter_tests)
+        foreach(case IN ITEMS gx_fifo gx_texture_cache render_worker gfx_recording)
+            add_dependencies(unit_tests ${case}_tests)
+            add_test(NAME renderer_${case} COMMAND ${case}_tests)
+            set_tests_properties(renderer_${case} PROPERTIES LABELS melee TIMEOUT 60)
+        endforeach()
         add_test(NAME pad_adapter COMMAND pad_adapter_tests)
         add_test(NAME f1_bindings COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_SOURCE_DIR}/tools/test_f1_bindings.py)

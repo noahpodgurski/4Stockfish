@@ -99,6 +99,14 @@ public class MeleeActivity extends SDLActivity {
     }
 
     private TouchOverlayView mTouchOverlay;
+    private boolean mFullscreen = true;
+
+    public void setFullscreen(final boolean fullscreen) {
+        runOnUiThread(() -> {
+            mFullscreen = fullscreen;
+            applyImmersiveMode();
+        });
+    }
 
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
@@ -201,6 +209,11 @@ public class MeleeActivity extends SDLActivity {
         }
     }
 
+    @Override
+    public void onSystemUiVisibilityChange(int visibility) {
+        // Insets/IMMERSIVE_STICKY handle swipes; SDL's delayed hide ignores our saved choice.
+    }
+
     private void applyImmersiveMode() {
         if (mBrokenLibraries) {
             return;
@@ -209,18 +222,25 @@ public class MeleeActivity extends SDLActivity {
         if (window == null) {
             return;
         }
+        window.setFlags(mFullscreen ? android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN : 0,
+            android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false);
+            window.setDecorFitsSystemWindows(!mFullscreen);
             android.view.WindowInsetsController controller = window.getInsetsController();
             if (controller != null) {
-                controller.hide(android.view.WindowInsets.Type.systemBars());
+                if (mFullscreen)
+                    controller.hide(android.view.WindowInsets.Type.systemBars());
+                else
+                    controller.show(android.view.WindowInsets.Type.systemBars());
                 controller.setSystemBarsBehavior(
-                    android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                    mFullscreen ? android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                        : android.view.WindowInsetsController.BEHAVIOR_DEFAULT);
             }
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                 android.view.WindowManager.LayoutParams lp = window.getAttributes();
                 lp.layoutInDisplayCutoutMode =
-                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+                    mFullscreen ? android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                        : android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
                 window.setAttributes(lp);
             }
         } else {
@@ -230,7 +250,8 @@ public class MeleeActivity extends SDLActivity {
                 | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-            window.getDecorView().setSystemUiVisibility(flags);
+            window.getDecorView().setSystemUiVisibility(mFullscreen ? flags
+                : android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
     }
 
@@ -259,12 +280,4 @@ public class MeleeActivity extends SDLActivity {
         return new String[0];
     }
 
-    @Override
-    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
-        if (mSurface != null) {
-            handleKeyEvent(mSurface, event.getKeyCode(), event, null);
-            return true;
-        }
-        return super.dispatchKeyEvent(event);
-    }
 }
