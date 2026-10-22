@@ -513,6 +513,9 @@ void sync_reset(void);
 /* ---- net_snapshot.c --------------------------------------------------- */
 
 bool snapshot_take(Snapshot* s, int32_t frame);
+/* The regions a take would copy, as they are now. Returns the count, and
+ * writes them when out != NULL and cap is large enough. */
+int snapshot_regions(Region* out, int cap);
 /* True when the last snapshot_take failed only because a DVD/ARQ transfer
  * was in flight: that frame cannot be predicted, the next one can. */
 bool snapshot_refused_io(void);

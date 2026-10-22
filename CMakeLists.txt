@@ -220,6 +220,9 @@ set(PC_SOURCES
         src/pc/region.c
         src/pc/slp.c
         src/pc/slp_format.c
+        src/pc/savestate.c
+        src/pc/savestate_format.c
+        src/pc/savestate_gfx.cpp
         src/pc/stb_vorbis.c
         src/pc/thp.c
         src/pc/touch.c
@@ -494,6 +497,13 @@ if (NOT ANDROID AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     add_test(NAME thp COMMAND thp_test)
     set_tests_properties(thp PROPERTIES LABELS melee)
     add_dependencies(unit_tests thp_test)
+
+    add_executable(savestate_test EXCLUDE_FROM_ALL tools/test_savestate.c src/pc/savestate_format.c)
+    target_include_directories(savestate_test PRIVATE src)
+    target_compile_options(savestate_test PRIVATE -UNDEBUG)
+    add_test(NAME savestate COMMAND savestate_test)
+    set_tests_properties(savestate PROPERTIES LABELS melee TIMEOUT 30)
+    add_dependencies(unit_tests savestate_test)
 
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         find_package(Python3 REQUIRED COMPONENTS Interpreter)

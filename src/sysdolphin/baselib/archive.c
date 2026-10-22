@@ -77,6 +77,10 @@ void* HSD_ArchiveGetPublicAddress(HSD_Archive* archive, const char* symbols)
 {
     u32 i;
 
+    if (archive == NULL || archive->symbols == NULL || archive->public_info == NULL) {
+        return NULL;
+    }
+
     for (i = 0; i < archive->header.nb_public; i++) {
         int comparison =
             strcmp(archive->symbols + archive->public_info[i].symbol, symbols);

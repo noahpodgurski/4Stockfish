@@ -101,6 +101,11 @@ bool pc_file_cache_require(const char* filename) {
     return false;
 }
 
+/* Dev savestates write a native file; the browser has no saver. */
+void pc_savestate_request_save(void) {}
+void pc_savestate_on_frame(void) {}
+void pc_savestate_on_tick(void) {}
+
 /* Replay recording writes to a native file; the browser has no recorder. */
 void pc_slp_match_start(const struct StartMeleeData* data) {
     (void)data;

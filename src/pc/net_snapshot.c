@@ -597,6 +597,15 @@ static bool s_take_refused_io;   /* the last take was one of them */
 static int32_t s_oom_frame = -1;
 static bool s_oom_fired;
 
+int snapshot_regions(Region* out, int cap) {
+    Region tmp[MAX_REGIONS];
+    int n = regions_now(tmp);
+    if (out != NULL && cap >= n) {
+        memcpy(out, tmp, (size_t)n * sizeof *tmp);
+    }
+    return n;
+}
+
 /* False when the state region is unavailable or the buffer could not be
  * grown; the snapshot is then invalid. */
 bool snapshot_take(Snapshot* s, int32_t frame) {

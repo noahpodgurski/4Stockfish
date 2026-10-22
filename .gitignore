@@ -44,6 +44,9 @@ melee-pc.log
 mods/*
 !mods/.gitkeep
 
+# Dev match savestates (Ctrl+S).
+savestates/
+
 # CTest temporary files
 Testing/
 

@@ -1,5 +1,8 @@
 #include "stockfish.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <melee/ft/fighter.h>
@@ -42,6 +45,9 @@ static const char* sf_kind_name[Ft_Kind_Max] = {
     "Doc",    "Falco",    "Pichu",  "GnW",    "Ganon",  "Roy",    "MasterH",
     "CrazyH", "Boy",      "Girl",   "Giga",   "Sandbag",
 };
+
+#define PAD_LEFT 0.0F
+#define PAD_TOP 10.0F
 
 static u32 sf_last_frame;
 static HSD_Text* sf_text;
@@ -154,18 +160,20 @@ static void sf_draw_panel(HSD_GObj* gobj, intptr_t pass)
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-    sf_quad(18.0F, -10.0F, 470.0F, -(16.0F + (float) sf_panel_rows * 18.0F),
+    sf_quad(PAD_LEFT, -10.0F, 700.0F, -(16.0F + (float) sf_panel_rows * 18.0F),
             28, 170);
     if (sf_bar >= 0) {
-        bar_y = -(18.0F + (float) (sf_panel_rows - 1) * 18.0F);
-        sf_quad(28.0F, bar_y, 428.0F, bar_y - 8.0F, 70, 200);
-        sf_quad(28.0F, bar_y, 28.0F + 400.0F * (float) sf_bar / 1000.0F,
+        bar_y = -(PAD_TOP + (float) (sf_panel_rows - 1) * 18.0F);
+        sf_quad(PAD_LEFT, bar_y, 428.0F, bar_y - 8.0F, 70, 200);
+        sf_quad(PAD_LEFT, bar_y, PAD_LEFT + 400.0F * (float) sf_bar / 1000.0F,
                 bar_y - 8.0F, 230, 230);
     }
-    if (sf_rule_row >= 0) {
-        float y = -(18.0F + 18.0F * (float) sf_rule_row);
+    if (sf_text != NULL) {
+        /* "4stockfish" is text y 0. SIS negates y, and the glyph is 32
+         * units tall at the text scale, so this is the edge under that word. */
+        float y = -(PAD_TOP * 3.0F);
 
-        sf_quad(28.0F, y, 428.0F, y - 1.0F, 255, 255);
+        sf_quad(PAD_LEFT, y, 130.0F, y + 1.0F, 255, 255); // line under "4stockfish"
     }
     HSD_StateInvalidate(-1);
 }
@@ -189,10 +197,36 @@ static Fighter* sf_fighter_at(int slot, int sub)
     return fp;
 }
 
-static void sf_print(int row, const char* fmt, const char* a, int n)
+/* One menu row. Formatted here, so the text object only ever gets "%s".
+ * Returns the row's entry in the text object. */
+static int sf_vprint(int row, const char* fmt, va_list ap)
 {
-    HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F + 18.0F * (float) row, fmt, a,
-                        n);
+    char buf[128];
+
+    vsnprintf(buf, sizeof buf, fmt, ap);
+    return HSD_SisLib_803A6B98(sf_text, PAD_LEFT,
+                               PAD_TOP + 2.0F + 18.0F * (float) row, "%s", buf);
+}
+
+static void sf_print(int row, const char* fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    sf_vprint(row, fmt, ap);
+    va_end(ap);
+}
+
+/* A row in its own color. The rest keep text_color from sf_style_text. */
+static void sf_print_color(int row, GXColor color, const char* fmt, ...)
+{
+    va_list ap;
+    int entry;
+
+    va_start(ap, fmt);
+    entry = sf_vprint(row, fmt, ap);
+    va_end(ap);
+    HSD_SisLib_803A74F0(sf_text, entry, &color);
 }
 
 static int sf_draw_head(const PcSfView* v)
@@ -200,15 +234,15 @@ static int sf_draw_head(const PcSfView* v)
     Fighter* attacker = sf_fighter_at(v->attacker_slot, 0);
     Fighter* victim = sf_fighter_at(v->victim_slot, v->victim_sub);
 
-    HSD_SisLib_803A6B98(sf_text, 28.0F, 0.0F, "4stockfish");
-    if (attacker != NULL && victim != NULL) {
-        HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F, "%s vs %s, %d pct",
-                            sf_name(attacker->kind), sf_name(victim->kind),
-                            (int) victim->dmg.x1830_percent);
-    } else {
-        HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F, "no opponent");
-    }
-    return 1;
+    sf_print_color(-1, (GXColor) {74, 168, 99, 255}, "4Stockfish");
+    // if (attacker != NULL && victim != NULL) {
+    //     HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F, "%s vs %s, %d pct",
+    //                         sf_name(attacker->kind), sf_name(victim->kind),
+    //                         (int) victim->dmg.x1830_percent);
+    // } else {
+    //     HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F, "no opponent");
+    // }
+    return 0;
 }
 
 static void sf_draw_search(const PcSfView* v)
@@ -216,17 +250,15 @@ static void sf_draw_search(const PcSfView* v)
     int row = sf_draw_head(v);
 
     if (!v->have_best) {
-        sf_print(row++, "%snothing yet", "", 0);
+        sf_print(row++, "nothing yet");
     } else if (v->best_ko) {
-        sf_print(row++, "%soptimal path: KO", "", 0);
+        sf_print(row++, "optimal path: KO");
     } else {
-        sf_print(row++, "%soptimal path: +%d%%", "", v->best_dmg);
+        sf_print(row++, "optimal path: +%d%%", v->best_dmg);
     }
-    row++;
-    HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F + 18.0F * (float) row + 5.0F,
-        "searching %d frames, max combo gap %d", v->horizon, v->endlag);
-    HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F + 18.0F * (float) (row + 1) + 5.0F,
-        "%ds", v->elapsed_time);
+    sf_print(row++, "searching %d frames, max combo gap %d", v->horizon,
+             v->endlag);
+    sf_print(row++, "%ds", v->elapsed_time);
     sf_bar = v->progress;
     sf_panel_rows = row + 2;
 }
@@ -234,19 +266,33 @@ static void sf_draw_search(const PcSfView* v)
 /* Choice rows drawn at once, the above and below counts included. The
  * text object crashes once the menu runs past about ten rows, header
  * included, so this stays under that. */
-#define SF_MENU_CHOICES 6
+#define SF_MENU_CHOICES 5
 
 static void sf_draw_line(int row, const PcSfView* v, int i)
 {
-    const char* mark = i == v->cursor ? "PICK" : "opt";
+    // const char* mark = i == v->cursor ? "---" : "";
+    // const char* endMark = i == v->cursor ? "---" : "";
+    const char* mark = "";
+    const char* endMark = "";
 
     if (v->lines[i].ko) {
-        HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F + 18.0F * row, "%s %d %s  KO",
-                            mark, i + 1, v->lines[i].text);
+        if (i == v->cursor) {
+            sf_print_color(row, (GXColor) {86, 100, 209, 255}, "%s %d: %d frames %s KO %s", mark, i + 1,
+                 v->lines[i].frames, v->lines[i].text, endMark);
+        } else {
+            sf_print(row, "%s %d: %d frames %s KO %s", mark, i + 1,
+                     v->lines[i].frames, v->lines[i].text, endMark);
+        }
     } else {
-        HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F + 18.0F * row,
-                            "%s %d %s  plus %d", mark, i + 1, v->lines[i].text,
-                            v->lines[i].dmg);
+        if (i == v->cursor) {
+            sf_print_color(row, (GXColor) {86, 100, 209, 255}, "%s %d: %d frames %s plus %d %s", mark, i + 1,
+                 v->lines[i].frames, v->lines[i].text, v->lines[i].dmg,
+                 endMark);
+        } else {
+            sf_print(row, "%s %d: %d frames %s plus %d %s", mark, i + 1,
+                     v->lines[i].frames, v->lines[i].text, v->lines[i].dmg,
+                     endMark);
+        }
     }
 }
 
@@ -254,37 +300,47 @@ static void sf_draw_menu(const PcSfView* v)
 {
     int row = sf_draw_head(v);
     int slots, first, count, above, below, i;
+    int vis[PC_SF_LINES];
+    int nvis = 0;
+    int cur = 0;
 
-    // sf_print(row++, "%sframes %d, left right", "", v->horizon);
-    // sf_print(row++, "%sendlag %d, L R", "", v->endlag);
-    HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F + 18.0F * (float) row++,
-        "frames %d, left right, endlag %d, L R", v->horizon,
-    v->endlag);
-    row++;
+    for (i = 0; i < v->nlines; i++) {
+        if (pc_sf_line_shown(i)) {
+            if (i == v->cursor) {
+                cur = nvis;
+            }
+            vis[nvis++] = i;
+        }
+    }
+    sf_print(row++, "frames %d, DPAD left right, endlag %d, L R", v->horizon,
+             v->endlag);
+    sf_print(row++, "filter: %s, stick left right",
+             pc_sf_move_label(v->filter - 1));
+    sf_print(row++, "sort: %s, X", v->sort_length ? "length" : "damage");
     sf_rule_row = row;
     slots = SF_MENU_CHOICES;
     if (v->note != NULL && slots > 2) {
         slots -= 1;
     }
-    if (v->nlines <= slots) {
+    if (nvis <= slots) {
         first = 0;
-        count = v->nlines;
+        count = nvis;
     } else {
         count = slots - 2;
         if (count < 1) {
             count = 1;
         }
-        first = v->cursor - count / 2;
+        first = cur - count / 2;
         if (first < 0) {
             first = 0;
         }
-        if (first + count > v->nlines) {
-            first = v->nlines - count;
+        if (first + count > nvis) {
+            first = nvis - count;
         }
         if (first == 0 && count < slots - 1) {
             count++;
         }
-        if (first > 0 && first + count >= v->nlines && count < slots - 1) {
+        if (first > 0 && first + count >= nvis && count < slots - 1) {
             int room = (slots - 1) - count;
 
             if (room > first) {
@@ -295,18 +351,21 @@ static void sf_draw_menu(const PcSfView* v)
         }
     }
     above = first > 0;
-    below = first + count < v->nlines;
+    below = first + count < nvis;
     if (above) {
-        sf_print(row++, "%s%d ...", "", first);
+        sf_print(row++, "%d ...", first);
     }
     for (i = 0; i < count; i++, row++) {
-        sf_draw_line(row, v, first + i);
+        sf_draw_line(row, v, vis[first + i]);
     }
     if (below) {
-        sf_print(row++, "%s%d ...", "", v->nlines - (first + count));
+        sf_print(row++, "%d ...", nvis - (first + count));
+    }
+    if (nvis == 0 && v->nlines > 0) {
+        sf_print(row++, "no line has that move");
     }
     if (v->note != NULL) {
-        sf_print(row++, "%s", v->note, 0);
+        sf_print(row++, "%s", v->note);
     }
     sf_panel_rows = row + 1;
 }
@@ -315,21 +374,21 @@ static void sf_draw_playing(const PcSfView* v)
 {
     sf_panel = 0;
     if (v->play_index >= 0 && v->play_index < v->nlines) {
-        sf_print(0, "playing %s", v->lines[v->play_index].text, 0);
+        sf_print(0, "playing %s", v->lines[v->play_index].text);
     } else {
-        sf_print(0, "%splaying", "", 0);
+        sf_print(0, "playing");
     }
 }
 
 static void sf_draw_result(const PcSfView* v)
 {
     if (v->result_ko) {
-        sf_print(0, "%sresult KO", "", 0);
+        sf_print(0, "result KO");
     } else {
-        sf_print(0, "%sresult plus %d", "", v->result_dmg);
+        sf_print(0, "result plus %d", v->result_dmg);
     }
     if (v->play_index >= 0 && v->play_index < v->nlines) {
-        sf_print(1, "%s", v->lines[v->play_index].text, 0);
+        sf_print(1, "%s", v->lines[v->play_index].text);
     }
     sf_panel_rows = 2;
 }
@@ -372,12 +431,14 @@ static void sf_menu_input(const PcSfView* v)
 {
     int port = v->attacker_slot >= 0 ? Player_GetPadPort(v->attacker_slot)
                                       : -1;
+    float sx;
     float sy;
     u32 trigger;
 
     if (port < 0 || port > 3) {
         return;
     }
+    sx = HSD_PadCopyStatus[port].nml_stickX;
     sy = HSD_PadCopyStatus[port].nml_stickY;
     trigger = HSD_PadCopyStatus[port].trigger;
     if (trigger & HSD_PAD_DPADLEFT) {
@@ -396,14 +457,25 @@ static void sf_menu_input(const PcSfView* v)
         pc_sf_endlag_step(1);
         return;
     }
-    if (sy > 0.5F || sy < -0.5F) {
+    if (trigger & HSD_PAD_X) {
+        pc_sf_sort_toggle();
+        return;
+    }
+    if (sx > 0.5F || sx < -0.5F) {
+        if (sf_stick_lock == 0) {
+            pc_sf_filter_step(sx > 0.0F ? 1 : -1);
+            sf_stick_lock = 10;
+        } else {
+            sf_stick_lock -= 1;
+        }
+    } else if (sy > 0.5F || sy < -0.5F) {
         if (sf_stick_lock == 0) {
             pc_sf_cursor_step(sy > 0.0F ? -1 : 1);
             sf_stick_lock = 10;
         } else {
             sf_stick_lock -= 1;
         }
-    } else if (sy > -0.3F && sy < 0.3F) {
+    } else if (sx > -0.3F && sx < 0.3F && sy > -0.3F && sy < 0.3F) {
         sf_stick_lock = 0;
     }
     if (trigger & HSD_PAD_A) {

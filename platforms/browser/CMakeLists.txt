@@ -27,7 +27,7 @@ target_compile_options(aurora_gx PRIVATE ${MELEE_FP_FLAGS})
 target_compile_options(aurora_gd PRIVATE ${MELEE_FP_FLAGS})
 # The upstream PC layer, minus what the browser replaces: main.c and
 # disc_open.c (platforms/browser/main.c, dvd.c), and the launcher, updater,
-# GameCube adapter and file cache (pc_stubs.c). Keep in step with PC_SOURCES in
+# GameCube adapter, file cache and dev savestates (pc_stubs.c). Keep in step with PC_SOURCES in
 # the top-level CMakeLists.txt.
 set(BROWSER_PC_SOURCES
  audio.c discfont.c gx.c input_poll.c keyboard.c misc.c os.c region.c stb_vorbis.c thp.c touch.c vi.c widescreen.c

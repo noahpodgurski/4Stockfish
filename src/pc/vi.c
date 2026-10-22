@@ -11,6 +11,7 @@
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
 
+#include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_timer.h>
 
 #ifdef __EMSCRIPTEN__
@@ -22,6 +23,7 @@ extern void browser_yield(void);
 #include <string.h>
 
 #include "pc/pc.h"
+#include "pc/savestate.h"
 #include "pc/launcher.h"
 #include "pc/touch.h"
 #include "pc/widescreen.h"
@@ -202,6 +204,10 @@ void pc_frame_boundary(void) {
             if (event->sdl.type == SDL_EVENT_KEY_DOWN &&
                 event->sdl.key.scancode == SDL_SCANCODE_F1 && !event->sdl.key.repeat)
                 pc_menu_toggle();
+            if (event->sdl.type == SDL_EVENT_KEY_DOWN &&
+                event->sdl.key.scancode == SDL_SCANCODE_S &&
+                (event->sdl.key.mod & SDL_KMOD_CTRL) && !event->sdl.key.repeat)
+                pc_savestate_request_save();
             pc_menu_event(&event->sdl);
             pc_keyboard_event(&event->sdl);
             pc_touch_event(&event->sdl);
@@ -213,6 +219,7 @@ void pc_frame_boundary(void) {
      * frame instead of clearing the EFB to black underneath the menu. */
     aurora_preserve_frame_buffer(pc_menu_is_open());
     pc_keyboard_apply();
+    pc_savestate_on_frame();
     /* MELEE_EXIT_AFTER_FRAMES=<n>: bound a scripted run without needing
      * synthetic input, which is unreliable under Xwayland. Setting
      * pc_exit_requested instead of exiting here on purpose: the window-close

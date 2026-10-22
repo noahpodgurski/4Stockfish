@@ -2,6 +2,7 @@
 #ifdef TARGET_PC
 #include "pc/net.h"
 #include "pc/pc.h"
+#include "pc/savestate.h"
 #include "pc/sf_search.h"
 #include "pc/slp.h"
 #include "pc/widescreen.h"
@@ -286,6 +287,9 @@ static inline u64 maybe_gm_801A48A4(u8 i)
 /// One simulation tick. Returns true when the scene asked to end.
 static bool gm_RunSimTick(void (*on_frame)(void), struct gm_80479D58_t* temp_r25)
 {
+#ifdef TARGET_PC
+    pc_savestate_on_tick();
+#endif
     lb_800198E0();
     if (DbLevel >= DbLKind_DebugRom) {
         gm_801A4970(&temp_r25->unk_10.db_input);

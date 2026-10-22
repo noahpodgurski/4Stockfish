@@ -32,7 +32,7 @@ enum {
     PC_SF_YIELD,  /* the advisor ran; end this batch and present */
 };
 
-#define PC_SF_LINES 48 /* every kept candidate can be listed */
+#define PC_SF_LINES 64 /* every kept candidate can be listed */
 #define PC_SF_LINE_TEXT 72
 
 typedef struct PcSfView {
@@ -50,8 +50,12 @@ typedef struct PcSfView {
     struct {
         char text[PC_SF_LINE_TEXT];
         int dmg;
+        int frames; /* input frames in this line */
         bool ko;
+        unsigned moves; /* bit per pc_sf_move_label index that hit in this line */
     } lines[PC_SF_LINES];
+    int filter; /* 0 for none, else 1 + the move bit a listed line must have */
+    bool sort_length; /* longest line first, instead of KO then damage */
     int play_index;
     int result_dmg;
     bool result_ko;
@@ -77,7 +81,11 @@ void pc_sf_request(int pause_bit); /* the match was just paused */
 void pc_sf_end(void);              /* the game unpaused itself from the menu */
 void pc_sf_horizon_step(int dir);  /* -1 / +1: 15 frames shorter / longer, then search again */
 void pc_sf_endlag_step(int dir);   /* -1 / +1: 15 frames less / more endlag, then search again */
-void pc_sf_cursor_step(int dir);
+void pc_sf_cursor_step(int dir); /* skips lines the filter hides */
+void pc_sf_filter_step(int dir);  /* -1 / +1: previous / next move present in the list, or none */
+bool pc_sf_line_shown(int i);     /* line i passes the filter */
+const char* pc_sf_move_label(int bit);
+void pc_sf_sort_toggle(void);     /* damage order <-> length order */
 void pc_sf_play(void); /* replay the line under the cursor */
 const PcSfView* pc_sf_view(void);
 
