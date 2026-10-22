@@ -6,7 +6,7 @@
 <body class="theme-choose">
   <div id="frame">
     <div id="titlebar">
-      <span id="title">Melee PC</span><span id="title-sub">/ Settings</span>
+      <span id="title">4Stockfish</span><span id="title-sub">/ Settings</span>
       <span class="stripes"><span></span><span></span><span></span><span></span><span></span></span>
       <span id="edition"><span id="app-version">v0.1.8-beta</span> &#183; NTSC-U 1.02</span>
     </div>
@@ -17,7 +17,7 @@
         <button id="verify" class="plate" data-desc="Check the disc image against the original NTSC-U 1.02 disc."><span id="verify-label">Verify Disc</span></button>
         <button id="settings" class="plate" data-desc="Graphics, audio, gameplay, controls, online play and the launcher itself."><span>Settings</span></button>
         <button id="discord" class="plate" data-desc="Join the community Discord server in your browser."><span>Discord</span></button>
-        <button id="quit" class="plate" data-desc="Close Melee PC."><span>Quit</span></button>
+        <button id="quit" class="plate" data-desc="Close 4Stockfish."><span>Quit</span></button>
       </div>
       <div id="side">
         <div id="update-card" style="display: none;">
@@ -25,7 +25,7 @@
             <span class="update-badge">NEW</span>
             <span id="update-tag" class="update-tag">v0.1.8-beta</span>
           </div>
-          <div id="update-title" class="update-title">Melee PC Update</div>
+          <div id="update-title" class="update-title">4Stockfish Update</div>
           <p id="update-desc" class="update-desc">A newer version is available.</p>
           <div id="update-progress-row" class="update-progress-row" style="display: none;">
             <div class="progress-bar-bg">

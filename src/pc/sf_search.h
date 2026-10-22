@@ -9,7 +9,7 @@
  *
  * All advisor state lives in src/pc/sf_search.c, outside every snapshot, so
  * a restore never rewinds it. The menu itself (SIS text, pad reading) is
- * src/melee/sf/stockfish.c. Game thread only. */
+ * src/melee/sf/4stockfish.c. Game thread only. */
 
 #include <stdbool.h>
 
@@ -38,9 +38,9 @@ enum {
 typedef struct PcSfView {
     int state;
     int horizon;
-    int endlag; /* frames out of hitstun a line may spend before it stops */
-    int depth;    /* frames searched so far */
-    int progress; /* 0..1000 over the whole search, verification included */
+    int endlag;       /* frames out of hitstun a line may spend before it stops */
+    int depth;        /* frames searched so far */
+    int progress;     /* 0..1000 over the whole search, verification included */
     int elapsed_time; /* seconds since this search started */
     bool have_best;
     int best_dmg; /* best simulated so far, not yet verified */
@@ -51,10 +51,11 @@ typedef struct PcSfView {
         char text[PC_SF_LINE_TEXT];
         int dmg;
         int frames; /* input frames in this line */
+        int advantage; /* hitstun_remaining - actionable_frames at combo end */
         bool ko;
         unsigned moves; /* bit per pc_sf_move_label index that hit in this line */
     } lines[PC_SF_LINES];
-    int filter; /* 0 for none, else 1 + the move bit a listed line must have */
+    int filter;       /* 0 for none, else 1 + the move bit a listed line must have */
     bool sort_length; /* longest line first, instead of KO then damage */
     int play_index;
     int result_dmg;
@@ -81,12 +82,12 @@ void pc_sf_request(int pause_bit); /* the match was just paused */
 void pc_sf_end(void);              /* the game unpaused itself from the menu */
 void pc_sf_horizon_step(int dir);  /* -1 / +1: 15 frames shorter / longer, then search again */
 void pc_sf_endlag_step(int dir);   /* -1 / +1: 15 frames less / more endlag, then search again */
-void pc_sf_cursor_step(int dir); /* skips lines the filter hides */
-void pc_sf_filter_step(int dir);  /* -1 / +1: previous / next move present in the list, or none */
-bool pc_sf_line_shown(int i);     /* line i passes the filter */
+void pc_sf_cursor_step(int dir);   /* skips lines the filter hides */
+void pc_sf_filter_step(int dir);   /* -1 / +1: previous / next move present in the list, or none */
+bool pc_sf_line_shown(int i);      /* line i passes the filter */
 const char* pc_sf_move_label(int bit);
-void pc_sf_sort_toggle(void);     /* damage order <-> length order */
-void pc_sf_play(void); /* replay the line under the cursor */
+void pc_sf_sort_toggle(void); /* damage order <-> length order */
+void pc_sf_play(void);        /* replay the line under the cursor */
 const PcSfView* pc_sf_view(void);
 
 #ifdef __cplusplus

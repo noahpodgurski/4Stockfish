@@ -1191,7 +1191,7 @@ public:
                         text("update-title", ustate.latest_release.name.empty() ?
                                                  ustate.latest_release.tag_name :
                                                  ustate.latest_release.name);
-                        std::string desc = "A newer version of Melee PC is available (" +
+                        std::string desc = "A newer version of 4Stockfish is available (" +
                                            ustate.latest_release.tag_name + ").";
 #if defined(_WIN32)
                         desc += " Download and extract the Windows ZIP from the release page.";

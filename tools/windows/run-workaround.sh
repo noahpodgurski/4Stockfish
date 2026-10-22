@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Workaround launcher script for Melee PC
+# Workaround launcher script for 4Stockfish
 # Forces SDL3 to use DirectSound (or dummy) to avoid WASAPI audio startup crash
 set -euo pipefail
 

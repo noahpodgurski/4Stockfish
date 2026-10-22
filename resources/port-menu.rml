@@ -1,13 +1,13 @@
 <rml>
   <head>
-    <title>Melee PC / Settings</title>
+    <title>4Stockfish / Settings</title>
     <link type="text/rcss" href="launcher.rcss" />
     <link type="text/rcss" href="port-menu.rcss" />
   </head>
   <body class="in-settings theme-settings port-menu">
     <div id="frame">
       <div id="titlebar">
-        <span id="title">Melee PC</span>
+        <span id="title">4Stockfish</span>
         <span id="title-sub">/ Settings</span>
         <span class="stripes">
           <span />
@@ -17,7 +17,7 @@
           <span />
         </span>
         <span id="edition">
-          <span id="menu-version">Melee PC</span>
+          <span id="menu-version">4Stockfish</span>
           <span> · F1 to close</span>
         </span>
       </div>

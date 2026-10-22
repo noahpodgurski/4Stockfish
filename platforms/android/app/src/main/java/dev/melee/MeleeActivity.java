@@ -59,7 +59,7 @@ public class MeleeActivity extends SDLActivity {
                     throw new java.io.IOException("The selected document could not be opened.");
                 }
                 String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-                String header = "Melee PC " + version + "\nDevice: " + android.os.Build.MANUFACTURER +
+                String header = "4Stockfish " + version + "\nDevice: " + android.os.Build.MANUFACTURER +
                     " " + android.os.Build.MODEL + "\nAndroid: " + android.os.Build.VERSION.RELEASE +
                     " (API " + android.os.Build.VERSION.SDK_INT + ")\nABI: " +
                     java.util.Arrays.toString(android.os.Build.SUPPORTED_ABIS) +

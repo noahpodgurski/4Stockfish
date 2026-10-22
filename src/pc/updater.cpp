@@ -649,10 +649,10 @@ void check_for_updates_async(bool include_prereleases) {
 
 #if defined(_WIN32)
         ok = http_get_string_winhttp(
-            L"api.github.com", L"/repos/999sian/melee-pc/releases", body, error);
+            L"api.github.com", L"/repos/noahpodgurski/4stockfish/releases", body, error);
 #elif defined(MELEE_USE_CURL)
         ok = http_get_string_curl(
-            "https://api.github.com/repos/999sian/melee-pc/releases", body, error);
+            "https://api.github.com/repos/noahpodgurski/4stockfish/releases", body, error);
 #else
         error = "Networking unsupported on this platform";
 #endif

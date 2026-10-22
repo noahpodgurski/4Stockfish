@@ -63,6 +63,7 @@
 #include <melee/ft/fighter.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
+#include <melee/ft/kinds/ftFox/forward.h>
 #include <melee/lb/forward.h>
 #include <melee/gm/gmscene.h>
 #include <melee/gm/gmvs.h>
@@ -70,7 +71,7 @@
 #include <melee/lb/lb_0195.h>
 #include <melee/lb/lbaudio_ax.h>
 #include <melee/pl/player.h>
-#include <melee/sf/stockfish.h>
+#include <melee/sf/4stockfish.h>
 #pragma GCC diagnostic pop
 #include <xxhash.h>
 
@@ -185,6 +186,10 @@ enum {
     SF_MAC_WDR,
     SF_MAC_LASER,
     SF_MAC_SHINE,
+    /* Shine, hold through startup/hit, jump-cancel on Loop, then wavedash.
+     * Fox/Falco's usual exit: one script so the JC is not left to chance. */
+    SF_MAC_SHINE_WDL,
+    SF_MAC_SHINE_WDR,
     /* Short hop, then an aerial on the first airborne frame. A playout of
      * a bare hop presses nothing, so it never shows what the hop is for. */
     SF_MAC_SH_N,
@@ -247,6 +252,10 @@ typedef struct SfLine {
     bool attack;   /* A, B, or Z move whose hitboxes are not finished */
     bool iasa;     /* allow_interrupt was set, so this frame can be searched */
     bool connected; /* this attack has already dealt damage */
+    /* At the end of the combo: consecutive Wait frames on the attacker, and
+     * hitstun frames still left on the victim (mv.co.damage.x0). */
+    uint8_t actionable_frames;
+    uint8_t hitstun_remaining;
     uint8_t gap;    /* frames the victim has been out of hitstun */
     uint8_t commit; /* frames left to keep this jump past the squat */
     uint8_t lcancel; /* frames since L during this aerial, 0 if not armed */
@@ -853,6 +862,31 @@ static bool victim_in_hitstun(void) {
     return v != NULL && (v->dmg.x195c_hitlag_frames > 0.0f || v->x221C_b6);
 }
 
+/* Frame advantage after this tick: how long the attacker has been in Wait,
+ * and how much hitstun the victim still has. `prev_actionable` is the
+ * consecutive Wait count from the parent frame. */
+static void fill_end_metrics(SfLine* l, uint8_t prev_actionable) {
+    const Fighter* a = fighter_at(s_attacker, 0, NULL);
+    const Fighter* v = fighter_at(s_victim, s_victim_sub, NULL);
+    if (a != NULL && a->motion_id == ftCo_MS_Wait) {
+        l->actionable_frames = prev_actionable < 255 ? (uint8_t)(prev_actionable + 1) : 255;
+    } else {
+        l->actionable_frames = 0;
+    }
+    if (v != NULL && (v->dmg.x195c_hitlag_frames > 0.0f || v->x221C_b6)) {
+        int left = (int)v->mv.co.damage.x0;
+        if (left < 0) {
+            left = 0;
+        }
+        if (left > 255) {
+            left = 255;
+        }
+        l->hitstun_remaining = (uint8_t)left;
+    } else {
+        l->hitstun_remaining = 0;
+    }
+}
+
 /* What decides the future of a state, cheaply: every fighter's motion,
  * physics, damage, hitlag, the input buffer (so a press that has not moved
  * the animation yet is still frame N after that press, not after no
@@ -1089,6 +1123,7 @@ static int hit_dist(const SfLine* a, const SfLine* b) {
 }
 
 static bool attack_motion(int motion);
+static bool grabbing(int motion);
 static int attack_family(int motion);
 
 static int dash_motion(int motion) {
@@ -1124,9 +1159,6 @@ static int starter_motion(int motion) {
         return 0;
     }
     if (attack_motion(motion)) {
-        return 1;
-    }
-    if (motion >= ftCo_MS_ThrowF && motion <= ftCo_MS_ThrowLw) {
         return 1;
     }
     return motion >= ftCo_MS_Count;
@@ -1317,6 +1349,7 @@ static void hof_add(const SfLine* parent, int combo, const SfResult* r, int moti
     l.swings = (uint8_t)swing_count(parent, combo, r->motion);
     note_opening(&l, combo, motion);
     note_connect(&l);
+    fill_end_metrics(&l, parent->actionable_frames);
     for (int i = 0; i < s_hof_n; i++) {
         if (line_same(&s_hof[i], &l)) {
             return;
@@ -1528,6 +1561,11 @@ static void search_begin(void) {
         s_path[0].line.jumps = att->x1968_jumpsUsed;
         s_path[0].line.max_jumps = (uint8_t)att->co_attrs.max_jumps;
         seed_opening(&s_path[0].line);
+        /* attack_motion is only known after the first edge without this;
+         * a search that starts on ThrowHi must stay locked like a child. */
+        if (attack_motion(s_path[0].line.motion)) {
+            s_path[0].line.attack = true;
+        }
     }
     s_root_toward = (uint8_t)toward_input();
     s_mac_script = false;
@@ -1585,10 +1623,40 @@ static bool move_over(int motion) {
            landing_air(motion) || air_motion(motion);
 }
 
-/* A common attack or a grab. A buffered press can start one of these on a
- * frame whose input is only the stick, and that frame is still the attack. */
+/* ThrowF..ThrowLw. IASA is empty on the common throws, so the search must
+ * hold through the whole animation — including after the release hit — or
+ * every frame opens the ground list and burns the budget before a hop. */
+static bool throwing(int motion) {
+    return motion >= ftCo_MS_ThrowF && motion <= ftCo_MS_ThrowLw;
+}
+
+/* Fox/Falco reflector Loop is jump-cancellable (ftCo_Jump_CheckInput) even
+ * on whiff; Hit and Start are not. Falco shares ftFx_MS_*. */
+static bool shine_jump_cancel(int motion) {
+    return motion == ftFx_MS_SpecialLwLoop || motion == ftFx_MS_SpecialAirLwLoop;
+}
+
+static bool shine_hit(int motion) {
+    return motion == ftFx_MS_SpecialLwHit || motion == ftFx_MS_SpecialAirLwHit;
+}
+
+static bool shine_motion(int motion) {
+    return motion == ftFx_MS_SpecialLwStart || motion == ftFx_MS_SpecialAirLwStart ||
+           motion == ftFx_MS_SpecialLwLoop || motion == ftFx_MS_SpecialAirLwLoop ||
+           motion == ftFx_MS_SpecialLwHit || motion == ftFx_MS_SpecialAirLwHit ||
+           motion == ftFx_MS_SpecialLwEnd || motion == ftFx_MS_SpecialAirLwEnd ||
+           motion == ftFx_MS_SpecialLwTurn || motion == ftFx_MS_SpecialAirLwTurn;
+}
+
+/* A common attack, grab, or throw. A buffered press can start one of these
+ * on a frame whose input is only the stick, and that frame is still the
+ * attack. Throws are included so CatchWait → ThrowHi keeps CONT_ATTACK;
+ * without that the throw ran with attack cleared and looked like Wait. */
 static bool attack_motion(int motion) {
     if (motion >= ftCo_MS_Attack11 && motion <= ftCo_MS_AttackAirLw) {
+        return true;
+    }
+    if (throwing(motion)) {
         return true;
     }
     return motion == ftCo_MS_Catch || motion == ftCo_MS_CatchPull || motion == ftCo_MS_CatchDash ||
@@ -1611,6 +1679,15 @@ static int continuation(const SfLine* par, int combo, const SfResult* r, int mot
     }
     if (par->attack && same) {
         /* Hitboxes ending is not the end of the move. IASA can be later. */
+        *seen = par->hit_seen || live;
+        return CONT_ATTACK;
+    }
+    /* Shine (and other character specials) change motion_id between startup
+     * and loop while the move is still live. attack_motion only names the
+     * common set, so without this the Start→Loop edge cleared attack and
+     * jump-cancel left the cancel list — Fox still found some JC lines via
+     * ground hop macros; Falco's pillar needs the cancel jump on that edge. */
+    if (par->attack && !move_over(motion) && !attack_motion(motion) && !grabbing(motion)) {
         *seen = par->hit_seen || live;
         return CONT_ATTACK;
     }
@@ -1752,7 +1829,12 @@ static int edge_line(const SfLine* par, int combo, const SfResult* r, const SfBo
     child.hit_seen = seen;
     child.attack = cont == CONT_ATTACK;
     child.iasa = body->iasa;
-    child.connected = same && par->attack ? (par->connected || dealt) : dealt;
+    /* Shine Start→Loop and Hit→Loop change motion_id without a new hit.
+     * Clearing connected on that edge locked the Loop (no allow_interrupt)
+     * and jump-cancel was never tried — Falco's pillar needs that press. */
+    child.connected = (cont == CONT_ATTACK && par->attack) || (same && par->attack)
+                          ? (par->connected || dealt)
+                          : dealt;
     child.gap = (uint8_t)gap;
     child.commit = commit;
     child.lcancel = lcancel;
@@ -1781,6 +1863,7 @@ static int edge_line(const SfLine* par, int combo, const SfResult* r, const SfBo
             child.dj = true;
         }
     }
+    fill_end_metrics(&child, par->actionable_frames);
     if (r->dmg > par->dmg) {
         note_connect(&child);
     }
@@ -1880,6 +1963,8 @@ static SfAllow state_actions(int motion, bool attack) {
         SF_IN_HALF_LEFT, SF_IN_HALF_RIGHT, SF_IN_HALF_UP, SF_IN_HALF_DOWN,
         SF_IN_UP_LEFT, SF_IN_UP_RIGHT, SF_IN_DOWN_LEFT, SF_IN_DOWN_RIGHT,
         SF_IN_SHIELD, SF_IN_GRAB, SF_IN_A,
+        /* Dash grabs from wait/walk: Z with a side stick. */
+        SF_IN_LEFT + SF_IN_GRAB, SF_IN_RIGHT + SF_IN_GRAB,
         /* Tilts. A diagonal stick still resolves to one of these. */
         SF_IN_HALF_LEFT + SF_IN_A, SF_IN_HALF_RIGHT + SF_IN_A,
         SF_IN_HALF_UP + SF_IN_A, SF_IN_HALF_DOWN + SF_IN_A,
@@ -1921,10 +2006,11 @@ static SfAllow state_actions(int motion, bool attack) {
         SF_IN_WD_L, SF_IN_WD_R, SF_IN_SHIELD, SF_IN_DOWN + SF_IN_SHIELD,
         SF_IN_LEFT + SF_IN_SHIELD, SF_IN_RIGHT + SF_IN_SHIELD, SF_IN_UP + SF_IN_SHIELD,
     };
+    /* Throws are a stick smash (lstick crosses the threshold this frame).
+     * A is pummel. Directions must stay available every CatchWait frame. */
     static const int throws[] = {
-        SF_IN_NONE,
         SF_IN_A,
-        SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN, 
+        SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN,
     };
     /* A move that hit or reached IASA. Jump is the shine's only way out
      * before it ends, so it has to be here. */
@@ -2063,6 +2149,30 @@ static int macro_input(const SfLine* par) {
         return par->macro_step == 0 ? SF_IN_B : SF_IN_NONE;
     case SF_MAC_SHINE:
         return par->macro_step == 0 ? (SF_IN_DOWN + SF_IN_B) : SF_IN_NONE;
+    case SF_MAC_SHINE_WDL:
+    case SF_MAC_SHINE_WDR: {
+        int wd = par->macro == SF_MAC_SHINE_WDL ? SF_IN_WD_L : SF_IN_WD_R;
+        if (par->macro_phase == 0) {
+            if (shine_jump_cancel(par->motion)) {
+                return SF_IN_JUMP;
+            }
+            if (shine_motion(par->motion)) {
+                return SF_IN_NONE;
+            }
+            return par->macro_step == 0 ? (SF_IN_DOWN + SF_IN_B) : SF_IN_NONE;
+        }
+        /* phase 1+ is the wavedash (same inputs as WDL with phase-1). */
+        if (par->macro_phase >= 3) {
+            return SF_IN_NONE;
+        }
+        if (par->macro_phase == 2 || in_air(par->motion)) {
+            return wd;
+        }
+        if (par->motion == ftCo_MS_KneeBend) {
+            return SF_IN_NONE;
+        }
+        return SF_IN_JUMP;
+    }
     case SF_MAC_SH_N:
     case SF_MAC_SH_U:
     case SF_MAC_SH_D:
@@ -2176,9 +2286,37 @@ static void mac_prepare(const SfLine* par, int combo, int motion) {
         if (step >= SF_MAC_DASH_FRAMES && approach_act(motion)) {
             done = true;
         }
-    } else if (id == SF_MAC_LASER || id == SF_MAC_SHINE) {
+    } else if (id == SF_MAC_LASER) {
         if (step >= 1 && approach_act(motion) && motion != ftCo_MS_KneeBend) {
             done = true;
+        }
+    } else if (id == SF_MAC_SHINE) {
+        /* One down+B. Keeping the macro through the reflector forced neutral
+         * input on every later frame (node_open only offers SF_KID_SCRIPT),
+         * so jump-cancel — the only way into waveshine / pillar follow-ups —
+         * was never tried. Fox sometimes still found JC via other openings;
+         * Falco's shine→jump lines depend on this press ending immediately. */
+        if (step >= 1) {
+            done = true;
+        }
+    } else if (id == SF_MAC_SHINE_WDL || id == SF_MAC_SHINE_WDR) {
+        int wd = id == SF_MAC_SHINE_WDL ? SF_IN_WD_L : SF_IN_WD_R;
+        if (phase == 0) {
+            if (motion == ftCo_MS_KneeBend || jump_air(motion) || in_air(motion)) {
+                phase = 1;
+            }
+        }
+        if (phase >= 1) {
+            uint8_t wp = (uint8_t)(phase - 1);
+            if (combo == wd && !jump_air(motion)) {
+                wp = 2;
+            } else if (wp < 2 && in_air(motion)) {
+                wp = 1;
+            }
+            if (wp == 2 && wavedash_landed(motion)) {
+                done = true;
+            }
+            phase = (uint8_t)(wp + 1);
         }
     }
     if (step >= SF_MAC_LIMIT) {
@@ -2279,7 +2417,11 @@ static int default_input(const SfLine* l) {
 }
 
 static SfAllow ration(const SfLine* l, SfAllow want) {
-    if (l->age % SF_STICK_EVERY == 0) {
+    /* Throw and pummel are stick directions with no button. Grab lag burns
+     * CatchWait's first frames while the node is locked, so age is already
+     * past 0 when throws first open — ration would strip every throw stick
+     * until the next SF_STICK_EVERY boundary and the grab would never throw. */
+    if (grabbing(l->motion) || l->age % SF_STICK_EVERY == 0) {
         return want;
     }
     int last = l->len > 0 ? l->seq[l->len - 1] / SF_BTN : 0;
@@ -2322,8 +2464,13 @@ static bool node_open(SfNode* n, bool wide) {
     /* Startup, before this move hits and before the interrupt window, cannot
      * be cancelled. A grab still throws; the attack check is for moves.
      * Damage from an earlier move does not count: holding A through a
-     * smash's startup is only charge. */
-    bool cancellable = !par->attack || grabbing(par->motion) || par->connected || par->iasa;
+     * smash's startup is only charge. A throw cannot be cancelled after
+     * release either — keep it locked so uthrow→dj uair still has budget.
+     * Shine Loop can JC without allow_interrupt; shine Hit cannot. */
+    bool cancellable =
+        !throwing(par->motion) && !shine_hit(par->motion) &&
+        (!par->attack || grabbing(par->motion) || par->connected || par->iasa ||
+         shine_jump_cancel(par->motion));
     if (!wide || par->lag || (!squat && !guard && !aerial && !cancellable)) {
         if (wide) {
             s_n_locked++;
@@ -2408,27 +2555,37 @@ static bool node_open(SfNode* n, bool wide) {
         }
     }
     /* Hops and wavedashes are scripted, so the jump release and the
-     * airdodge frame are not left to chance. Anywhere jump works. */
+     * airdodge frame are not left to chance. Anywhere jump works.
+     * Shine Loop: always waveshine — hop-aerial macros steal the budget. */
+    bool shine_jc = shine_jump_cancel(par->motion);
     if (par->grounded && !squat && !aerial && !grabbing(par->motion) &&
-        (guard || allow_has(want, SF_IN_JUMP)))
+        (guard || allow_has(want, SF_IN_JUMP) || shine_jc))
     {
         if (par->len == 0 && !par->attack && grounded_motion(par->motion)) {
             kid_add(n, SF_KID_MACRO + SF_MAC_DASH);
             kid_add(n, SF_KID_MACRO + SF_MAC_LASER);
             kid_add(n, SF_KID_MACRO + SF_MAC_SHINE);
+            kid_add(n, SF_KID_MACRO + SF_MAC_SHINE_WDL);
+            kid_add(n, SF_KID_MACRO + SF_MAC_SHINE_WDR);
         }
-        kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
-        kid_add(n, SF_KID_MACRO + SF_MAC_FULL);
-        for (int m = SF_MAC_SH_N; m <= SF_MAC_FH_R; m++) {
-            kid_add(n, SF_KID_MACRO + m);
-        }
-        if (par->jumps + 1 < par->max_jumps) {
-            for (int m = SF_MAC_AJ_N; m <= SF_MAC_FJ_R; m++) {
+        if (shine_jc) {
+            kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
+            kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
+            kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
+        } else {
+            kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
+            kid_add(n, SF_KID_MACRO + SF_MAC_FULL);
+            for (int m = SF_MAC_SH_N; m <= SF_MAC_FH_R; m++) {
                 kid_add(n, SF_KID_MACRO + m);
             }
+            if (par->jumps + 1 < par->max_jumps) {
+                for (int m = SF_MAC_AJ_N; m <= SF_MAC_FJ_R; m++) {
+                    kid_add(n, SF_KID_MACRO + m);
+                }
+            }
+            kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
+            kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
         }
-        kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
-        kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
     }
     /* A bare double jump presses nothing after it, so its playout never
      * shows a hit. Out of an aerial only once its interrupt window opens.
@@ -2753,14 +2910,15 @@ static void sort_listed(void) {
             memcpy(row, &s_view.lines[j], sizeof row);
             memcpy(&s_view.lines[j], &s_view.lines[j - 1], sizeof row);
             memcpy(&s_view.lines[j - 1], row, sizeof row);
-            if (s_view.cursor == j) {
-                s_view.cursor = j - 1;
-            } else if (s_view.cursor == j - 1) {
-                s_view.cursor = j;
-            }
+            // if (s_view.cursor == j) {
+            //     s_view.cursor = j - 1;
+            // } else if (s_view.cursor == j - 1) {
+            //     s_view.cursor = j;
+            // }
             j--;
         }
     }
+    s_view.cursor = 0;
 }
 
 static void list_line(const SfLine* l) {
@@ -2783,6 +2941,7 @@ static void list_line(const SfLine* l) {
     snprintf(s_view.lines[n].text, sizeof s_view.lines[n].text, "%s", text);
     s_view.lines[n].dmg = l->dmg;
     s_view.lines[n].frames = l->len;
+    s_view.lines[n].advantage = (int)l->hitstun_remaining - (int)l->actionable_frames;
     s_view.lines[n].ko = l->ko;
     s_view.lines[n].moves = line_moves(l);
     s_lines[n] = *l;
@@ -2817,6 +2976,7 @@ static void verify_one(void) {
     restore_keep_pads(&s_root);
     int dealt = 0;
     bool ko = false;
+    uint8_t act = 0;
     for (int i = 0; i < limit && !dropped; i++) {
         int combo = i < n ? l->seq[i] : SF_IN_NONE;
         build_pads(pads, combo);
@@ -2835,6 +2995,8 @@ static void verify_one(void) {
                 shown.ko = r.ko;
                 note_connect(&shown);
             }
+            fill_end_metrics(&shown, act);
+            act = shown.actionable_frames;
         }
         if (!r.ko && r.dmg > dealt) {
             dealt = r.dmg;
@@ -2865,6 +3027,10 @@ static void verify_one(void) {
     if (!s_trim) {
         l->dmg = dealt;
         l->ko = ko;
+        if (saw_script) {
+            l->actionable_frames = shown.actionable_frames;
+            l->hitstun_remaining = shown.hitstun_remaining;
+        }
         if (!r.dead && (l->ko || l->dmg > 0)) {
             list_line(l);
         }

@@ -276,7 +276,8 @@ static void flush_save(void) {
     if (s_load_state == LOAD_WAIT || s_load_state == LOAD_UNREAD) {
         if (!s_save_ignored_logged) {
             s_save_ignored_logged = true;
-            pc_log_line("savestate: Ctrl+S ignored until the file from MELEE_SAVESTATE is restored");
+            pc_log_line(
+                "savestate: Ctrl+S ignored until the file from MELEE_SAVESTATE is restored");
         }
         return;
     }
@@ -305,7 +306,8 @@ static void flush_save(void) {
     }
     s_save_wait_logged = false;
     if (snap.nregions < 1 || snap.nregions > SAVESTATE_MAX_REGIONS || snap.buf == NULL ||
-        snap.used == 0 || snap.used > SAVESTATE_MAX_BYTES) {
+        snap.used == 0 || snap.used > SAVESTATE_MAX_BYTES)
+    {
         pc_log_line("savestate: snapshot was empty");
         s_save_requested = false;
         return;
@@ -362,7 +364,8 @@ static void flush_save(void) {
 }
 
 static void fail_load(const char* why) {
-    pc_log_line("savestate: %s (%s)", why, s_load_path[0] != '\0' ? s_load_path : "MELEE_SAVESTATE");
+    pc_log_line(
+        "savestate: %s (%s)", why, s_load_path[0] != '\0' ? s_load_path : "MELEE_SAVESTATE");
     free(s_payload);
     s_payload = NULL;
     s_load_state = LOAD_FAIL;
@@ -392,7 +395,8 @@ static void read_load(void) {
     s_payload = (uint8_t*)malloc((size_t)s_load.payload_bytes);
     if (s_payload == NULL ||
         fread(s_payload, 1, (size_t)s_load.payload_bytes, f) != (size_t)s_load.payload_bytes ||
-        !savestate_end_read(f)) {
+        !savestate_end_read(f))
+    {
         fclose(f);
         fail_load("file is truncated or too large");
         return;
@@ -456,7 +460,8 @@ static void apply_load(void) {
     }
     if (saved_data->len != data->len || saved_bss->len != bss->len ||
         saved_data->ptr - s_load.module_base != (uint64_t)(uintptr_t)data->ptr - base ||
-        saved_bss->ptr - s_load.module_base != (uint64_t)(uintptr_t)bss->ptr - base) {
+        saved_bss->ptr - s_load.module_base != (uint64_t)(uintptr_t)bss->ptr - base)
+    {
         fail_load("this executable does not match the savestate");
         return;
     }
@@ -472,7 +477,9 @@ static void apply_load(void) {
     for (i = 0; i < s_load.nregions; i++) {
         const SavestateRegion* r = &s_load.regions[i];
         uint64_t dest;
-        if (r->len > s_load.payload_bytes || sum + r->len < sum || sum + r->len > s_load.payload_bytes) {
+        if (r->len > s_load.payload_bytes || sum + r->len < sum ||
+            sum + r->len > s_load.payload_bytes)
+        {
             fail_load("region lengths do not match the payload");
             return;
         }
@@ -483,7 +490,8 @@ static void apply_load(void) {
             dest = (uint64_t)(uintptr_t)bss->ptr;
         } else {
             dest = (uint64_t)((int64_t)r->ptr + mem1_delta);
-            if (dest < mem1 || r->len > s_load.mem1_size || dest + r->len > mem1 + s_load.mem1_size) {
+            if (dest < mem1 || r->len > s_load.mem1_size || dest + r->len > mem1 + s_load.mem1_size)
+            {
                 fail_load("a heap region falls outside MEM1");
                 return;
             }
@@ -500,8 +508,8 @@ static void apply_load(void) {
         s_load.module_base + s_load.module_size, image_delta);
     moved += savestate_relocate(s_payload, (size_t)s_load.payload_bytes, s_load.mem1_base,
         s_load.mem1_base + s_load.mem1_size, mem1_delta);
-    snap.seed_ptr = (u32*)(uintptr_t)slide(s_load.seed_ptr, s_load.module_base,
-        s_load.module_base + s_load.module_size, image_delta);
+    snap.seed_ptr = (u32*)(uintptr_t)slide(
+        s_load.seed_ptr, s_load.module_base, s_load.module_base + s_load.module_size, image_delta);
     snap.seed_ptr = (u32*)(uintptr_t)slide((uint64_t)(uintptr_t)snap.seed_ptr, s_load.mem1_base,
         s_load.mem1_base + s_load.mem1_size, mem1_delta);
     if (snap.seed_ptr == NULL) {
@@ -509,7 +517,8 @@ static void apply_load(void) {
         return;
     }
     if (mem1_delta != 0) {
-        pc_log_line("savestate: MEM1 moved by %+lld; restore may be unstable", (long long)mem1_delta);
+        pc_log_line(
+            "savestate: MEM1 moved by %+lld; restore may be unstable", (long long)mem1_delta);
     }
     snapshot_restore(&snap);
     pc_savestate_drop_gfx_cache();

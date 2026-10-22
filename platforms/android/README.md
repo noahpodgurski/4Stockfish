@@ -1,6 +1,6 @@
-# Android Build Guide for Melee PC
+# Android Build Guide for 4Stockfish
 
-This directory contains the Android application wrapper for Super Smash Bros. Melee PC.
+This directory contains the Android application wrapper for Super Smash Bros. 4Stockfish.
 
 ## Architecture & Requirements
 

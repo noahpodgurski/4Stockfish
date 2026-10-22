@@ -94,7 +94,7 @@
 #include <sysdolphin/baselib/random.h>
 #ifdef TARGET_PC
 #include "pc/slp.h"
-#include <melee/sf/stockfish.h>
+#include <melee/sf/4stockfish.h>
 #endif
 
 extern MotionState* ftData_CharacterStateTables[Ft_Kind_Max];

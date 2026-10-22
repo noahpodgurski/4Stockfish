@@ -11,7 +11,7 @@ export MELEE_VERSION="${MELEE_VERSION:-$(cat "${ROOT_DIR}/VERSION")}"
 
 # Apple's clang builds the C++ (aurora, Dawn glue, launcher); the decomp's C
 # goes through Homebrew GCC via tools/gcc_launcher.py. See CMakeLists.txt.
-echo "=== Building Melee PC (macOS ${ARCH}) ==="
+echo "=== Building 4Stockfish (macOS ${ARCH}) ==="
 cmake -B "${BUILD_DIR}" -G Ninja \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_C_COMPILER=clang \

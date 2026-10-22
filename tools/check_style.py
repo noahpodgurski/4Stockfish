@@ -150,15 +150,37 @@ def check_banned_types(path: Path):
     return errors
 
 
-def check_clang_format(path: Path, fix: bool = False):
+def find_clang_format():
+    """Resolve clang-format from PATH or common Windows install locations."""
+    from shutil import which
+
+    found = which("clang-format") or which("clang-format.exe")
+    if found:
+        return found
+    candidates = [
+        Path(r"C:\Program Files\LLVM\bin\clang-format.exe"),
+        Path(r"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\bin\clang-format.exe"),
+        Path(r"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin\clang-format.exe"),
+        Path(r"C:\Program Files\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\bin\clang-format.exe"),
+        Path(r"C:\Program Files\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang-format.exe"),
+        Path(r"C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\Llvm\bin\clang-format.exe"),
+        Path(r"C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\Llvm\x64\bin\clang-format.exe"),
+    ]
+    for p in candidates:
+        if p.is_file():
+            return str(p)
+    return None
+
+
+def check_clang_format(path: Path, clang_format: str, fix: bool = False):
     if fix:
-        cmd = ["clang-format", "-i", str(path)]
+        cmd = [clang_format, "-i", str(path)]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode != 0:
             return [f"clang-format error on {path.name}: {r.stderr.strip()}"]
         return []
 
-    cmd = ["clang-format", "--dry-run", "--Werror", str(path)]
+    cmd = [clang_format, "--dry-run", "--Werror", str(path)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
         err = (r.stderr or r.stdout or "").strip()
@@ -181,6 +203,18 @@ def main():
         print("No files to check.")
         return 0
 
+    clang_format = None
+    if not args.skip_format:
+        clang_format = find_clang_format()
+        if clang_format is None:
+            print(
+                "clang-format not found. Install LLVM and ensure clang-format is on PATH,\n"
+                "  e.g. winget install LLVM.LLVM\n"
+                "Or re-run with --skip-format to check whitespace and banned types only.",
+                file=sys.stderr,
+            )
+            return 1
+
     total_errors = 0
     print(f"Checking style across {len(files)} files in melee-pc...")
 
@@ -192,8 +226,8 @@ def main():
         file_errors.extend(ws_errors)
 
         # Clang-format checks
-        if not args.skip_format:
-            fmt_errors = check_clang_format(path, fix=args.fix)
+        if clang_format is not None:
+            fmt_errors = check_clang_format(path, clang_format, fix=args.fix)
             file_errors.extend(fmt_errors)
 
         # Banned primitive type checks

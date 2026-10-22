@@ -222,8 +222,8 @@ void pc_frame_boundary(void) {
                 event->sdl.key.scancode == SDL_SCANCODE_F1 && !event->sdl.key.repeat)
                 pc_menu_toggle();
             if (event->sdl.type == SDL_EVENT_KEY_DOWN &&
-                event->sdl.key.scancode == SDL_SCANCODE_S &&
-                (event->sdl.key.mod & SDL_KMOD_CTRL) && !event->sdl.key.repeat)
+                event->sdl.key.scancode == SDL_SCANCODE_S && (event->sdl.key.mod & SDL_KMOD_CTRL) &&
+                !event->sdl.key.repeat)
                 pc_savestate_request_save();
             pc_menu_event(&event->sdl);
             pc_keyboard_event(&event->sdl);

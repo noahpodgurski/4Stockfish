@@ -1,4 +1,5 @@
-#include "stockfish.h"
+#include "4stockfish.h"
+#include "pc/pc.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -160,7 +161,7 @@ static void sf_draw_panel(HSD_GObj* gobj, intptr_t pass)
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-    sf_quad(PAD_LEFT, -10.0F, 700.0F, -(16.0F + (float) sf_panel_rows * 18.0F),
+    sf_quad(PAD_LEFT, -10.0F, 600.0F, -(16.0F + (float) sf_panel_rows * 18.0F),
             28, 170);
     if (sf_bar >= 0) {
         bar_y = -(PAD_TOP + (float) (sf_panel_rows - 1) * 18.0F);
@@ -169,8 +170,6 @@ static void sf_draw_panel(HSD_GObj* gobj, intptr_t pass)
                 bar_y - 8.0F, 230, 230);
     }
     if (sf_text != NULL) {
-        /* "4stockfish" is text y 0. SIS negates y, and the glyph is 32
-         * units tall at the text scale, so this is the edge under that word. */
         float y = -(PAD_TOP * 3.0F);
 
         sf_quad(PAD_LEFT, y, 130.0F, y + 1.0F, 255, 255); // line under "4stockfish"
@@ -234,7 +233,7 @@ static int sf_draw_head(const PcSfView* v)
     Fighter* attacker = sf_fighter_at(v->attacker_slot, 0);
     Fighter* victim = sf_fighter_at(v->victim_slot, v->victim_sub);
 
-    sf_print_color(-1, (GXColor) {74, 168, 99, 255}, "4Stockfish");
+    sf_print_color(-1, (GXColor) {74, 168, 99, 255}, "4Stockfish %s", pc_app_version());
     // if (attacker != NULL && victim != NULL) {
     //     HSD_SisLib_803A6B98(sf_text, 28.0F, 18.0F, "%s vs %s, %d pct",
     //                         sf_name(attacker->kind), sf_name(victim->kind),
@@ -270,28 +269,23 @@ static void sf_draw_search(const PcSfView* v)
 
 static void sf_draw_line(int row, const PcSfView* v, int i)
 {
-    // const char* mark = i == v->cursor ? "---" : "";
-    // const char* endMark = i == v->cursor ? "---" : "";
-    const char* mark = "";
-    const char* endMark = "";
-
+    // todo fix advantage calculation
+    // int adv = v->lines[i].advantage;
     if (v->lines[i].ko) {
         if (i == v->cursor) {
-            sf_print_color(row, (GXColor) {86, 100, 209, 255}, "%s %d: %d frames %s KO %s", mark, i + 1,
-                 v->lines[i].frames, v->lines[i].text, endMark);
+            sf_print_color(row, (GXColor) {86, 100, 209, 255}, "%d: %d frames %s KO", i + 1,
+                 v->lines[i].frames, v->lines[i].text);
         } else {
-            sf_print(row, "%s %d: %d frames %s KO %s", mark, i + 1,
-                     v->lines[i].frames, v->lines[i].text, endMark);
+            sf_print(row, "%d: %d frames %s KO", i + 1,
+                     v->lines[i].frames, v->lines[i].text);
         }
     } else {
         if (i == v->cursor) {
-            sf_print_color(row, (GXColor) {86, 100, 209, 255}, "%s %d: %d frames %s plus %d %s", mark, i + 1,
-                 v->lines[i].frames, v->lines[i].text, v->lines[i].dmg,
-                 endMark);
+            sf_print_color(row, (GXColor) {86, 100, 209, 255}, "%d: %d frames %s +%d%%", i + 1,
+                 v->lines[i].frames, v->lines[i].text, v->lines[i].dmg);
         } else {
-            sf_print(row, "%s %d: %d frames %s plus %d %s", mark, i + 1,
-                     v->lines[i].frames, v->lines[i].text, v->lines[i].dmg,
-                     endMark);
+            sf_print(row, "%d: %d frames %s +%d%%", i + 1,
+                     v->lines[i].frames, v->lines[i].text, v->lines[i].dmg);
         }
     }
 }
@@ -372,12 +366,9 @@ static void sf_draw_menu(const PcSfView* v)
 
 static void sf_draw_playing(const PcSfView* v)
 {
-    sf_panel = 0;
-    if (v->play_index >= 0 && v->play_index < v->nlines) {
-        sf_print(0, "playing %s", v->lines[v->play_index].text);
-    } else {
-        sf_print(0, "playing");
-    }
+    int row = sf_draw_head(v);
+    sf_print(row++, "%s", v->lines[v->play_index].text);
+    sf_panel_rows = row;
 }
 
 static void sf_draw_result(const PcSfView* v)
@@ -385,7 +376,7 @@ static void sf_draw_result(const PcSfView* v)
     if (v->result_ko) {
         sf_print(0, "result KO");
     } else {
-        sf_print(0, "result plus %d", v->result_dmg);
+        sf_print(0, "result +%d%%,", v->result_dmg);
     }
     if (v->play_index >= 0 && v->play_index < v->nlines) {
         sf_print(1, "%s", v->lines[v->play_index].text);

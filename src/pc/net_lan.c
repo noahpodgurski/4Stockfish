@@ -250,7 +250,7 @@ static void announce_on(int sock, void* buf, size_t cap, bool goodbye) {
         .name = MSTR(SERVICE), .type = MDNS_RECORDTYPE_PTR, .data.ptr.name = MSTR(s_instance)};
 #define TXT(k, v)                                                                                  \
     {                                                                                              \
-        .name = MSTR(s_instance), .type = MDNS_RECORDTYPE_TXT, .data.txt = { MSTR(k), MSTR(v) }    \
+        .name = MSTR(s_instance), .type = MDNS_RECORDTYPE_TXT, .data.txt = {MSTR(k), MSTR(v)}      \
     }
     mdns_record_t extra[14] = {
         /* SRV + 8 TXT + host/peer/offer + A + AAAA */

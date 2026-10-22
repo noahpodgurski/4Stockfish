@@ -16,7 +16,7 @@ esac
 
 # Release packages always ship the patched SDL build, not the host's SDL.
 
-echo "=== Building Melee PC (Linux ${ARCH}) ==="
+echo "=== Building 4Stockfish (Linux ${ARCH}) ==="
 cmake -B "${BUILD_DIR}" -G Ninja \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DAURORA_SDL3_PROVIDER=vendor \

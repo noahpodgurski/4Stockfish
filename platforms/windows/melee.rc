@@ -15,11 +15,11 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription",  "Super Smash Bros. Melee PC Port\0"
+            VALUE "FileDescription",  "4Stockfish\0"
             VALUE "FileVersion",      "1.0.2.0\0"
-            VALUE "InternalName",     "melee\0"
-            VALUE "OriginalFilename", "melee.exe\0"
-            VALUE "ProductName",      "melee-pc\0"
+            VALUE "InternalName",     "4Stockfish\0"
+            VALUE "OriginalFilename", "4Stockfish.exe\0"
+            VALUE "ProductName",      "4Stockfish\0"
             VALUE "ProductVersion",   "1.0.2.0\0"
         END
     END

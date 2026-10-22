@@ -66,8 +66,9 @@ bool savestate_info_write(FILE* f, const SavestateInfo* info) {
     uint8_t hdr[SAVESTATE_FIXED + SAVESTATE_MAX_REGIONS * SAVESTATE_REGION];
     size_t n;
     int i;
-    if (f == NULL || info == NULL || info->nregions < 1 ||
-        info->nregions > SAVESTATE_MAX_REGIONS || info->payload_bytes > SAVESTATE_MAX_BYTES) {
+    if (f == NULL || info == NULL || info->nregions < 1 || info->nregions > SAVESTATE_MAX_REGIONS ||
+        info->payload_bytes > SAVESTATE_MAX_BYTES)
+    {
         return false;
     }
     memset(hdr, 0, sizeof hdr);
@@ -115,7 +116,8 @@ bool savestate_info_read(FILE* f, SavestateInfo* info) {
     info->nregions = get_i32(fixed, 64);
     info->payload_bytes = get_u64(fixed, 72);
     if (info->nregions < 1 || info->nregions > SAVESTATE_MAX_REGIONS ||
-        info->payload_bytes > SAVESTATE_MAX_BYTES || info->module_size == 0) {
+        info->payload_bytes > SAVESTATE_MAX_BYTES || info->module_size == 0)
+    {
         return false;
     }
     for (i = 0; i < info->nregions; i++) {
