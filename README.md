@@ -62,9 +62,9 @@ It works by actually simulating the game and searching many different state tree
 1. slippi file replay viewer, recommend places for improvement, things to practice (low difficulty, high % difference)
     1. start with loading slippi file
 
-## Download
+## Documentation
 
-Please see https://github.com/999sian/melee-pc for info on download and full documentation details of the melee pc port
+Please see the great work over at https://github.com/999sian/melee-pc for full documentation details of the melee pc port. This project wouldn't be possible without them.
 
 
 ## License
