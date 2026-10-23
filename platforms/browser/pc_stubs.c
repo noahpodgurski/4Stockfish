@@ -18,6 +18,7 @@
 #include "pc/file_cache.h"
 #include "pc/pc.h"
 #include "pc/paths.h"
+#include "pc/sf_search.h"
 #include "pc/slp.h"
 
 /* Desktop launcher preferences; defaults match launcher_data.hpp. MELEE_UCF is
@@ -123,6 +124,57 @@ bool pc_file_cache_require(const char* filename) {
 void pc_savestate_request_save(void) {}
 void pc_savestate_on_frame(void) {}
 void pc_savestate_on_tick(void) {}
+int pc_savestate_frames_since_load(void) {
+    return 0;
+}
+
+int pc_sf_slice(void (*run_tick)(void)) {
+    (void)run_tick;
+    return PC_SF_PASS;
+}
+bool pc_sf_searching(void) {
+    return false;
+}
+bool pc_sf_sim_tick(void) {
+    return false;
+}
+bool pc_sf_hold_outcome(void) {
+    return false;
+}
+void pc_sf_note_io(void) {}
+int pc_sf_state(void) {
+    return PC_SF_IDLE;
+}
+void pc_sf_request(int pause_bit) {
+    (void)pause_bit;
+}
+void pc_sf_end(void) {}
+void pc_sf_horizon_step(int dir) {
+    (void)dir;
+}
+void pc_sf_endlag_step(int dir) {
+    (void)dir;
+}
+void pc_sf_cursor_step(int dir) {
+    (void)dir;
+}
+void pc_sf_filter_step(int dir) {
+    (void)dir;
+}
+bool pc_sf_line_shown(int i) {
+    (void)i;
+    return false;
+}
+const char* pc_sf_move_label(int bit) {
+    (void)bit;
+    return "";
+}
+void pc_sf_sort_toggle(void) {}
+void pc_sf_play(void) {}
+const PcSfView* pc_sf_view(void) {
+    static const PcSfView empty = {.state = PC_SF_IDLE};
+    return &empty;
+}
 
 /* Replay recording writes to a native file; the browser has no recorder. */
 void pc_slp_match_start(const struct StartMeleeData* data) {
