@@ -77,6 +77,14 @@ uint64_t pc_install_id(void) {
 const char* pc_app_rev(void) {
     return "browser";
 }
+/* version.cpp is desktop-only; 4stockfish prints this in the pause menu. */
+const char* pc_app_version(void) {
+#ifdef MELEE_APP_VERSION
+    return MELEE_APP_VERSION;
+#else
+    return "browser";
+#endif
+}
 
 /* libusb GameCube adapter. */
 void pc_gcadapter_init(void) {}
