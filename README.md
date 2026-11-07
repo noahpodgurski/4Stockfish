@@ -10,7 +10,7 @@ It works by actually simulating the game and searching many different state tree
 
 <img src="docs/screenshots/gameplay2.png" width="800px" alt="Demo">
 
-
+# [Youtube Trailer](https://www.youtube.com/watch?v=mV4lkVz-7u)
 
 ## Controls
 

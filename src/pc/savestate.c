@@ -26,6 +26,7 @@
 #include <SDL3/SDL_time.h>
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -164,8 +165,9 @@ static bool module_span(uint64_t* base, uint64_t* size) {
         return false;
     }
     while (fgets(line, sizeof line, f) != NULL) {
-        unsigned long start, end;
-        if (strstr(line, exe) == NULL || sscanf(line, "%lx-%lx", &start, &end) != 2) {
+        uintptr_t start, end;
+        if (strstr(line, exe) == NULL || sscanf(line, "%" SCNxPTR "-%" SCNxPTR, &start, &end) != 2)
+        {
             continue;
         }
         if ((uint64_t)start < lo) {
@@ -668,8 +670,8 @@ void pc_savestate_request_open(void) {
     }
     SDL_free(wins);
     set_message("choose a file");
-    SDL_ShowOpenFileDialog(on_dialog, NULL, window, filters, 2,
-        s_dialog_dir[0] != '\0' ? s_dialog_dir : NULL, false);
+    SDL_ShowOpenFileDialog(
+        on_dialog, NULL, window, filters, 2, s_dialog_dir[0] != '\0' ? s_dialog_dir : NULL, false);
 }
 
 int pc_savestate_generation(void) {

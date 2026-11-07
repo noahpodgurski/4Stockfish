@@ -162,6 +162,20 @@ void net_sfx_rollback_done(void) {}
 void net_sfx_stats(NetSfxStats* out) {
     memset(out, 0, sizeof *out);
 }
+bool net_sfx_private_active(void) {
+    return false;
+}
+/* 4stockfish lives outside this harness. Idle answers keep net.c's offline path. */
+void pc_sf_note_io(void) {}
+int pc_sf_state(void) {
+    return PC_SF_IDLE;
+}
+bool pc_sf_sim_tick(void) {
+    return false;
+}
+bool pc_sf_searching(void) {
+    return false;
+}
 int aurora_dvd_inflight(void) {
     return 0;
 }

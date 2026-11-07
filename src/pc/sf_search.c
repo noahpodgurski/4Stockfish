@@ -104,7 +104,7 @@
 #include <string.h>
 
 #define SF_DIRECTIONS 13 /* neutral, 4 cardinals, 4 half sticks, 4 diagonals */
-#define SF_BTN 6 /* none, a, b, jump, shield, grab; nested inside the directions */
+#define SF_BTN 6         /* none, a, b, jump, shield, grab; nested inside the directions */
 /* Shield is button set 4 (L) with a neutral stick. Jump is X, grab is Z. */
 #define SF_IN_NONE 0
 #define SF_IN_A 1
@@ -276,7 +276,7 @@ enum {
 /* Vertical speed of "falling" for SF_MAC_FJ_*. Fox reaches it 6 frames
  * past the apex. */
 #define SF_FALL_VY (-1.5f)
-#define SF_PLAY_TAIL 60 /* frames of no input after the combo, at 60fps */
+#define SF_PLAY_TAIL 60   /* frames of no input after the combo, at 60fps */
 #define SF_ROOT_TRIES 120 /* presents to wait for a disc read before refusing */
 #define SF_ITEM_PLINK 9
 #define SF_START 0x1000u
@@ -298,19 +298,19 @@ typedef struct SfLine {
     int dmg;
     bool ko;
     int motion;
-    bool hit_seen; /* this motion has had an attack hitbox out */
-    bool attack;   /* A, B, or Z move whose hitboxes are not finished */
-    bool iasa;     /* allow_interrupt was set, so this frame can be searched */
+    bool hit_seen;  /* this motion has had an attack hitbox out */
+    bool attack;    /* A, B, or Z move whose hitboxes are not finished */
+    bool iasa;      /* allow_interrupt was set, so this frame can be searched */
     bool connected; /* this attack has already dealt damage */
     /* At the end of the combo: consecutive Wait frames on the attacker, and
      * hitstun frames still left on the victim (mv.co.damage.x0). */
     uint8_t actionable_frames;
     uint8_t hitstun_remaining;
-    uint8_t gap;    /* frames the victim has been out of hitstun */
-    uint8_t commit; /* frames left to keep this jump past the squat */
-    uint8_t lcancel; /* frames since L during this aerial, 0 if not armed */
-    uint8_t swings; /* separate attacks started on this line */
-    uint8_t hit_swing; /* swing count when the last name was written */
+    uint8_t gap;           /* frames the victim has been out of hitstun */
+    uint8_t commit;        /* frames left to keep this jump past the squat */
+    uint8_t lcancel;       /* frames since L during this aerial, 0 if not armed */
+    uint8_t swings;        /* separate attacks started on this line */
+    uint8_t hit_swing;     /* swing count when the last name was written */
     uint8_t hits[SF_HITS]; /* FtMoveId of each connecting move, in order */
     uint8_t nhits;
     uint16_t first_hit; /* frame of the first damage, 0 if this line has not hit */
@@ -318,22 +318,22 @@ typedef struct SfLine {
     uint8_t macro_step;
     uint8_t macro_phase;
     uint8_t macro_toward;
-    uint8_t approach; /* AP_* bits before the first attack */
-    uint8_t squat;    /* SQUAT_* while a jump has not left the ground */
-    uint8_t open_set; /* open_motion is the first attack */
-    uint8_t open_btn; /* A, B, or Z of that attack, 0 if the press carried no button */
+    uint8_t approach;     /* AP_* bits before the first attack */
+    uint8_t squat;        /* SQUAT_* while a jump has not left the ground */
+    uint8_t open_set;     /* open_motion is the first attack */
+    uint8_t open_btn;     /* A, B, or Z of that attack, 0 if the press carried no button */
     uint16_t open_motion; /* attack_family of the first attack */
-    uint8_t drift; /* stick direction held during an aerial, 0 if neutral */
-    uint8_t age;    /* frames this motion has lasted */
+    uint8_t drift;        /* stick direction held during an aerial, 0 if neutral */
+    uint8_t age;          /* frames this motion has lasted */
     bool grounded;
-    bool lag;       /* the attacker is in hitlag, so no input is read */
-    bool apex;      /* vertical speed turned downward on this frame */
+    bool lag;  /* the attacker is in hitlag, so no input is read */
+    bool apex; /* vertical speed turned downward on this frame */
     float vy;
-    uint8_t jumps;   /* x1968_jumpsUsed */
+    uint8_t jumps; /* x1968_jumpsUsed */
     uint8_t max_jumps;
     bool dj;         /* double jumped since the last named hit */
     uint8_t dj_hits; /* bit i: hits[i] came out of a double jump */
-    int position; /* place of the attacker minus the victim on the path's last frame */
+    int position;    /* place of the attacker minus the victim on the path's last frame */
 } SfLine;
 
 typedef struct SfResult {
@@ -390,12 +390,12 @@ typedef struct SfNode {
     uint8_t adv[SF_KIDS];   /* victim hitstun left with the attacker free to act */
     uint8_t mv[SF_KIDS];    /* move id the playout landed, 0 if it added no damage */
     uint16_t dref;          /* dist of the default input */
-    uint64_t key[SF_KIDS]; /* seen_key after the child's first tick */
-    uint64_t seen_k;       /* this frame in the transposition table, 0 if unset */
-    bool reduced;          /* entered on the short late-move budget */
-    bool wide;             /* opened into more than its default input */
-    bool skipped;          /* budget ran out with children still waiting */
-    bool redo_on;          /* search redo_k again at full width */
+    uint64_t key[SF_KIDS];  /* seen_key after the child's first tick */
+    uint64_t seen_k;        /* this frame in the transposition table, 0 if unset */
+    bool reduced;           /* entered on the short late-move budget */
+    bool wide;              /* opened into more than its default input */
+    bool skipped;           /* budget ran out with children still waiting */
+    bool redo_on;           /* search redo_k again at full width */
     uint8_t redo_k;
 } SfNode;
 
@@ -405,13 +405,13 @@ enum { PH_ROOT, PH_EXPAND, PH_VERIFY, PH_DONE };
 static int s_state = PC_SF_IDLE;
 static int s_phase;
 static void (*s_run_tick)(void);
-static bool s_in_tick;     /* an advisor tick is running */
+static bool s_in_tick; /* an advisor tick is running */
 static SDL_ThreadID s_tick_thread;
-static bool s_outcome;     /* that tick tried to end the match */
-static bool s_io;          /* that tick asked for a disc read */
-static bool s_restart;     /* search again from the root, keeping it */
-static int s_searched;     /* deepest horizon already finished */
-static bool s_trim;        /* re-list stored lines at a shorter horizon */
+static bool s_outcome; /* that tick tried to end the match */
+static bool s_io;      /* that tick asked for a disc read */
+static bool s_restart; /* search again from the root, keeping it */
+static int s_searched; /* deepest horizon already finished */
+static bool s_trim;    /* re-list stored lines at a shorter horizon */
 static bool s_inited;
 
 static int s_pause_bit;
@@ -428,7 +428,7 @@ static uint16_t s_real_last[4];
 static SfCombo s_combo[SF_COMBOS];
 static Snapshot s_root;
 static SfNode s_path[SF_HORIZON_MAX + 1];
-static int s_top; /* index of the frame being expanded, -1 when the walk is done */
+static int s_top;   /* index of the frame being expanded, -1 when the walk is done */
 static int s_depth; /* deepest frame this search has reached */
 static uint8_t s_root_toward;
 static bool s_shine_kind; /* the attacker is Fox or Falco */
@@ -481,15 +481,13 @@ static unsigned s_n_trials, s_n_pruned, s_n_impure, s_n_io, s_n_eaten, s_n_verif
  * Z is a digital trigger, not a face button. */
 static void build_combos(void) {
     enum { SF_STICK_FULL = 127, SF_STICK_HALF = 40 };
-    static const int8_t dx[SF_DIRECTIONS] = {
-        0, -SF_STICK_FULL, SF_STICK_FULL, 0, 0, -SF_STICK_HALF, SF_STICK_HALF, 0, 0,
-        -SF_STICK_FULL, SF_STICK_FULL, -SF_STICK_FULL, SF_STICK_FULL};
-    static const int8_t dy[SF_DIRECTIONS] = {
-        0, 0, 0, SF_STICK_FULL, -SF_STICK_FULL, 0, 0, SF_STICK_HALF, -SF_STICK_HALF,
-        SF_STICK_FULL, SF_STICK_FULL, -SF_STICK_FULL, -SF_STICK_FULL};
-    static const char* dname[SF_DIRECTIONS] = {
-        "", "left", "right", "up", "down", "half left", "half right", "half up", "half down",
-        "up left", "up right", "down left", "down right"};
+    static const int8_t dx[SF_DIRECTIONS] = {0, -SF_STICK_FULL, SF_STICK_FULL, 0, 0, -SF_STICK_HALF,
+        SF_STICK_HALF, 0, 0, -SF_STICK_FULL, SF_STICK_FULL, -SF_STICK_FULL, SF_STICK_FULL};
+    static const int8_t dy[SF_DIRECTIONS] = {0, 0, 0, SF_STICK_FULL, -SF_STICK_FULL, 0, 0,
+        SF_STICK_HALF, -SF_STICK_HALF, SF_STICK_FULL, SF_STICK_FULL, -SF_STICK_FULL,
+        -SF_STICK_FULL};
+    static const char* dname[SF_DIRECTIONS] = {"", "left", "right", "up", "down", "half left",
+        "half right", "half up", "half down", "up left", "up right", "down left", "down right"};
     static const uint16_t bbit[SF_BTN] = {
         0, PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_Z};
     static const char* bname[SF_BTN] = {"", "a", "b", "jump", "shield", "grab"};
@@ -606,10 +604,32 @@ static const char* move_name(int id) {
 
 /* Every name move_name can return, in the order the menu filter cycles. */
 static const char* const s_move_labels[] = {
-    "jab", "dash attack", "forward tilt", "up tilt", "down tilt", "f-smash", "u-smash",
-    "d-smash", "nair", "fair", "bair", "uair", "dair", "neutral B", "side B", "up B", "down B",
-    "fthrow", "bthrow", "uthrow", "dthrow", "pummel", "getup attack", "edge attack",
-    "neutral special", "double jump",
+    "jab",
+    "dash attack",
+    "forward tilt",
+    "up tilt",
+    "down tilt",
+    "f-smash",
+    "u-smash",
+    "d-smash",
+    "nair",
+    "fair",
+    "bair",
+    "uair",
+    "dair",
+    "neutral B",
+    "side B",
+    "up B",
+    "down B",
+    "fthrow",
+    "bthrow",
+    "uthrow",
+    "dthrow",
+    "pummel",
+    "getup attack",
+    "edge attack",
+    "neutral special",
+    "double jump",
 };
 #define SF_LABEL_DJ 25
 #define SF_MOVE_LABELS ((int)(sizeof s_move_labels / sizeof s_move_labels[0]))
@@ -676,9 +696,19 @@ static void opening_prefix(char* dst, size_t cap, const SfLine* l) {
     }
     if (l->drift > 0 && l->drift < SF_DIRECTIONS) {
         static const char* stick[] = {
-            "", "left ", "right ", "up ", "down ",
-            "half left ", "half right ", "half up ", "half down ",
-            "up left ", "up right ", "down left ", "down right ",
+            "",
+            "left ",
+            "right ",
+            "up ",
+            "down ",
+            "half left ",
+            "half right ",
+            "half up ",
+            "half down ",
+            "up left ",
+            "up right ",
+            "down left ",
+            "down right ",
         };
         size_t n = strlen(stick[l->drift]);
         if (pos + n < cap) {
@@ -714,7 +744,7 @@ static void format_line(char* dst, size_t cap, const SfLine* l) {
         }
         /* The prefix already ends with a space. Commas belong between hits. */
         int n = snprintf(dst + pos, cap - pos, "%s%s%s", i > 0 ? ", " : "",
-                         (l->dj_hits >> i) & 1u ? "DJ " : "", name);
+            (l->dj_hits >> i) & 1u ? "DJ " : "", name);
         if (n < 0 || pos + (size_t)n >= cap) {
             dst[pos] = '\0';
             break;
@@ -1117,7 +1147,6 @@ static uint64_t attacker_body(void) {
     XXH3_64bits_update(s_xxh, bits, sizeof bits);
     return XXH3_64bits_digest(s_xxh);
 }
-
 
 /* ---- candidates ------------------------------------------------------- */
 
@@ -1573,7 +1602,6 @@ static bool attack_air(int motion) {
     return motion >= ftCo_MS_AttackAirN && motion <= ftCo_MS_AttackAirLw;
 }
 
-
 /* Angled smashes and tilts are one move. Everything else, including each
  * aerial and each throw, keeps its own slot. */
 static int attack_family(int motion) {
@@ -1609,7 +1637,6 @@ static bool jump_air(int motion) {
     return jump_motion(motion) || fall_motion(motion);
 }
 
-
 static bool landing_air(int motion) {
     return motion >= ftCo_MS_LandingAirN && motion <= ftCo_MS_LandingAirLw;
 }
@@ -1630,7 +1657,6 @@ static bool missed_lcancel(int prev_motion, const Fighter* fp) {
     }
     return fp->x67F >= p_ftCommonData->xE4;
 }
-
 
 /* ---- search ----------------------------------------------------------- */
 
@@ -1671,8 +1697,9 @@ static void search_begin(void) {
     s_depth = 0;
     s_path[0].line = (SfLine){.len = 0};
     const char* trials = getenv("MELEE_SF_TRIALS");
-    s_budget = trials != NULL && atoi(trials) > 0 ? (uint32_t)atoi(trials)
-                                                  : (uint32_t)(SF_TRIALS_PER_FRAME * s_horizon * s_effort);
+    s_budget = trials != NULL && atoi(trials) > 0 ?
+                   (uint32_t)atoi(trials) :
+                   (uint32_t)(SF_TRIALS_PER_FRAME * s_horizon * s_effort);
     s_path[0].budget = s_budget;
     s_hof_n = 0;
     s_verify_i = 0;
@@ -1813,8 +1840,8 @@ static bool attack_motion(int motion) {
  * position as movement, so the line can still approach and attack again. */
 enum { CONT_KEEP, CONT_ATTACK, CONT_DROP };
 
-static int continuation(const SfLine* par, int combo, const SfResult* r, int motion, bool live,
-                        bool* seen) {
+static int continuation(
+    const SfLine* par, int combo, const SfResult* r, int motion, bool live, bool* seen) {
     bool same = motion == par->motion;
     *seen = same ? (par->hit_seen || live) : live;
     if (!same && (attack_input(combo) || attack_motion(motion))) {
@@ -1860,8 +1887,8 @@ static SfBody read_body(int prev_motion, int fallback_motion) {
 /* Holding nothing is the baseline. Anything else that leaves the attacker
  * where neutral did is not a branch: the game reads no input from a buffer,
  * so a press with no effect on this frame has none later either. */
-static bool input_useless(int kid, uint64_t body_hash, uint64_t fp, uint64_t neutral_body,
-                          uint64_t neutral_fp) {
+static bool input_useless(
+    int kid, uint64_t body_hash, uint64_t fp, uint64_t neutral_body, uint64_t neutral_fp) {
     if (kid == SF_IN_NONE) {
         return false;
     }
@@ -1932,8 +1959,8 @@ static bool tactic_pending(const SfLine* par, int motion, bool lag, bool boxes) 
 
 /* Record damage, then build the next frame of the line when it is still a
  * combo. EDGE_DROP: the line ends here. */
-static int edge_line(const SfLine* par, int combo, const SfResult* r, const SfBody* body,
-                     SfLine* out) {
+static int edge_line(
+    const SfLine* par, int combo, const SfResult* r, const SfBody* body, SfLine* out) {
     uint8_t mac_id = s_mac_id;
     uint8_t mac_step = s_mac_step;
     uint8_t mac_phase = s_mac_phase;
@@ -2022,9 +2049,9 @@ static int edge_line(const SfLine* par, int combo, const SfResult* r, const SfBo
     /* Shine Start→Loop and Hit→Loop change motion_id without a new hit.
      * Clearing connected on that edge locked the Loop (no allow_interrupt)
      * and jump-cancel was never tried — Falco's pillar needs that press. */
-    child.connected = (cont == CONT_ATTACK && par->attack) || (same && par->attack)
-                          ? (par->connected || dealt)
-                          : dealt;
+    child.connected = (cont == CONT_ATTACK && par->attack) || (same && par->attack) ?
+                          (par->connected || dealt) :
+                          dealt;
     child.gap = (uint8_t)gap;
     child.commit = commit;
     child.lcancel = lcancel;
@@ -2155,71 +2182,144 @@ static SfAllow state_actions(int motion, bool attack) {
         SF_IN_NONE,
         /* Walk, dash, crouch, shield, grab, hop. Diagonals are the wavedash
          * and dash-jump angles: the stick is on that diagonal before jumpsquat. */
-        SF_IN_JUMP, SF_IN_UP, SF_IN_DOWN, SF_IN_LEFT, SF_IN_RIGHT,
-        SF_IN_HALF_LEFT, SF_IN_HALF_RIGHT, SF_IN_HALF_UP, SF_IN_HALF_DOWN,
-        SF_IN_UP_LEFT, SF_IN_UP_RIGHT, SF_IN_DOWN_LEFT, SF_IN_DOWN_RIGHT,
-        SF_IN_SHIELD, SF_IN_GRAB, SF_IN_A,
+        SF_IN_JUMP,
+        SF_IN_UP,
+        SF_IN_DOWN,
+        SF_IN_LEFT,
+        SF_IN_RIGHT,
+        SF_IN_HALF_LEFT,
+        SF_IN_HALF_RIGHT,
+        SF_IN_HALF_UP,
+        SF_IN_HALF_DOWN,
+        SF_IN_UP_LEFT,
+        SF_IN_UP_RIGHT,
+        SF_IN_DOWN_LEFT,
+        SF_IN_DOWN_RIGHT,
+        SF_IN_SHIELD,
+        SF_IN_GRAB,
+        SF_IN_A,
         /* Dash grabs from wait/walk: Z with a side stick. */
-        SF_IN_LEFT + SF_IN_GRAB, SF_IN_RIGHT + SF_IN_GRAB,
+        SF_IN_LEFT + SF_IN_GRAB,
+        SF_IN_RIGHT + SF_IN_GRAB,
         /* Tilts. A diagonal stick still resolves to one of these. */
-        SF_IN_HALF_LEFT + SF_IN_A, SF_IN_HALF_RIGHT + SF_IN_A,
-        SF_IN_HALF_UP + SF_IN_A, SF_IN_HALF_DOWN + SF_IN_A,
-        SF_IN_UP_LEFT + SF_IN_A, SF_IN_UP_RIGHT + SF_IN_A,
-        SF_IN_DOWN_LEFT + SF_IN_A, SF_IN_DOWN_RIGHT + SF_IN_A,
+        SF_IN_HALF_LEFT + SF_IN_A,
+        SF_IN_HALF_RIGHT + SF_IN_A,
+        SF_IN_HALF_UP + SF_IN_A,
+        SF_IN_HALF_DOWN + SF_IN_A,
+        SF_IN_UP_LEFT + SF_IN_A,
+        SF_IN_UP_RIGHT + SF_IN_A,
+        SF_IN_DOWN_LEFT + SF_IN_A,
+        SF_IN_DOWN_RIGHT + SF_IN_A,
         /* Smashes. A with the dash stick held is also the dash attack once
          * the state is already dash; from wait the same press is an f-smash. */
-        SF_IN_LEFT + SF_IN_A, SF_IN_RIGHT + SF_IN_A,
-        SF_IN_UP + SF_IN_A, SF_IN_DOWN + SF_IN_A,
+        SF_IN_LEFT + SF_IN_A,
+        SF_IN_RIGHT + SF_IN_A,
+        SF_IN_UP + SF_IN_A,
+        SF_IN_DOWN + SF_IN_A,
         /* Specials. Down-diagonal B is shine while moving. */
-        SF_IN_B, SF_IN_LEFT + SF_IN_B, SF_IN_RIGHT + SF_IN_B,
-        SF_IN_UP + SF_IN_B, SF_IN_DOWN + SF_IN_B,
-        SF_IN_DOWN_LEFT + SF_IN_B, SF_IN_DOWN_RIGHT + SF_IN_B,
-        SF_IN_UP_LEFT + SF_IN_B, SF_IN_UP_RIGHT + SF_IN_B,
+        SF_IN_B,
+        SF_IN_LEFT + SF_IN_B,
+        SF_IN_RIGHT + SF_IN_B,
+        SF_IN_UP + SF_IN_B,
+        SF_IN_DOWN + SF_IN_B,
+        SF_IN_DOWN_LEFT + SF_IN_B,
+        SF_IN_DOWN_RIGHT + SF_IN_B,
+        SF_IN_UP_LEFT + SF_IN_B,
+        SF_IN_UP_RIGHT + SF_IN_B,
         /* Hop toward a side or a diagonal: the first input of a wavedash
          * or a short-hop aerial. Holding the dash stick through the jump
          * keeps dash -> jump -> up+A a running up smash. */
-        SF_IN_LEFT + SF_IN_JUMP, SF_IN_RIGHT + SF_IN_JUMP,
-        SF_IN_UP_LEFT + SF_IN_JUMP, SF_IN_UP_RIGHT + SF_IN_JUMP,
-        SF_IN_DOWN_LEFT + SF_IN_JUMP, SF_IN_DOWN_RIGHT + SF_IN_JUMP,
+        SF_IN_LEFT + SF_IN_JUMP,
+        SF_IN_RIGHT + SF_IN_JUMP,
+        SF_IN_UP_LEFT + SF_IN_JUMP,
+        SF_IN_UP_RIGHT + SF_IN_JUMP,
+        SF_IN_DOWN_LEFT + SF_IN_JUMP,
+        SF_IN_DOWN_RIGHT + SF_IN_JUMP,
     };
     static const int air[] = {
         SF_IN_NONE,
         /* Double jump. The direction is part of the press. */
         SF_IN_JUMP,
-        SF_IN_LEFT + SF_IN_JUMP, SF_IN_RIGHT + SF_IN_JUMP,
-        SF_IN_UP + SF_IN_JUMP, SF_IN_DOWN + SF_IN_JUMP,
-        SF_IN_HALF_LEFT + SF_IN_JUMP, SF_IN_HALF_RIGHT + SF_IN_JUMP,
-        SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN,
-        SF_IN_HALF_LEFT, SF_IN_HALF_RIGHT, SF_IN_HALF_DOWN, SF_IN_HALF_UP,
-        SF_IN_UP_LEFT, SF_IN_UP_RIGHT, SF_IN_DOWN_LEFT, SF_IN_DOWN_RIGHT,
-        SF_IN_A, SF_IN_LEFT + SF_IN_A, SF_IN_RIGHT + SF_IN_A,
-        SF_IN_UP + SF_IN_A, SF_IN_DOWN + SF_IN_A,
-        SF_IN_DOWN_LEFT + SF_IN_A, SF_IN_DOWN_RIGHT + SF_IN_A,
-        SF_IN_B, SF_IN_LEFT + SF_IN_B, SF_IN_RIGHT + SF_IN_B,
-        SF_IN_UP + SF_IN_B, SF_IN_DOWN + SF_IN_B,
+        SF_IN_LEFT + SF_IN_JUMP,
+        SF_IN_RIGHT + SF_IN_JUMP,
+        SF_IN_UP + SF_IN_JUMP,
+        SF_IN_DOWN + SF_IN_JUMP,
+        SF_IN_HALF_LEFT + SF_IN_JUMP,
+        SF_IN_HALF_RIGHT + SF_IN_JUMP,
+        SF_IN_LEFT,
+        SF_IN_RIGHT,
+        SF_IN_UP,
+        SF_IN_DOWN,
+        SF_IN_HALF_LEFT,
+        SF_IN_HALF_RIGHT,
+        SF_IN_HALF_DOWN,
+        SF_IN_HALF_UP,
+        SF_IN_UP_LEFT,
+        SF_IN_UP_RIGHT,
+        SF_IN_DOWN_LEFT,
+        SF_IN_DOWN_RIGHT,
+        SF_IN_A,
+        SF_IN_LEFT + SF_IN_A,
+        SF_IN_RIGHT + SF_IN_A,
+        SF_IN_UP + SF_IN_A,
+        SF_IN_DOWN + SF_IN_A,
+        SF_IN_DOWN_LEFT + SF_IN_A,
+        SF_IN_DOWN_RIGHT + SF_IN_A,
+        SF_IN_B,
+        SF_IN_LEFT + SF_IN_B,
+        SF_IN_RIGHT + SF_IN_B,
+        SF_IN_UP + SF_IN_B,
+        SF_IN_DOWN + SF_IN_B,
         /* Airdodge. The down diagonals are the wavedash; a low hop also
          * lands from a cardinal dodge. */
-        SF_IN_WD_L, SF_IN_WD_R, SF_IN_SHIELD, SF_IN_DOWN + SF_IN_SHIELD,
-        SF_IN_LEFT + SF_IN_SHIELD, SF_IN_RIGHT + SF_IN_SHIELD, SF_IN_UP + SF_IN_SHIELD,
+        SF_IN_WD_L,
+        SF_IN_WD_R,
+        SF_IN_SHIELD,
+        SF_IN_DOWN + SF_IN_SHIELD,
+        SF_IN_LEFT + SF_IN_SHIELD,
+        SF_IN_RIGHT + SF_IN_SHIELD,
+        SF_IN_UP + SF_IN_SHIELD,
     };
     /* Throws are a stick smash (lstick crosses the threshold this frame).
      * A is pummel. Directions must stay available every CatchWait frame. */
     static const int throws[] = {
         SF_IN_A,
-        SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN,
+        SF_IN_LEFT,
+        SF_IN_RIGHT,
+        SF_IN_UP,
+        SF_IN_DOWN,
     };
     /* A move that hit or reached IASA. Jump is the shine's only way out
      * before it ends, so it has to be here. */
     static const int cancel[] = {
         SF_IN_NONE,
-        SF_IN_JUMP, SF_IN_LEFT + SF_IN_JUMP, SF_IN_RIGHT + SF_IN_JUMP,
-        SF_IN_A, SF_IN_B, SF_IN_GRAB, SF_IN_SHIELD,
-        SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN,
-        SF_IN_HALF_LEFT, SF_IN_HALF_RIGHT, SF_IN_HALF_DOWN, SF_IN_HALF_UP,
-        SF_IN_LEFT + SF_IN_A, SF_IN_RIGHT + SF_IN_A, SF_IN_UP + SF_IN_A, SF_IN_DOWN + SF_IN_A,
-        SF_IN_HALF_LEFT + SF_IN_A, SF_IN_HALF_RIGHT + SF_IN_A,
-        SF_IN_HALF_UP + SF_IN_A, SF_IN_HALF_DOWN + SF_IN_A,
-        SF_IN_LEFT + SF_IN_B, SF_IN_RIGHT + SF_IN_B, SF_IN_UP + SF_IN_B, SF_IN_DOWN + SF_IN_B,
+        SF_IN_JUMP,
+        SF_IN_LEFT + SF_IN_JUMP,
+        SF_IN_RIGHT + SF_IN_JUMP,
+        SF_IN_A,
+        SF_IN_B,
+        SF_IN_GRAB,
+        SF_IN_SHIELD,
+        SF_IN_LEFT,
+        SF_IN_RIGHT,
+        SF_IN_UP,
+        SF_IN_DOWN,
+        SF_IN_HALF_LEFT,
+        SF_IN_HALF_RIGHT,
+        SF_IN_HALF_DOWN,
+        SF_IN_HALF_UP,
+        SF_IN_LEFT + SF_IN_A,
+        SF_IN_RIGHT + SF_IN_A,
+        SF_IN_UP + SF_IN_A,
+        SF_IN_DOWN + SF_IN_A,
+        SF_IN_HALF_LEFT + SF_IN_A,
+        SF_IN_HALF_RIGHT + SF_IN_A,
+        SF_IN_HALF_UP + SF_IN_A,
+        SF_IN_HALF_DOWN + SF_IN_A,
+        SF_IN_LEFT + SF_IN_B,
+        SF_IN_RIGHT + SF_IN_B,
+        SF_IN_UP + SF_IN_B,
+        SF_IN_DOWN + SF_IN_B,
     };
     if (grabbing(motion)) {
         return allow_bits(throws, sizeof throws / sizeof throws[0]);
@@ -2236,8 +2336,8 @@ static SfAllow state_actions(int motion, bool attack) {
 /* Bits of `want` that leave a different state than holding nothing.
  * Neutral itself is followed separately. A disc read stays in the mask
  * and is tried again when that branch is taken. */
-static bool probe_actionable(const Snapshot* snap, int c, uint64_t neutral_body,
-                             uint64_t neutral_fp) {
+static bool probe_actionable(
+    const Snapshot* snap, int c, uint64_t neutral_body, uint64_t neutral_fp) {
     bool outcome = s_outcome;
     SfResult r;
     uint64_t body_hash;
@@ -2250,8 +2350,8 @@ static bool probe_actionable(const Snapshot* snap, int c, uint64_t neutral_body,
     return !r.dead && !input_useless(c, body_hash, fp, neutral_body, neutral_fp);
 }
 
-static SfAllow actionable(const Snapshot* snap, SfAllow want, uint64_t neutral_body,
-                          uint64_t neutral_fp) {
+static SfAllow actionable(
+    const Snapshot* snap, SfAllow want, uint64_t neutral_body, uint64_t neutral_fp) {
     /* Lag (landing, endlag after a hit, a special's startup) ignores every
      * input at once. When none of these moves the attacker, the rest of
      * the list would not either, and probing it costs most of the budget
@@ -2343,7 +2443,11 @@ static int toward_input(void) {
 
 /* Nair, uair, dair, then the two sides, in SF_MAC_SH_* / SF_MAC_FH_* order. */
 static const int mac_aerial[] = {
-    SF_IN_A, SF_IN_UP + SF_IN_A, SF_IN_DOWN + SF_IN_A, SF_IN_LEFT + SF_IN_A, SF_IN_RIGHT + SF_IN_A,
+    SF_IN_A,
+    SF_IN_UP + SF_IN_A,
+    SF_IN_DOWN + SF_IN_A,
+    SF_IN_LEFT + SF_IN_A,
+    SF_IN_RIGHT + SF_IN_A,
 };
 
 static int macro_input(const SfLine* par) {
@@ -2608,8 +2712,19 @@ static int kid_value(const SfResult* r) {
 
 static uint64_t seen_key(uint64_t fp, const SfLine* l) {
     uint8_t f[13] = {
-        l->attack, l->connected, l->hit_seen, l->gap, l->commit, l->lcancel,
-        l->macro, l->macro_step, l->macro_phase, l->squat, l->iasa, l->lag, l->drift,
+        l->attack,
+        l->connected,
+        l->hit_seen,
+        l->gap,
+        l->commit,
+        l->lcancel,
+        l->macro,
+        l->macro_step,
+        l->macro_phase,
+        l->squat,
+        l->iasa,
+        l->lag,
+        l->drift,
     };
     uint64_t k = fp ^ (XXH3_64bits(f, sizeof f) * 0x9E3779B97F4A7C15ull);
     return k != 0 ? k : 1;
@@ -2684,9 +2799,7 @@ static int default_kid(const SfLine* l) {
     /* Neutral stick: down held into the Loop can drop through a platform.
      * B stays down through the loop too. Releasing it ends the move before
      * a jump out of it can be pressed. */
-    if ((shine_start(l->motion) || shine_jump_cancel(l->motion)) &&
-        (last % SF_BTN) == SF_IN_B)
-    {
+    if ((shine_start(l->motion) || shine_jump_cancel(l->motion)) && (last % SF_BTN) == SF_IN_B) {
         return SF_IN_B;
     }
     return (last / SF_BTN) * SF_BTN;
@@ -2764,10 +2877,9 @@ static bool node_open(SfNode* n, bool wide, bool attacks_only) {
      * smash's startup is only charge. A throw cannot be cancelled after
      * release either — keep it locked so uthrow→dj uair still has budget.
      * Shine Loop can JC without allow_interrupt; shine Hit cannot. */
-    bool cancellable =
-        !throwing(par->motion) && !shine_hit(par->motion) &&
-        (!par->attack || grabbing(par->motion) || par->connected || par->iasa ||
-         shine_jump_cancel(par->motion));
+    bool cancellable = !throwing(par->motion) && !shine_hit(par->motion) &&
+                       (!par->attack || grabbing(par->motion) || par->connected || par->iasa ||
+                           shine_jump_cancel(par->motion));
     /* Drift is chosen on the first frame of the aerial and then held.
      * Branching it again every few frames spends the budget the next
      * attack needs. */
@@ -2798,27 +2910,57 @@ static bool node_open(SfNode* n, bool wide, bool attacks_only) {
          * or special, which is up smash, up B, and shine out of shield. */
         if (squat) {
             static const int squat_in[] = {
-                SF_IN_NONE, SF_IN_JUMP, SF_IN_A,
-                SF_IN_UP + SF_IN_A, SF_IN_DOWN + SF_IN_A,
-                SF_IN_UP + SF_IN_B, SF_IN_DOWN + SF_IN_B,
-                SF_IN_LEFT, SF_IN_LEFT + SF_IN_JUMP, SF_IN_LEFT + SF_IN_A,
-                SF_IN_RIGHT, SF_IN_RIGHT + SF_IN_JUMP, SF_IN_RIGHT + SF_IN_A,
-                SF_IN_HALF_LEFT, SF_IN_HALF_LEFT + SF_IN_JUMP, SF_IN_HALF_LEFT + SF_IN_A,
-                SF_IN_HALF_RIGHT, SF_IN_HALF_RIGHT + SF_IN_JUMP, SF_IN_HALF_RIGHT + SF_IN_A,
+                SF_IN_NONE,
+                SF_IN_JUMP,
+                SF_IN_A,
+                SF_IN_UP + SF_IN_A,
+                SF_IN_DOWN + SF_IN_A,
+                SF_IN_UP + SF_IN_B,
+                SF_IN_DOWN + SF_IN_B,
+                SF_IN_LEFT,
+                SF_IN_LEFT + SF_IN_JUMP,
+                SF_IN_LEFT + SF_IN_A,
+                SF_IN_RIGHT,
+                SF_IN_RIGHT + SF_IN_JUMP,
+                SF_IN_RIGHT + SF_IN_A,
+                SF_IN_HALF_LEFT,
+                SF_IN_HALF_LEFT + SF_IN_JUMP,
+                SF_IN_HALF_LEFT + SF_IN_A,
+                SF_IN_HALF_RIGHT,
+                SF_IN_HALF_RIGHT + SF_IN_JUMP,
+                SF_IN_HALF_RIGHT + SF_IN_A,
                 /* Last squat frame is already airborne for the next input. */
-                SF_IN_UP_LEFT, SF_IN_UP_RIGHT, SF_IN_DOWN_LEFT, SF_IN_DOWN_RIGHT,
-                SF_IN_DOWN_LEFT + SF_IN_JUMP, SF_IN_DOWN_RIGHT + SF_IN_JUMP,
-                SF_IN_UP_LEFT + SF_IN_JUMP, SF_IN_UP_RIGHT + SF_IN_JUMP,
-                SF_IN_WD_L, SF_IN_WD_R, SF_IN_SHIELD, SF_IN_DOWN + SF_IN_SHIELD,
-                SF_IN_LEFT + SF_IN_SHIELD, SF_IN_RIGHT + SF_IN_SHIELD,
-                SF_IN_B, SF_IN_LEFT + SF_IN_B, SF_IN_RIGHT + SF_IN_B,
-                SF_IN_DOWN_LEFT + SF_IN_A, SF_IN_DOWN_RIGHT + SF_IN_A,
+                SF_IN_UP_LEFT,
+                SF_IN_UP_RIGHT,
+                SF_IN_DOWN_LEFT,
+                SF_IN_DOWN_RIGHT,
+                SF_IN_DOWN_LEFT + SF_IN_JUMP,
+                SF_IN_DOWN_RIGHT + SF_IN_JUMP,
+                SF_IN_UP_LEFT + SF_IN_JUMP,
+                SF_IN_UP_RIGHT + SF_IN_JUMP,
+                SF_IN_WD_L,
+                SF_IN_WD_R,
+                SF_IN_SHIELD,
+                SF_IN_DOWN + SF_IN_SHIELD,
+                SF_IN_LEFT + SF_IN_SHIELD,
+                SF_IN_RIGHT + SF_IN_SHIELD,
+                SF_IN_B,
+                SF_IN_LEFT + SF_IN_B,
+                SF_IN_RIGHT + SF_IN_B,
+                SF_IN_DOWN_LEFT + SF_IN_A,
+                SF_IN_DOWN_RIGHT + SF_IN_A,
             };
             want = allow_bits(squat_in, sizeof squat_in / sizeof squat_in[0]);
         } else {
             static const int shield[] = {
-                SF_IN_NONE, SF_IN_JUMP, SF_IN_GRAB, SF_IN_A, SF_IN_UP + SF_IN_A, SF_IN_UP + SF_IN_B,
-                SF_IN_DOWN + SF_IN_B, SF_IN_UP,
+                SF_IN_NONE,
+                SF_IN_JUMP,
+                SF_IN_GRAB,
+                SF_IN_A,
+                SF_IN_UP + SF_IN_A,
+                SF_IN_UP + SF_IN_B,
+                SF_IN_DOWN + SF_IN_B,
+                SF_IN_UP,
             };
             want = allow_bits(shield, sizeof shield / sizeof shield[0]);
         }
@@ -2826,17 +2968,30 @@ static bool node_open(SfNode* n, bool wide, bool attacks_only) {
         /* Drift. Neutral keeps the aerial. Half sticks are the slower
          * drift. L is pressed for every input by with_lcancel. */
         static const int drift[] = {
-            SF_IN_NONE, SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN,
-            SF_IN_HALF_LEFT, SF_IN_HALF_RIGHT, SF_IN_HALF_UP, SF_IN_HALF_DOWN,
-            SF_IN_UP_LEFT, SF_IN_UP_RIGHT, SF_IN_DOWN_LEFT, SF_IN_DOWN_RIGHT,
+            SF_IN_NONE,
+            SF_IN_LEFT,
+            SF_IN_RIGHT,
+            SF_IN_UP,
+            SF_IN_DOWN,
+            SF_IN_HALF_LEFT,
+            SF_IN_HALF_RIGHT,
+            SF_IN_HALF_UP,
+            SF_IN_HALF_DOWN,
+            SF_IN_UP_LEFT,
+            SF_IN_UP_RIGHT,
+            SF_IN_DOWN_LEFT,
+            SF_IN_DOWN_RIGHT,
         };
         want = allow_bits(drift, sizeof drift / sizeof drift[0]);
         /* The interrupt window is the only time a second aerial can
          * come out before landing. That is Marth's double fair. */
         if (par->iasa) {
             static const int again[] = {
-                SF_IN_GRAB, SF_IN_LEFT + SF_IN_GRAB, SF_IN_RIGHT + SF_IN_GRAB,
-                SF_IN_UP + SF_IN_GRAB, SF_IN_DOWN + SF_IN_GRAB,
+                SF_IN_GRAB,
+                SF_IN_LEFT + SF_IN_GRAB,
+                SF_IN_RIGHT + SF_IN_GRAB,
+                SF_IN_UP + SF_IN_GRAB,
+                SF_IN_DOWN + SF_IN_GRAB,
             };
             want = allow_or(want, allow_bits(again, sizeof again / sizeof again[0]));
         }
@@ -3004,8 +3159,8 @@ static uint8_t landed_move(void) {
     return a != NULL && a->x208C > 0 && a->x208C < 256 ? (uint8_t)a->x208C : 0;
 }
 
-static bool sample_kid(SfNode* n, int kid, int* value, bool* alive, uint16_t* dist,
-                       uint8_t* adv, uint8_t* mv) {
+static bool sample_kid(
+    SfNode* n, int kid, int* value, bool* alive, uint16_t* dist, uint8_t* adv, uint8_t* mv) {
     SfLine line;
     SfResult r;
     uint64_t fp;
@@ -3381,7 +3536,9 @@ static void explore_next(SfNode* n) {
                 if (share > fair) {
                     share = fair;
                 }
-            } else if (attack && this_hit && left >= SF_EXPAND_MIN && share < (uint64_t)SF_EXPAND_MIN) {
+            } else if (attack && this_hit && left >= SF_EXPAND_MIN &&
+                       share < (uint64_t)SF_EXPAND_MIN)
+            {
                 share = (uint64_t)SF_EXPAND_MIN;
             }
             if (share < (uint64_t)SF_EXPAND_MIN && !(this_hit && later_hits > 0)) {
@@ -3556,8 +3713,10 @@ static bool stage_ledges(float* left, float* right) {
         if (lines[i].inner == NULL) {
             continue;
         }
-        if ((flags & LINE_FLAG_ENABLED) == 0 || (flags & (LINE_FLAG_HIDDEN | LINE_FLAG_EMPTY)) != 0 ||
-            (flags & LINE_FLAG_PLATFORM) != 0 || (flags & LINE_FLAG_KIND) != CollLine_Floor) {
+        if ((flags & LINE_FLAG_ENABLED) == 0 ||
+            (flags & (LINE_FLAG_HIDDEN | LINE_FLAG_EMPTY)) != 0 ||
+            (flags & LINE_FLAG_PLATFORM) != 0 || (flags & LINE_FLAG_KIND) != CollLine_Floor)
+        {
             continue;
         }
         mpLineGetV0Pos(i, &v0);
@@ -3588,8 +3747,8 @@ static bool stage_ledges(float* left, float* right) {
 }
 
 static bool fighter_gone(const Fighter* fp) {
-    return fp == NULL || (fp->motion_id >= ftCo_MS_DeadDown &&
-                          fp->motion_id <= ftCo_MS_DeadUpFallHitCameraIce);
+    return fp == NULL ||
+           (fp->motion_id >= ftCo_MS_DeadDown && fp->motion_id <= ftCo_MS_DeadUpFallHitCameraIce);
 }
 
 /* Hitstun frames still left. Hitlag counts: the freeze ends into that stun. */
@@ -3626,8 +3785,8 @@ static float fighter_place(const Fighter* fp, float center, float half, bool hav
         if (d < 0.0f) {
             d = -d;
         }
-        place = d <= 1.0f ? (float)SF_POS_CENTER * (1.0f - d)
-                          : -(float)SF_POS_OFFSTAGE - (float)SF_POS_OFF * (d - 1.0f);
+        place = d <= 1.0f ? (float)SF_POS_CENTER * (1.0f - d) :
+                            -(float)SF_POS_OFFSTAGE - (float)SF_POS_OFF * (d - 1.0f);
     }
     return place - (float)(hitstun_left(fp) * SF_POS_STUN);
 }
@@ -3994,7 +4153,13 @@ static int opening_bucket(const SfLine* l) {
 
 static void log_openings(void) {
     static const char* name[] = {
-        "standing", "dash", "short hop", "full hop", "dash short hop", "dash full hop", "wavedash",
+        "standing",
+        "dash",
+        "short hop",
+        "full hop",
+        "dash short hop",
+        "dash full hop",
+        "wavedash",
         "short and full hop",
     };
     int count[8] = {0};
@@ -4059,27 +4224,27 @@ static int search_slot(void) {
             return PC_SF_YIELD;
         }
     } else {
-    int dir = (pressed & SF_DPAD_RIGHT) ? 1 : (pressed & SF_DPAD_LEFT) ? -1 : 0;
-    int h = s_horizon + dir * SF_HORIZON_STEP;
-    if (dir != 0 && h >= SF_HORIZON_MIN && h <= SF_HORIZON_MAX && h != s_horizon) {
-        if (!(dir > 0 && extend_horizon(h))) {
-            s_horizon = h;
+        int dir = (pressed & SF_DPAD_RIGHT) ? 1 : (pressed & SF_DPAD_LEFT) ? -1 : 0;
+        int h = s_horizon + dir * SF_HORIZON_STEP;
+        if (dir != 0 && h >= SF_HORIZON_MIN && h <= SF_HORIZON_MAX && h != s_horizon) {
+            if (!(dir > 0 && extend_horizon(h))) {
+                s_horizon = h;
+                restore_keep_pads(&s_root);
+                search_begin();
+            }
+        }
+        int lag_dir = (pressed & SF_TRIGGER_R) ? 1 : (pressed & SF_TRIGGER_L) ? -1 : 0;
+        int lag = s_endlag + lag_dir * SF_ENDLAG_STEP;
+        if (lag_dir != 0 && lag >= SF_ENDLAG_MIN && lag <= SF_ENDLAG_MAX && lag != s_endlag) {
+            s_endlag = lag;
             restore_keep_pads(&s_root);
             search_begin();
         }
-    }
-    int lag_dir = (pressed & SF_TRIGGER_R) ? 1 : (pressed & SF_TRIGGER_L) ? -1 : 0;
-    int lag = s_endlag + lag_dir * SF_ENDLAG_STEP;
-    if (lag_dir != 0 && lag >= SF_ENDLAG_MIN && lag <= SF_ENDLAG_MAX && lag != s_endlag) {
-        s_endlag = lag;
-        restore_keep_pads(&s_root);
-        search_begin();
-    }
-    if (pressed & SF_BUTTON_Y) {
-        s_effort = s_effort >= 8 ? 1 : s_effort * 2;
-        restore_keep_pads(&s_root);
-        search_begin();
-    }
+        if (pressed & SF_BUTTON_Y) {
+            s_effort = s_effort >= 8 ? 1 : s_effort * 2;
+            restore_keep_pads(&s_root);
+            search_begin();
+        }
     }
     uint64_t t0 = SDL_GetTicksNS();
     while (s_phase != PH_DONE && SDL_GetTicksNS() - t0 < SF_SLICE_NS) {
@@ -4192,8 +4357,9 @@ static void self_test(void) {
     if (wait > 0) {
         wait--;
     } else if (step == 0 && s_state == PC_SF_IDLE &&
-               (after_load ? pc_savestate_frames_since_load() >= 20
-                           : gm_GetFrameCount() >= (u32)at)) {
+               (after_load ? pc_savestate_frames_since_load() >= 20 :
+                             gm_GetFrameCount() >= (u32)at))
+    {
         press = SF_START;
         step = 1;
         wait = 30;

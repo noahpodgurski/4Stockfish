@@ -130,6 +130,10 @@ bool pc_file_cache_require(const char* filename) {
 
 /* Dev savestates write a native file; the browser has no saver. */
 void pc_savestate_request_save(void) {}
+void pc_savestate_request_open(void) {}
+int pc_savestate_generation(void) {
+    return 0;
+}
 void pc_savestate_on_frame(void) {}
 void pc_savestate_on_tick(void) {}
 int pc_savestate_frames_since_load(void) {
@@ -163,6 +167,7 @@ void pc_sf_horizon_step(int dir) {
 void pc_sf_endlag_step(int dir) {
     (void)dir;
 }
+void pc_sf_effort_step(void) {}
 void pc_sf_cursor_step(int dir) {
     (void)dir;
 }

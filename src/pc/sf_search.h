@@ -52,12 +52,12 @@ typedef struct PcSfView {
     struct {
         char text[PC_SF_LINE_TEXT];
         int dmg;
-        int frames; /* input frames in this line */
+        int frames;    /* input frames in this line */
         int advantage; /* hitstun_remaining - actionable_frames at combo end */
         int position;  /* attacker place minus victim place on the path's last frame */
         bool ko;
-        unsigned moves; /* bit per pc_sf_move_label index that hit in this line */
-        bool have_end;  /* the victim was on screen on the path's last frame */
+        unsigned moves;     /* bit per pc_sf_move_label index that hit in this line */
+        bool have_end;      /* the victim was on screen on the path's last frame */
         float end_x, end_y; /* victim world position on the path's last frame */
         float vel_x, vel_y; /* victim self plus knockback velocity on that frame */
     } lines[PC_SF_LINES];
@@ -69,8 +69,8 @@ typedef struct PcSfView {
         bool ko;
     } found[PC_SF_FOUND]; /* ring of the newest hits the search found */
     int nfound;
-    int found_head; /* next slot written */
-    int filter;       /* 0 for none, else 1 + the move bit a listed line must have */
+    int found_head;  /* next slot written */
+    int filter;      /* 0 for none, else 1 + the move bit a listed line must have */
     char* sort_type; /* longest line first, damage, length, position */
     int play_index;
     int result_dmg;
