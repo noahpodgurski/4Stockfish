@@ -16,3 +16,8 @@
 1. options are also labled from 1-10 based on difficulty
     1. difficulty is based on how tight the inputs are (X frame of leeway? instant SH nair, etc..)
     1. there's a practice mode to try and mimic the inputs of the option
+
+1. Combos are also labled from 1-10 based on difficulty
+    1. Difficulty is based on how tight the inputs are (X frame of leeway? instant SH nair, etc..)
+
+1. Practice mode to try and repeat the selected combo
