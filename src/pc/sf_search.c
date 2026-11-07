@@ -25,11 +25,29 @@
  * Grab: a throw. Shield: jump, grab, up smash, up B, and down B. During an
  * attack, after it has hit or its interrupt window has opened, A or B with
  * a direction, plus jump. An input that does not change the state is not
- * kept. An aerial otherwise drifts and L-cancels. Landing from that aerial
+ * kept. An aerial drifts: full, half, and diagonal sticks are separate
+ * lines, and each aerial is given a full share so a miss in the short
+ * playout does not drop the others. Landing from that aerial
  * with the L-cancel window already missed is dropped. A line that has dealt
- * damage continues through hitstun. It ends after the victim has been
- * actionable for more than SF_COMBO_GAP frames. Another hit starts that
- * count over.
+ * damage is not cut while the tactic is still unresolved: during the aerial
+ * and its landing, during a hop already committed to an aerial, and during
+ * an attack that has not reached a frame the attacker can act on. The gap
+ * then counts frames both fighters can act, and the line ends after more
+ * of those than the endlag setting. Another hit starts that count over.
+ * A playout follows an attack until it hits or a short quiet window runs
+ * out, so a late aerial is ranked by the hit.
+ *
+ * Ordering. Children are ranked by that playout. The best is searched
+ * even when little budget is left. After a hit, a frame that cannot open
+ * the whole list still tries the attacks and the jumps, and a later
+ * attack whose share is too small is searched on a short budget, then
+ * again at full width if that beats the best so far. An input that has
+ * extended a line from the same kind of state, and the input that worked
+ * after the previous one, is tried earlier. A state already searched to
+ * completion at this budget is not walked twice. A child whose playout
+ * landed the same move for the same damage as an earlier one (another
+ * drift or stick angle) gets a short search, so the budget goes to
+ * different follow-ups.
  *
  * Publish. Trials that raised the damage or took the stock are candidate
  * lines. A short combo is still followed, so a later hit can make it
@@ -39,7 +57,10 @@
  * input for the same window playback uses. A star KO starts in that
  * window: the stock is removed only after the animation. The menu names
  * the moves that connected and how many frames the line ran. The input
- * sequence is what playback uses.
+ * sequence is what playback uses. calculate_position then scores the last
+ * frame of each path: closer to center stage is better, past the ledge is
+ * worse, and hitstun still left is worse. The score is the attacker's
+ * place minus the victim's.
  *
  * Search ticks are deaf and silent (net.c pc_net_resim, pc_net_audio_deaf),
  * start no rumble, write no .slp frames, never end the match (gmvs.c) and
@@ -66,6 +87,7 @@
 #include <melee/ft/kinds/ftFox/forward.h>
 #include <melee/lb/forward.h>
 #include <melee/gm/gmscene.h>
+#include <melee/mp/mplib.h>
 #include <melee/gm/gmvs.h>
 #include <melee/it/types.h>
 #include <melee/lb/lb_0195.h>
@@ -115,8 +137,8 @@ _Static_assert(SF_IN_WD_L < SF_COMBOS && SF_IN_WD_R < SF_COMBOS, "wavedash is a 
 #define SF_HORIZON_STEP 30
 /* A listed line is longer than this share of the horizon: 4/5 is 80%.
  * len * DEN > horizon * NUM, so 48 frames of a 60-frame search is out. */
-#define SF_SPAN_NUM 4
-#define SF_SPAN_DEN 5
+#define SF_SPAN_NUM 3
+#define SF_SPAN_DEN 6
 #define SF_HOF PC_SF_LINES /* candidate lines kept, then all replayed and listed */
 /* Simulated ticks per frame of horizon. MELEE_SF_TRIALS sets the total. */
 #define SF_TRIALS_PER_FRAME 1500
@@ -125,8 +147,25 @@ _Static_assert(SF_IN_WD_L < SF_COMBOS && SF_IN_WD_R < SF_COMBOS, "wavedash is a 
 /* Units a playout closes on the victim, past the default input, that still
  * add to a child's budget. 40 is worth about a 10 percent hit. */
 #define SF_CLOSE_MAX 40
-/* Frames each child is played out with its default input to rank it. */
+/* Hitstun frames of advantage that still add to a child's budget. */
+#define SF_ADV_MAX 30
+/* Frames each child is played out with its default input to rank it.
+ * An attack that has not hit yet is followed further, up to SF_QUIET
+ * extra frames, so the rank sees the hit a 12-frame look would miss. */
 #define SF_PLAYOUT 12
+#define SF_QUIET 24
+/* Budget for a late attack. Long enough for the hit to land. If that
+ * search beats the best so far, the same child is searched again at
+ * SF_EXPAND_MIN. */
+#define SF_REDUCED 96
+/* Budget for another angle of a move an earlier child already landed.
+ * Enough to open the attacks after it, so a better follow-up from that
+ * angle can still earn the full-width retry. */
+#define SF_TWIN 300
+/* History only breaks ties between equal playouts. A real hit still leads. */
+#define SF_HIST_TIE 63
+/* A remembered input is worth a short search even when this playout missed. */
+#define SF_HIST_HOT 16
 /* While moving or drifting, the stick may change only this often, or at
  * the top of a jump (fast fall). Buttons may be pressed on any frame. */
 #define SF_STICK_EVERY 6
@@ -134,6 +173,16 @@ _Static_assert(SF_IN_WD_L < SF_COMBOS && SF_IN_WD_R < SF_COMBOS, "wavedash is a 
  * the 7-frame L-cancel window. */
 #define SF_LCANCEL_PULSE 6
 #define SF_KO_VALUE 1000
+/* Place of one fighter on the path's last frame. Center stage is worth
+ * SF_POS_CENTER and the ledge is worth nothing. Being past the ledge at all
+ * costs SF_POS_OFFSTAGE, and each half-stage of X past it costs SF_POS_OFF
+ * more. Each frame of hitstun still left costs SF_POS_STUN. A dead fighter
+ * is past any of those. */
+#define SF_POS_CENTER 200
+#define SF_POS_OFFSTAGE 300
+#define SF_POS_OFF 250
+#define SF_POS_STUN 4
+#define SF_POS_DEAD (SF_POS_CENTER + SF_POS_OFFSTAGE + 4 * SF_POS_OFF)
 #define SF_SEEN_BITS 20
 #define SF_SLICE_NS 12000000ull
 #define SF_HOLD_FRAMES 75
@@ -235,6 +284,7 @@ enum {
 #define SF_DPAD_RIGHT 0x0002u
 #define SF_TRIGGER_L 0x0040u
 #define SF_TRIGGER_R 0x0020u
+#define SF_BUTTON_Y 0x0800u
 
 typedef struct SfCombo {
     int8_t sx, sy;
@@ -273,6 +323,7 @@ typedef struct SfLine {
     uint8_t open_set; /* open_motion is the first attack */
     uint8_t open_btn; /* A, B, or Z of that attack, 0 if the press carried no button */
     uint16_t open_motion; /* attack_family of the first attack */
+    uint8_t drift; /* stick direction held during an aerial, 0 if neutral */
     uint8_t age;    /* frames this motion has lasted */
     bool grounded;
     bool lag;       /* the attacker is in hitlag, so no input is read */
@@ -282,6 +333,7 @@ typedef struct SfLine {
     uint8_t max_jumps;
     bool dj;         /* double jumped since the last named hit */
     uint8_t dj_hits; /* bit i: hits[i] came out of a double jump */
+    int position; /* place of the attacker minus the victim on the path's last frame */
 } SfLine;
 
 typedef struct SfResult {
@@ -303,6 +355,7 @@ typedef struct SfBody {
     bool iasa;
     bool miss;
     bool stun;
+    bool lag; /* attacker hitlag: no input is read on this frame */
 } SfBody;
 
 /* Two words: a diagonal shield is past bit 63. */
@@ -334,8 +387,16 @@ typedef struct SfNode {
     uint8_t kid[SF_KIDS];
     int16_t val[SF_KIDS];
     uint16_t dist[SF_KIDS]; /* closest the playout came to the victim */
+    uint8_t adv[SF_KIDS];   /* victim hitstun left with the attacker free to act */
+    uint8_t mv[SF_KIDS];    /* move id the playout landed, 0 if it added no damage */
     uint16_t dref;          /* dist of the default input */
     uint64_t key[SF_KIDS]; /* seen_key after the child's first tick */
+    uint64_t seen_k;       /* this frame in the transposition table, 0 if unset */
+    bool reduced;          /* entered on the short late-move budget */
+    bool wide;             /* opened into more than its default input */
+    bool skipped;          /* budget ran out with children still waiting */
+    bool redo_on;          /* search redo_k again at full width */
+    uint8_t redo_k;
 } SfNode;
 
 enum { SN_NEW, SN_SAMPLE, SN_EXPLORE };
@@ -359,6 +420,7 @@ static HSD_GObj* s_victim_gobj;
 static int s_base_pct, s_base_stocks, s_base_att_stocks;
 static int s_horizon = SF_HORIZON_DEFAULT;
 static int s_endlag = SF_ENDLAG_DEFAULT;
+static int s_effort = 1; /* SF_TRIALS_PER_FRAME multiplier, Y on the menu */
 static int s_root_tries;
 static uint8_t s_saved_qtype;
 static uint16_t s_real_last[4];
@@ -369,14 +431,24 @@ static SfNode s_path[SF_HORIZON_MAX + 1];
 static int s_top; /* index of the frame being expanded, -1 when the walk is done */
 static int s_depth; /* deepest frame this search has reached */
 static uint8_t s_root_toward;
-/* States already walked: a later visit with no less budget and no earlier
- * frame would only repeat that subtree. */
+static bool s_shine_kind; /* the attacker is Fox or Falco */
+/* States already searched to completion. A later visit with no less budget
+ * and no earlier frame would only repeat that subtree. A search that ran
+ * out first does not land here, so a wider visit can still open it. */
 typedef struct SfSeen {
     uint64_t key;
     uint32_t budget;
     uint16_t len;
+    bool complete; /* every child was searched, or the frame had no branch */
 } SfSeen;
 static SfSeen s_seen[1u << SF_SEEN_BITS];
+/* Inputs that extended a line. Bucket is the kind of state; the second
+ * table is the previous input, then this one. Killer is the input that
+ * did it most recently at this depth. */
+enum { SF_HIST_N = 6 };
+static uint16_t s_hist[SF_HIST_N][SF_KIDS];
+static uint16_t s_cont[SF_COMBOS][SF_KIDS];
+static uint16_t s_killer[SF_HORIZON_MAX]; /* 0 unset, else the kid plus one */
 static SfLine s_hof[SF_HOF];
 static int s_hof_n, s_verify_i;
 static SfLine s_lines[PC_SF_LINES]; /* the published lines, as replay scripts */
@@ -601,6 +673,18 @@ static void opening_prefix(char* dst, size_t cap, const SfLine* l) {
         }
         memcpy(dst + pos, words[i].word, n);
         pos += n;
+    }
+    if (l->drift > 0 && l->drift < SF_DIRECTIONS) {
+        static const char* stick[] = {
+            "", "left ", "right ", "up ", "down ",
+            "half left ", "half right ", "half up ", "half down ",
+            "up left ", "up right ", "down left ", "down right ",
+        };
+        size_t n = strlen(stick[l->drift]);
+        if (pos + n < cap) {
+            memcpy(dst + pos, stick[l->drift], n);
+            pos += n;
+        }
     }
     dst[pos] = '\0';
 }
@@ -834,6 +918,45 @@ static SfResult read_result(void) {
         }
     }
     return r;
+}
+
+/* The victim on the last frame verify_one scored, for the menu's arrows. */
+static struct {
+    bool have;
+    float x, y, vx, vy;
+} s_end;
+
+static void sample_victim(void) {
+    HSD_GObj* vg;
+    Fighter* v = fighter_at(s_victim, s_victim_sub, &vg);
+    if (v == NULL || vg != s_victim_gobj) {
+        return;
+    }
+    s_end.have = true;
+    s_end.x = v->cur_pos.x;
+    s_end.y = v->cur_pos.y;
+    s_end.vx = v->self_vel.x + v->x8c_kb_vel.x;
+    s_end.vy = v->self_vel.y + v->x8c_kb_vel.y;
+}
+
+/* A trial just raised the damage or took the stock: keep where the victim
+ * was sent, overwriting the oldest find once the ring is full. */
+static void note_found(bool ko) {
+    s_end.have = false;
+    sample_victim();
+    if (!s_end.have) {
+        return;
+    }
+    int n = s_view.found_head;
+    s_view.found[n].x = s_end.x;
+    s_view.found[n].y = s_end.y;
+    s_view.found[n].vx = s_end.vx;
+    s_view.found[n].vy = s_end.vy;
+    s_view.found[n].ko = ko;
+    s_view.found_head = (n + 1) % PC_SF_FOUND;
+    if (s_view.nfound < PC_SF_FOUND) {
+        s_view.nfound++;
+    }
 }
 
 /* Grounded, out of hitstun, and stopped. Nothing left in this playback
@@ -1096,32 +1219,6 @@ static bool hits_equal(const SfLine* a, const SfLine* b) {
     return true;
 }
 
-/* Insert, delete, or substitute one named hit. A one-hit line is not an
- * edit of a longer string: "nair" must not swallow every combo that starts
- * with nair. */
-static int hit_dist(const SfLine* a, const SfLine* b) {
-    int prev[SF_HITS + 1];
-    int cur[SF_HITS + 1];
-    int na = a->nhits;
-    int nb = b->nhits;
-    for (int j = 0; j <= nb; j++) {
-        prev[j] = j;
-    }
-    for (int i = 1; i <= na; i++) {
-        cur[0] = i;
-        for (int j = 1; j <= nb; j++) {
-            int cost = strcmp(hit_token(a, i - 1), hit_token(b, j - 1)) != 0;
-            int del = prev[j] + 1;
-            int ins = cur[j - 1] + 1;
-            int sub = prev[j - 1] + cost;
-            int best = del < ins ? del : ins;
-            cur[j] = best < sub ? best : sub;
-        }
-        memcpy(prev, cur, (size_t)(nb + 1) * sizeof prev[0]);
-    }
-    return prev[nb];
-}
-
 static bool attack_motion(int motion);
 static bool grabbing(int motion);
 static int attack_family(int motion);
@@ -1241,9 +1338,16 @@ static bool opening_same(const SfLine* a, const SfLine* b) {
     if (a->open_btn != 0 && b->open_btn != 0 && a->open_btn != b->open_btn) {
         return false;
     }
+    /* Same fair held forward and the same fair held back are different lines. */
+    if (a->drift != b->drift) {
+        return false;
+    }
     return true;
 }
 
+/* The same string, or that string with one more hit on the end: what a
+ * longer horizon grows. A different follow-up is a different combo, so
+ * down B into dair keeps its row next to down B into bair. */
 static bool combo_similar(const SfLine* a, const SfLine* b) {
     int d = a->nhits - b->nhits;
     /* A short hop nair and a running nair are not the same combo. Two
@@ -1251,13 +1355,23 @@ static bool combo_similar(const SfLine* a, const SfLine* b) {
     if (!opening_same(a, b)) {
         return false;
     }
-    if (a->nhits < 2 || b->nhits < 2) {
+    if (a->nhits < 2 || b->nhits < 2 || d == 0) {
         return hits_equal(a, b);
     }
     if (d > 1 || d < -1) {
         return false;
     }
-    return hit_dist(a, b) <= 1;
+    const SfLine* s = d < 0 ? a : b;
+    const SfLine* l = d < 0 ? b : a;
+    if (((s->dj_hits ^ l->dj_hits) & ((1u << s->nhits) - 1u)) != 0) {
+        return false;
+    }
+    for (int i = 0; i < s->nhits; i++) {
+        if (strcmp(hit_token(s, i), hit_token(l, i)) != 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /* Same damage: the longer string is the one a wider horizon just grew.
@@ -1302,19 +1416,27 @@ static bool line_spans(const SfLine* l) {
     if (l->ko) {
         return true;
     }
-    return true;
-    // return l->len * SF_SPAN_DEN > s_horizon * SF_SPAN_NUM;
+    // return true;
+    return l->len * SF_SPAN_DEN > s_horizon * SF_SPAN_NUM;
 }
 
-/* Worst extra copy of an opening that already has two rows. The best copy
- * of that opening stays, so a new starter can take the spare seat. */
+/* The same hits from the same starter, only held at another stick angle. */
+static bool drift_twin(const SfLine* a, const SfLine* b) {
+    SfLine t = *b;
+    t.drift = a->drift;
+    return opening_same(a, &t) && hits_equal(a, b);
+}
+
+/* Worst extra copy of an opening that already has two rows, or of one
+ * combo held at several stick angles. The best copy stays, so a new
+ * starter or a new follow-up can take the spare seat. */
 static int spare_row(void) {
     int victim = -1;
     for (int i = 0; i < s_hof_n; i++) {
         int copies = 0;
         int best = -1;
         for (int j = 0; j < s_hof_n; j++) {
-            if (!opening_same(&s_hof[i], &s_hof[j])) {
+            if (!opening_same(&s_hof[i], &s_hof[j]) && !drift_twin(&s_hof[i], &s_hof[j])) {
                 continue;
             }
             copies++;
@@ -1347,6 +1469,12 @@ static void hof_add(const SfLine* parent, int combo, const SfResult* r, int moti
         l.first_hit = (uint16_t)l.len;
     }
     l.swings = (uint8_t)swing_count(parent, combo, r->motion);
+    if (combo >= 0 && motion >= ftCo_MS_AttackAirN && motion <= ftCo_MS_AttackAirLw) {
+        int dir = combo / SF_BTN;
+        if (dir > 0 && dir < SF_DIRECTIONS) {
+            l.drift = (uint8_t)dir;
+        }
+    }
     note_opening(&l, combo, motion);
     note_connect(&l);
     fill_end_metrics(&l, parent->actionable_frames);
@@ -1507,6 +1635,8 @@ static bool missed_lcancel(int prev_motion, const Fighter* fp) {
 /* ---- search ----------------------------------------------------------- */
 
 static void snap_free(Snapshot* s);
+static void hist_add(const SfNode* parent, int kid, int gain);
+static void seen_store(const SfNode* n);
 
 static const Snapshot* node_snap(const SfNode* n) {
     return n == &s_path[0] ? &s_root : &n->snap;
@@ -1534,24 +1664,31 @@ static void search_begin(void) {
         memset(&s_path[i], 0, sizeof s_path[i]);
     }
     memset(s_seen, 0, sizeof s_seen);
+    memset(s_hist, 0, sizeof s_hist);
+    memset(s_cont, 0, sizeof s_cont);
+    memset(s_killer, 0, sizeof s_killer);
     s_top = 0;
     s_depth = 0;
     s_path[0].line = (SfLine){.len = 0};
     const char* trials = getenv("MELEE_SF_TRIALS");
     s_budget = trials != NULL && atoi(trials) > 0 ? (uint32_t)atoi(trials)
-                                                  : (uint32_t)(SF_TRIALS_PER_FRAME * s_horizon);
+                                                  : (uint32_t)(SF_TRIALS_PER_FRAME * s_horizon * s_effort);
     s_path[0].budget = s_budget;
     s_hof_n = 0;
     s_verify_i = 0;
     s_view.nlines = 0;
     s_view.cursor = 0;
+    s_view.nfound = 0;
+    s_view.found_head = 0;
     s_view.have_best = false;
     s_view.note = NULL;
     s_view.horizon = s_horizon;
     s_view.endlag = s_endlag;
+    s_view.effort = s_effort;
     s_n_trials = s_n_pruned = s_n_impure = s_n_io = s_n_eaten = s_n_verify_bad = s_n_locked =
         s_n_whiff = s_n_lcancel = s_n_gap = 0;
     Fighter* att = fighter_at(s_attacker, 0, NULL);
+    s_shine_kind = att != NULL && (att->kind == Ft_Kind_Fox || att->kind == Ft_Kind_Falco);
     if (att != NULL) {
         s_path[0].line.motion = (int)att->motion_id;
         s_path[0].line.iasa = att->allow_interrupt;
@@ -1640,6 +1777,13 @@ static bool shine_hit(int motion) {
     return motion == ftFx_MS_SpecialLwHit || motion == ftFx_MS_SpecialAirLwHit;
 }
 
+/* B still held when Start hands over to Loop keeps the Loop alive past
+ * FOX_REFLECTOR_RELEASE_LAG. Released early, the Loop can end before the
+ * frame that would have jumped out of it. */
+static bool shine_start(int motion) {
+    return motion == ftFx_MS_SpecialLwStart || motion == ftFx_MS_SpecialAirLwStart;
+}
+
 static bool shine_motion(int motion) {
     return motion == ftFx_MS_SpecialLwStart || motion == ftFx_MS_SpecialAirLwStart ||
            motion == ftFx_MS_SpecialLwLoop || motion == ftFx_MS_SpecialAirLwLoop ||
@@ -1709,6 +1853,7 @@ static SfBody read_body(int prev_motion, int fallback_motion) {
     b.iasa = att != NULL && att->allow_interrupt;
     b.miss = missed_lcancel(prev_motion, att);
     b.stun = victim_in_hitstun();
+    b.lag = att != NULL && att->dmg.x195c_hitlag_frames > 0.0f;
     return b;
 }
 
@@ -1738,6 +1883,11 @@ static int push_child(const SfLine* line, uint32_t budget, int value) {
     child->t0 = s_n_trials;
     child->best = value;
     child->baseline = false;
+    child->reduced = false;
+    child->wide = false;
+    child->skipped = false;
+    child->redo_on = false;
+    child->seen_k = 0;
     child->stage = SN_NEW;
     child->nkid = child->ki = child->cur = 0;
     s_top++;
@@ -1745,6 +1895,39 @@ static int push_child(const SfLine* line, uint32_t budget, int value) {
         s_depth = line->len;
     }
     return EDGE_PUSH;
+}
+
+/* The attacker cannot take the follow-up yet, or a hop is already in the
+ * air so an aerial can come out. Cutting on the victim's hitstun here drops
+ * that action before the frame it can be pressed. */
+static bool tactic_pending(const SfLine* par, int motion, bool lag, bool boxes) {
+    if (lag || par->lag) {
+        return true;
+    }
+    /* The aerial and the landing after it are one tactic. The next attack
+     * is pressed once the landing is over. */
+    if (attack_air(motion) || landing_air(motion) || motion == ftCo_MS_Landing ||
+        motion == ftCo_MS_LandingFallSpecial)
+    {
+        return true;
+    }
+    if (shine_motion(motion) && !shine_jump_cancel(motion)) {
+        return true;
+    }
+    /* Startup and hitlag of a grounded attack. A jump-cancellable loop can
+     * already leave, so the gap counts there. */
+    if (par->attack && !par->iasa && !move_over(motion) && !shine_jump_cancel(motion)) {
+        return true;
+    }
+    if (boxes && par->attack && !par->hit_seen) {
+        return true;
+    }
+    /* Commit already counts the hop down. Pausing the gap for that long is
+     * what lets the aerial at the end of it connect. */
+    if (par->commit > 0) {
+        return true;
+    }
+    return false;
 }
 
 /* Record damage, then build the next frame of the line when it is still a
@@ -1770,15 +1953,22 @@ static int edge_line(const SfLine* par, int combo, const SfResult* r, const SfBo
     if (r->ko || r->dmg > par->dmg) {
         hof_add(par, combo, r, body->motion);
         note_best(r);
+        note_found(r->ko);
     }
     if (r->ko || s_outcome || par->len + 1 >= s_horizon) {
         return EDGE_DROP;
     }
-    /* The count stays at 0 through hitlag and hitstun, and restarts when
-     * another hit puts the victim back there. */
+    /* The count stays at 0 through hitstun, and through hitlag. An
+     * unresolved attack freezes it instead of clearing it, so the frames
+     * already spent still count once the attacker can act. A new hit
+     * starts it over. */
     int gap = 0;
     if ((par->dmg > 0 || r->dmg > 0) && !body->stun) {
-        gap = par->gap + 1;
+        if (tactic_pending(par, body->motion, body->lag, body->boxes)) {
+            gap = par->gap;
+        } else {
+            gap = par->gap + 1;
+        }
     }
     if (gap > s_endlag) {
         s_n_gap++;
@@ -1861,6 +2051,12 @@ static int edge_line(const SfLine* par, int combo, const SfResult* r, const SfBo
         child.jumps = att->x1968_jumpsUsed;
         if (!par->grounded && child.jumps > par->jumps) {
             child.dj = true;
+        }
+    }
+    if (attack_air(motion)) {
+        int dir = combo >= 0 ? combo / SF_BTN : 0;
+        if (dir > 0 && dir < SF_DIRECTIONS) {
+            child.drift = (uint8_t)dir;
         }
     }
     fill_end_metrics(&child, par->actionable_frames);
@@ -2040,25 +2236,56 @@ static SfAllow state_actions(int motion, bool attack) {
 /* Bits of `want` that leave a different state than holding nothing.
  * Neutral itself is followed separately. A disc read stays in the mask
  * and is tried again when that branch is taken. */
+static bool probe_actionable(const Snapshot* snap, int c, uint64_t neutral_body,
+                             uint64_t neutral_fp) {
+    bool outcome = s_outcome;
+    SfResult r;
+    uint64_t body_hash;
+    bool ok = probe_snap(snap, c, &r, &body_hash);
+    s_outcome = outcome;
+    if (!ok) {
+        return true;
+    }
+    uint64_t fp = fingerprint();
+    return !r.dead && !input_useless(c, body_hash, fp, neutral_body, neutral_fp);
+}
+
 static SfAllow actionable(const Snapshot* snap, SfAllow want, uint64_t neutral_body,
                           uint64_t neutral_fp) {
+    /* Lag (landing, endlag after a hit, a special's startup) ignores every
+     * input at once. When none of these moves the attacker, the rest of
+     * the list would not either, and probing it costs most of the budget
+     * a line has after a wavedash. One input per button set, the stick
+     * alone included, stands in for the list. */
     SfAllow m = {0, 0};
-    for (int c = 0; c < SF_COMBOS; c++) {
-        if (c == SF_IN_NONE || !allow_has(want, c)) {
+    SfAllow done = {0, 0};
+    int tried = 0;
+    for (int b = 0; b < SF_BTN; b++) {
+        int c = -1;
+        for (int d = 0; d < SF_DIRECTIONS; d++) {
+            int k = d * SF_BTN + b;
+            if (k != SF_IN_NONE && allow_has(want, k)) {
+                c = k;
+                break;
+            }
+        }
+        if (c < 0) {
             continue;
         }
-        bool outcome = s_outcome;
-        SfResult r;
-        uint64_t body_hash;
-        uint64_t fp;
-        bool ok = probe_snap(snap, c, &r, &body_hash);
-        s_outcome = outcome;
-        if (!ok) {
+        tried++;
+        done = allow_or(done, allow_bit(c));
+        if (probe_actionable(snap, c, neutral_body, neutral_fp)) {
             m = allow_or(m, allow_bit(c));
+        }
+    }
+    if (tried >= 3 && allow_empty(m)) {
+        return m;
+    }
+    for (int c = 0; c < SF_COMBOS; c++) {
+        if (c == SF_IN_NONE || !allow_has(want, c) || allow_has(done, c)) {
             continue;
         }
-        fp = fingerprint();
-        if (!r.dead && !input_useless(c, body_hash, fp, neutral_body, neutral_fp)) {
+        if (probe_actionable(snap, c, neutral_body, neutral_fp)) {
             m = allow_or(m, allow_bit(c));
         }
     }
@@ -2155,6 +2382,9 @@ static int macro_input(const SfLine* par) {
         if (par->macro_phase == 0) {
             if (shine_jump_cancel(par->motion)) {
                 return SF_IN_JUMP;
+            }
+            if (shine_start(par->motion) || shine_hit(par->motion)) {
+                return SF_IN_B;
             }
             if (shine_motion(par->motion)) {
                 return SF_IN_NONE;
@@ -2341,13 +2571,26 @@ static void dfs_finish(void) {
 
 static void dfs_pop(void) {
     SfNode* n = &s_path[s_top];
+    /* A short search is not the position's answer. The full-width retry
+     * stores, once it has had the chance to beat the line. */
+    if (!n->reduced) {
+        seen_store(n);
+    }
     if (s_top > 0) {
         SfNode* p = &s_path[s_top - 1];
-        if (n->best > p->best) {
+        bool improved = n->best > p->best;
+        if (improved) {
+            hist_add(p, p->kid[p->cur], n->best - p->best);
             p->best = n->best;
         }
         if (n->best > p->val[p->cur]) {
             p->val[p->cur] = (int16_t)n->best;
+        }
+        /* The short search found more than anything tried so far. Search
+         * the same input again with enough budget to open its follow-ups. */
+        if (n->reduced && improved && !p->redo_on && p->cur < p->nkid) {
+            p->redo_on = true;
+            p->redo_k = p->cur;
         }
     }
     s_top--;
@@ -2364,31 +2607,60 @@ static int kid_value(const SfResult* r) {
 }
 
 static uint64_t seen_key(uint64_t fp, const SfLine* l) {
-    uint8_t f[12] = {
+    uint8_t f[13] = {
         l->attack, l->connected, l->hit_seen, l->gap, l->commit, l->lcancel,
-        l->macro, l->macro_step, l->macro_phase, l->squat, l->iasa, l->lag,
+        l->macro, l->macro_step, l->macro_phase, l->squat, l->iasa, l->lag, l->drift,
     };
     uint64_t k = fp ^ (XXH3_64bits(f, sizeof f) * 0x9E3779B97F4A7C15ull);
     return k != 0 ? k : 1;
 }
 
-/* False when this state was already walked from an earlier or equal frame
- * with at least this budget. */
-static bool seen_fresh(uint64_t key, int len, uint32_t budget) {
+/* True when this state was already searched to completion from an earlier
+ * or equal frame with at least this budget. A search that ran out of budget,
+ * or that only took the short late-move pass, does not count. */
+static bool seen_cut(uint64_t key, int len, uint32_t budget) {
     uint32_t mask = (1u << SF_SEEN_BITS) - 1u;
     uint32_t i = (uint32_t)key & mask;
     for (int p = 0; p < 8; p++, i = (i + 1u) & mask) {
         SfSeen* e = &s_seen[i];
-        if (e->key == key && e->len <= len && e->budget >= budget) {
+        if (e->key == 0) {
             return false;
         }
-        if (e->key == key || e->key == 0) {
-            *e = (SfSeen){key, budget, (uint16_t)len};
+        if (e->key == key && e->complete && e->len <= (uint16_t)len && e->budget >= budget) {
             return true;
         }
     }
-    s_seen[(uint32_t)key & mask] = (SfSeen){key, budget, (uint16_t)len};
-    return true;
+    return false;
+}
+
+static void seen_store(const SfNode* n) {
+    if (n->seen_k == 0 || n->reduced) {
+        return;
+    }
+    bool locked = !n->wide && n->nkid <= 1 && n->ki >= n->nkid;
+    bool complete = !n->skipped && n->ki >= n->nkid && (n->wide || locked);
+    uint32_t mask = (1u << SF_SEEN_BITS) - 1u;
+    uint32_t i = (uint32_t)n->seen_k & mask;
+    for (int p = 0; p < 8; p++, i = (i + 1u) & mask) {
+        SfSeen* e = &s_seen[i];
+        if (e->key != 0 && e->key != n->seen_k) {
+            continue;
+        }
+        /* Keep a finished search that was given more budget than this one. */
+        if (e->key == n->seen_k && e->complete && e->budget > n->budget && !complete) {
+            return;
+        }
+        e->key = n->seen_k;
+        e->budget = n->budget;
+        e->len = (uint16_t)n->line.len;
+        e->complete = complete;
+        return;
+    }
+    i = (uint32_t)n->seen_k & mask;
+    s_seen[i].key = n->seen_k;
+    s_seen[i].budget = n->budget;
+    s_seen[i].len = (uint16_t)n->line.len;
+    s_seen[i].complete = complete;
 }
 
 static int with_lcancel(const SfLine* l, int combo) {
@@ -2408,6 +2680,14 @@ static int default_kid(const SfLine* l) {
     int last = l->len > 0 ? l->seq[l->len - 1] : SF_IN_NONE;
     if (l->motion == ftCo_MS_KneeBend && (last % SF_BTN) == SF_IN_JUMP) {
         return last;
+    }
+    /* Neutral stick: down held into the Loop can drop through a platform.
+     * B stays down through the loop too. Releasing it ends the move before
+     * a jump out of it can be pressed. */
+    if ((shine_start(l->motion) || shine_jump_cancel(l->motion)) &&
+        (last % SF_BTN) == SF_IN_B)
+    {
+        return SF_IN_B;
     }
     return (last / SF_BTN) * SF_BTN;
 }
@@ -2450,7 +2730,24 @@ static void kid_add(SfNode* n, int kid) {
     n->nkid++;
 }
 
-static bool node_open(SfNode* n, bool wide) {
+/* Walks and empty sticks are not the follow-up. A frame that has already
+ * hit, but does not have the budget to open everything, still tries the
+ * buttons that can hit and the jumps that lead into them. */
+static SfAllow attacks_and_jumps(SfAllow want) {
+    SfAllow keep = {0, 0};
+    for (int c = 0; c < SF_COMBOS; c++) {
+        if (!allow_has(want, c)) {
+            continue;
+        }
+        int btn = c % SF_BTN;
+        if (btn == SF_IN_A || btn == SF_IN_B || btn == SF_IN_GRAB || btn == SF_IN_JUMP) {
+            keep = allow_or(keep, allow_bit(c));
+        }
+    }
+    return keep;
+}
+
+static bool node_open(SfNode* n, bool wide, bool attacks_only) {
     const SfLine* par = &n->line;
     n->nkid = 0;
     n->dkid = (uint8_t)default_kid(par);
@@ -2471,7 +2768,12 @@ static bool node_open(SfNode* n, bool wide) {
         !throwing(par->motion) && !shine_hit(par->motion) &&
         (!par->attack || grabbing(par->motion) || par->connected || par->iasa ||
          shine_jump_cancel(par->motion));
-    if (!wide || par->lag || (!squat && !guard && !aerial && !cancellable)) {
+    /* Drift is chosen on the first frame of the aerial and then held.
+     * Branching it again every few frames spends the budget the next
+     * attack needs. */
+    bool lock = !wide || par->lag || (!squat && !guard && !aerial && !cancellable) ||
+                (aerial && par->age != 0 && !par->iasa);
+    if (lock) {
         if (wide) {
             s_n_locked++;
         }
@@ -2516,7 +2818,7 @@ static bool node_open(SfNode* n, bool wide) {
         } else {
             static const int shield[] = {
                 SF_IN_NONE, SF_IN_JUMP, SF_IN_GRAB, SF_IN_A, SF_IN_UP + SF_IN_A, SF_IN_UP + SF_IN_B,
-                SF_IN_UP,
+                SF_IN_DOWN + SF_IN_B, SF_IN_UP,
             };
             want = allow_bits(shield, sizeof shield / sizeof shield[0]);
         }
@@ -2526,6 +2828,7 @@ static bool node_open(SfNode* n, bool wide) {
         static const int drift[] = {
             SF_IN_NONE, SF_IN_LEFT, SF_IN_RIGHT, SF_IN_UP, SF_IN_DOWN,
             SF_IN_HALF_LEFT, SF_IN_HALF_RIGHT, SF_IN_HALF_UP, SF_IN_HALF_DOWN,
+            SF_IN_UP_LEFT, SF_IN_UP_RIGHT, SF_IN_DOWN_LEFT, SF_IN_DOWN_RIGHT,
         };
         want = allow_bits(drift, sizeof drift / sizeof drift[0]);
         /* The interrupt window is the only time a second aerial can
@@ -2542,6 +2845,9 @@ static bool node_open(SfNode* n, bool wide) {
         probe = true;
     }
     want = ration(par, want);
+    if (attacks_only && probe) {
+        want = attacks_and_jumps(want);
+    }
     if (probe) {
         bool outcome = s_outcome;
         want = actionable(node_snap(n), want, n->neutral_body, n->neutral_fp);
@@ -2556,35 +2862,53 @@ static bool node_open(SfNode* n, bool wide) {
     }
     /* Hops and wavedashes are scripted, so the jump release and the
      * airdodge frame are not left to chance. Anywhere jump works.
-     * Shine Loop: always waveshine — hop-aerial macros steal the budget. */
+     * Shine Loop: waveshine, or a short hop aerial (pillar). A bare hop
+     * presses nothing in its playout, so only the aerial shows the hit. */
     bool shine_jc = shine_jump_cancel(par->motion);
     if (par->grounded && !squat && !aerial && !grabbing(par->motion) &&
         (guard || allow_has(want, SF_IN_JUMP) || shine_jc))
     {
-        if (par->len == 0 && !par->attack && grounded_motion(par->motion)) {
+        bool standing = !par->attack && !guard && grounded_motion(par->motion);
+        if (par->len == 0 && standing && !attacks_only) {
             kid_add(n, SF_KID_MACRO + SF_MAC_DASH);
             kid_add(n, SF_KID_MACRO + SF_MAC_LASER);
+        }
+        if (par->len == 0 && standing) {
             kid_add(n, SF_KID_MACRO + SF_MAC_SHINE);
+        }
+        /* Waveshine is how Fox and Falco get back to standing after a
+         * hit, so it is offered on every standing frame once the line has
+         * dealt damage, not only as the opener. */
+        if (s_shine_kind && standing && (par->len == 0 || par->dmg > 0)) {
             kid_add(n, SF_KID_MACRO + SF_MAC_SHINE_WDL);
             kid_add(n, SF_KID_MACRO + SF_MAC_SHINE_WDR);
         }
         if (shine_jc) {
-            kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
-            kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
-            kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
+            if (!attacks_only) {
+                kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
+                kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
+                kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
+            }
+            for (int m = SF_MAC_SH_N; m <= SF_MAC_SH_R; m++) {
+                kid_add(n, SF_KID_MACRO + m);
+            }
         } else {
-            kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
-            kid_add(n, SF_KID_MACRO + SF_MAC_FULL);
+            if (!attacks_only) {
+                kid_add(n, SF_KID_MACRO + SF_MAC_SHORT);
+                kid_add(n, SF_KID_MACRO + SF_MAC_FULL);
+            }
             for (int m = SF_MAC_SH_N; m <= SF_MAC_FH_R; m++) {
                 kid_add(n, SF_KID_MACRO + m);
             }
-            if (par->jumps + 1 < par->max_jumps) {
+            if (!attacks_only && par->jumps + 1 < par->max_jumps) {
                 for (int m = SF_MAC_AJ_N; m <= SF_MAC_FJ_R; m++) {
                     kid_add(n, SF_KID_MACRO + m);
                 }
             }
-            kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
-            kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
+            if (!attacks_only) {
+                kid_add(n, SF_KID_MACRO + SF_MAC_WDL);
+                kid_add(n, SF_KID_MACRO + SF_MAC_WDR);
+            }
         }
     }
     /* A bare double jump presses nothing after it, so its playout never
@@ -2600,9 +2924,10 @@ static bool node_open(SfNode* n, bool wide) {
         }
     }
     /* Waiting for the apex or the fall. Offered once per motion, not on
-     * every frame of the wait, since each start reaches the same jump. */
-    if (!par->grounded && !squat && !grabbing(par->motion) && par->jumps < par->max_jumps &&
-        (aerial ? par->iasa : (cancellable && par->age == 0)))
+     * every frame of the wait, since each start reaches the same jump.
+     * A short budget spends itself on the aerial that can come out now. */
+    if (!attacks_only && !par->grounded && !squat && !grabbing(par->motion) &&
+        par->jumps < par->max_jumps && (aerial ? par->iasa : (cancellable && par->age == 0)))
     {
         if (par->vy > 0.0f) {
             for (int m = SF_MAC_AJ_N; m <= SF_MAC_AJ_R; m++) {
@@ -2671,18 +2996,31 @@ static uint16_t victim_dist(void) {
 /* Play a child out with its default input for a few frames. Damage on the
  * way is recorded like any other line. Returns the best value reached;
  * *alive is false when the child is not worth following. *dist is the
- * closest the attacker got to the victim. */
-static bool sample_kid(SfNode* n, int kid, int* value, bool* alive, uint16_t* dist) {
+ * closest the attacker got to the victim. *adv is the most hitstun the
+ * victim had left on a frame the attacker could already move again. *mv
+ * is the move that dealt the best value, 0 when nothing was added. */
+static uint8_t landed_move(void) {
+    const Fighter* a = fighter_at(s_attacker, 0, NULL);
+    return a != NULL && a->x208C > 0 && a->x208C < 256 ? (uint8_t)a->x208C : 0;
+}
+
+static bool sample_kid(SfNode* n, int kid, int* value, bool* alive, uint16_t* dist,
+                       uint8_t* adv, uint8_t* mv) {
     SfLine line;
     SfResult r;
     uint64_t fp;
     *dist = UINT16_MAX;
+    *adv = 0;
+    *mv = 0;
     int e = kid_step(n, kid, &line, &r, &fp, true);
     if (e == KID_IO) {
         return false;
     }
     *alive = e == KID_OK;
     *value = e == KID_USELESS ? 0 : kid_value(&r);
+    if (*value > n->line.dmg) {
+        *mv = landed_move();
+    }
     if (e != KID_OK) {
         return true;
     }
@@ -2700,7 +3038,7 @@ static bool sample_kid(SfNode* n, int kid, int* value, bool* alive, uint16_t* di
     /* A script plays to its end, then the usual playout: an apex double
      * jump is past a plain playout's last frame. */
     int tail = SF_PLAYOUT;
-    for (int i = 1; i < tail && i < SF_PLAYOUT + SF_MAC_LIMIT; i++) {
+    for (int i = 1; i < tail && i < SF_PLAYOUT + SF_MAC_LIMIT + SF_QUIET; i++) {
         bool mac = line.macro != SF_MAC_NONE;
         if (mac) {
             tail = i + SF_PLAYOUT;
@@ -2718,6 +3056,7 @@ static bool sample_kid(SfNode* n, int kid, int* value, bool* alive, uint16_t* di
         int edge = edge_line(&line, combo, &r, &b, &next);
         if (kid_value(&r) > *value) {
             *value = kid_value(&r);
+            *mv = landed_move();
         }
         uint16_t d = victim_dist();
         if (d < *dist) {
@@ -2727,8 +3066,156 @@ static bool sample_kid(SfNode* n, int kid, int* value, bool* alive, uint16_t* di
             break;
         }
         line = next;
+        if (approach_act(line.motion) && line.hitstun_remaining > *adv) {
+            *adv = line.hitstun_remaining;
+        }
+        /* The attack was pressed and has not come out yet. Keep going so
+         * the rank is the hit, not the frame a short playout stops on. */
+        if (!mac && line.attack && !line.hit_seen && tail < SF_PLAYOUT + SF_QUIET) {
+            tail = i + 2;
+        }
     }
     return true;
+}
+
+/* Ground, air, an attack, shine, a grab, or anything else. Inputs that
+ * worked in one ground state are remembered for the next ground state. */
+static int hist_bucket(int motion) {
+    if (shine_motion(motion)) {
+        return 0;
+    }
+    if (grabbing(motion) || throwing(motion)) {
+        return 1;
+    }
+    if (attack_air(motion) || attack_motion(motion)) {
+        return 2;
+    }
+    if (in_air(motion)) {
+        return 3;
+    }
+    if (grounded_motion(motion)) {
+        return 4;
+    }
+    return 5;
+}
+
+static void hist_decay(void) {
+    for (int b = 0; b < SF_HIST_N; b++) {
+        for (int k = 0; k < SF_KIDS; k++) {
+            s_hist[b][k] /= 2;
+        }
+    }
+    for (int p = 0; p < SF_COMBOS; p++) {
+        for (int k = 0; k < SF_KIDS; k++) {
+            s_cont[p][k] /= 2;
+        }
+    }
+}
+
+/* This input beat the best line under `parent`. Remember it for the same
+ * kind of state, and for the input that came just before it. */
+static void hist_add(const SfNode* parent, int kid, int gain) {
+    if (kid < 0 || kid >= SF_KIDS || gain <= 0) {
+        return;
+    }
+    int g = gain > 40 ? 40 : gain;
+    uint16_t add = (uint16_t)(g * g);
+    int bucket = hist_bucket(parent->line.motion);
+    if (s_hist[bucket][kid] > (uint16_t)(60000 - add)) {
+        hist_decay();
+    }
+    s_hist[bucket][kid] = (uint16_t)(s_hist[bucket][kid] + add);
+    int prev = 0;
+    if (parent->line.len > 0) {
+        prev = parent->line.seq[parent->line.len - 1];
+        if (prev < 0 || prev >= SF_COMBOS) {
+            prev = 0;
+        }
+        if (s_cont[prev][kid] > (uint16_t)(60000 - add)) {
+            hist_decay();
+        }
+        s_cont[prev][kid] = (uint16_t)(s_cont[prev][kid] + add);
+    }
+    if (parent->line.len < SF_HORIZON_MAX) {
+        s_killer[parent->line.len] = (uint16_t)(kid + 1);
+    }
+}
+
+static uint16_t hist_of(const SfNode* n, int kid) {
+    if (kid < 0 || kid >= SF_KIDS) {
+        return 0;
+    }
+    int prev = 0;
+    if (n->line.len > 0) {
+        prev = n->line.seq[n->line.len - 1];
+        if (prev < 0 || prev >= SF_COMBOS) {
+            prev = 0;
+        }
+    }
+    uint32_t h = (uint32_t)s_hist[hist_bucket(n->line.motion)][kid] + s_cont[prev][kid];
+    if (n->line.len < SF_HORIZON_MAX && s_killer[n->line.len] == (uint16_t)(kid + 1)) {
+        h += 48;
+    }
+    return h > 65535u ? (uint16_t)65535u : (uint16_t)h;
+}
+
+/* A button that starts an attack, or a script whose point is an attack.
+ * A bare hop or a wavedash is not one: its playout has nothing to hit with. */
+static bool kid_attack(int kid) {
+    if (kid >= SF_KID_MACRO) {
+        int m = kid - SF_KID_MACRO;
+        return m == SF_MAC_SHINE || m == SF_MAC_SHINE_WDL || m == SF_MAC_SHINE_WDR ||
+               (m >= SF_MAC_SH_N && m < SF_MAC_COUNT);
+    }
+    return kid >= 0 && kid < SF_COMBOS && attack_input(kid);
+}
+
+/* Full hop and apex aerials wait through the jump before they swing.
+ * A frame that is already short on budget spends that wait and never
+ * reaches the attacks that come out now. */
+static bool kid_long(int kid) {
+    if (kid < SF_KID_MACRO) {
+        return false;
+    }
+    int m = kid - SF_KID_MACRO;
+    return (m >= SF_MAC_FH_N && m <= SF_MAC_FH_R) || (m >= SF_MAC_AJ_N && m <= SF_MAC_FJ_R);
+}
+
+/* An earlier child's playout landed the same move for the same damage:
+ * another stick angle or timing of that swing. It is searched short, and
+ * again at full width only if that beats what the first one found. */
+static bool kid_twin(const SfNode* n, int k) {
+    if (n->mv[k] == 0 || n->val[k] <= n->line.dmg) {
+        return false;
+    }
+    for (int j = 0; j < k; j++) {
+        if (n->mv[j] == n->mv[k] && n->val[j] == n->val[k]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* Later children whose playout already dealt more than this frame, one
+ * per move landed. */
+static int hitters_after(const SfNode* n, int k) {
+    int count = 0;
+    for (int j = k + 1; j < n->nkid; j++) {
+        if (n->val[j] > n->line.dmg && !kid_twin(n, j)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/* Playout damage first. A remembered input only reorders an equal playout,
+ * and the default input still leads a tie nothing has extended before. */
+static int rank_key(const SfNode* n, int k) {
+    int tie = (int)hist_of(n, n->kid[k]);
+    if (tie > SF_HIST_TIE) {
+        tie = SF_HIST_TIE;
+    }
+    return (int)n->val[k] * (SF_HIST_TIE + 1) + tie;
 }
 
 /* Dead children out, then best first. Equal values keep their order, so
@@ -2740,21 +3227,29 @@ static void rank_kids(SfNode* n) {
             n->kid[m] = n->kid[i];
             n->val[m] = n->val[i];
             n->dist[m] = n->dist[i];
+            n->adv[m] = n->adv[i];
+            n->mv[m] = n->mv[i];
             m++;
         }
     }
     n->nkid = (uint8_t)m;
     for (int i = 1; i < m; i++) {
-        for (int j = i; j > 0 && n->val[j] > n->val[j - 1]; j--) {
+        for (int j = i; j > 0 && rank_key(n, j) > rank_key(n, j - 1); j--) {
             uint8_t k = n->kid[j];
             int16_t v = n->val[j];
             uint16_t d = n->dist[j];
+            uint8_t a = n->adv[j];
+            uint8_t mv = n->mv[j];
             n->kid[j] = n->kid[j - 1];
             n->val[j] = n->val[j - 1];
             n->dist[j] = n->dist[j - 1];
+            n->adv[j] = n->adv[j - 1];
+            n->mv[j] = n->mv[j - 1];
             n->kid[j - 1] = k;
             n->val[j - 1] = v;
             n->dist[j - 1] = d;
+            n->adv[j - 1] = a;
+            n->mv[j - 1] = mv;
         }
     }
 }
@@ -2763,7 +3258,9 @@ static void rank_kids(SfNode* n) {
  * draws most of the budget. Waiting is always worth a share. Closing on
  * the victim faster than the default input counts too: a full hop and
  * double jump to a high victim hits nothing for many more frames than a
- * playout lasts. */
+ * playout lasts. So does being free to act while the victim is still in
+ * hitstun: a shine and a wavedash out of it deal little in the playout,
+ * but every follow-up starts from there. */
 static uint64_t kid_weight(const SfNode* n, int k) {
     int gain = n->val[k] - n->line.dmg;
     if (gain < 0) {
@@ -2780,52 +3277,140 @@ static uint64_t kid_weight(const SfNode* n, int k) {
     if (closer > 0) {
         w += (uint64_t)(closer * closer) / 4;
     }
+    int adv = n->adv[k] > SF_ADV_MAX ? SF_ADV_MAX : n->adv[k];
+    w += 6ull * (uint64_t)(adv * adv);
     if (n->kid[k] == n->dkid) {
         w += n->nkid;
+    }
+    /* What extended a line from here before, capped under a real hit. */
+    uint32_t h = hist_of(n, n->kid[k]);
+    if (h > 240) {
+        h = 240;
+    }
+    w += h / 4;
+    /* The only child whose playout hit. Give it a deeper look. */
+    if (k == 0 && n->nkid > 1 && n->val[0] > n->val[1]) {
+        w *= 2;
     }
     return w;
 }
 
+/* One tick of kid k, then a new frame when the input changed the state.
+ * False when the tick has to be tried again (a disc read, or no snapshot). */
+static bool launch_kid(SfNode* n, int k, uint32_t share, bool reduced, bool advance) {
+    SfLine child;
+    SfResult r;
+    uint64_t fp;
+    int e = kid_step(n, n->kid[k], &child, &r, &fp, false);
+    if (e == KID_IO) {
+        return false;
+    }
+    if (advance) {
+        n->ki++;
+    }
+    if (e != KID_OK) {
+        return true;
+    }
+    uint64_t sk = seen_key(state_key(), &child);
+    if (seen_cut(sk, child.len, share)) {
+        s_n_pruned++;
+        return true;
+    }
+    n->cur = (uint8_t)k;
+    if (push_child(&child, share, kid_value(&r)) == EDGE_RETRY) {
+        if (advance) {
+            n->ki--;
+        }
+        return false;
+    }
+    s_path[s_top].seen_k = sk;
+    s_path[s_top].reduced = reduced;
+    return true;
+}
+
 static void explore_next(SfNode* n) {
+    /* The short search beat the line. Follow that same input far enough
+     * for the follow-up to be pressed. */
+    if (n->redo_on) {
+        int k = n->redo_k;
+        n->redo_on = false;
+        int64_t left = (int64_t)n->budget - (int64_t)(s_n_trials - n->t0);
+        if (k < n->nkid && left >= SF_EXPAND_MIN) {
+            if (!launch_kid(n, k, (uint32_t)SF_EXPAND_MIN, false, false)) {
+                n->redo_on = true;
+            }
+            return;
+        }
+    }
     while (n->ki < n->nkid) {
         int64_t left = (int64_t)n->budget - (int64_t)(s_n_trials - n->t0);
-        if (left <= 0 || (n->nkid > 1 && left < SF_EXPAND_MIN)) {
+        int k = n->ki;
+        bool first = k == 0;
+        if (left <= 0 || (!first && left < SF_REDUCED)) {
+            n->skipped = true;
             break;
         }
-        int k = n->ki;
         uint64_t share = (uint64_t)left;
-        if (n->nkid > 1) {
+        bool reduced = false;
+        bool attack = kid_attack(n->kid[k]);
+        bool this_hit = n->val[k] > n->line.dmg;
+        int later_hits = hitters_after(n, k);
+        if (!first && kid_twin(n, k)) {
+            share = left < SF_TWIN ? (uint64_t)left : (uint64_t)SF_TWIN;
+            reduced = true;
+        } else if (n->nkid > 1) {
             uint64_t sum = 0;
+            uint64_t rest = 0;
             for (int j = k; j < n->nkid; j++) {
-                sum += kid_weight(n, j);
+                if (j == k || !kid_twin(n, j)) {
+                    sum += kid_weight(n, j);
+                    rest++;
+                }
             }
             /* A quarter is split evenly, so a child whose playout missed
              * still gets looked at when the budget is large. */
-            uint64_t rest = (uint64_t)(n->nkid - k);
             share = (uint64_t)left * 3 * kid_weight(n, k) / (4 * sum) + (uint64_t)left / (4 * rest);
-            if (share < SF_EXPAND_MIN) {
-                n->ki++;
-                continue;
+            /* Every playout that already hit gets an equal claim on what's
+             * left. One big aerial cannot spend the frame before a smaller
+             * hit, such as a special, is opened and followed. */
+            if (this_hit && later_hits > 0) {
+                uint64_t fair = (uint64_t)left / (uint64_t)(later_hits + 1);
+                if (fair < 1) {
+                    fair = 1;
+                }
+                if (share > fair) {
+                    share = fair;
+                }
+            } else if (attack && this_hit && left >= SF_EXPAND_MIN && share < (uint64_t)SF_EXPAND_MIN) {
+                share = (uint64_t)SF_EXPAND_MIN;
+            }
+            if (share < (uint64_t)SF_EXPAND_MIN && !(this_hit && later_hits > 0)) {
+                bool late = attack || hist_of(n, n->kid[k]) >= SF_HIST_HOT;
+                if (first) {
+                    /* The best line is still followed. A short share must
+                     * not drop it before the next hit exists. */
+                    if (share < (uint64_t)SF_REDUCED) {
+                        share = (uint64_t)SF_REDUCED;
+                    }
+                    if (share > (uint64_t)left) {
+                        share = (uint64_t)left;
+                    }
+                } else if (late && left >= SF_REDUCED) {
+                    share = (uint64_t)SF_REDUCED;
+                    reduced = true;
+                } else {
+                    n->ki++;
+                    continue;
+                }
+            } else if (share < (uint64_t)SF_EXPAND_MIN) {
+                reduced = true;
             }
         }
-        SfLine child;
-        SfResult r;
-        uint64_t fp;
-        int e = kid_step(n, n->kid[k], &child, &r, &fp, false);
-        if (e == KID_IO) {
-            return;
+        if (share > (uint64_t)left) {
+            share = (uint64_t)left;
         }
-        n->ki++;
-        if (e != KID_OK) {
+        if (!launch_kid(n, k, (uint32_t)share, reduced, true)) {
             return;
-        }
-        if (!seen_fresh(seen_key(state_key(), &child), child.len, (uint32_t)share)) {
-            s_n_pruned++;
-            return;
-        }
-        n->cur = (uint8_t)k;
-        if (push_child(&child, (uint32_t)share, kid_value(&r)) == EDGE_RETRY) {
-            n->ki--;
         }
         return;
     }
@@ -2840,23 +3425,40 @@ static void dfs_one(void) {
     SfNode* n = &s_path[s_top];
     if (n->stage == SN_NEW) {
         int64_t left = (int64_t)n->budget - (int64_t)(s_n_trials - n->t0);
-        if (!node_open(n, left >= SF_EXPAND_MIN)) {
+        bool rich = left >= SF_EXPAND_MIN;
+        /* Already hit, or standing in a jump-cancellable shine, and there
+         * is enough left to try the attacks. Quiet moves wait for a wider
+         * budget. A richer visit is not blocked by this one. */
+        bool tactical = !rich && left >= (int64_t)SF_REDUCED &&
+                        (n->line.dmg > 0 || shine_jump_cancel(n->line.motion));
+        if (!node_open(n, rich || tactical, tactical)) {
             return;
         }
+        n->wide = rich || tactical;
         n->ki = 0;
         n->stage = n->nkid > 1 ? SN_SAMPLE : SN_EXPLORE;
         return;
     }
     if (n->stage == SN_SAMPLE) {
         if (n->ki < n->nkid) {
+            int64_t left = (int64_t)n->budget - (int64_t)(s_n_trials - n->t0);
+            if (left < (int64_t)SF_EXPAND_MIN * 2 && kid_long(n->kid[n->ki])) {
+                n->val[n->ki] = -1;
+                n->ki++;
+                return;
+            }
             int value = 0;
             bool alive = false;
             uint16_t dist;
-            if (!sample_kid(n, n->kid[n->ki], &value, &alive, &dist)) {
+            uint8_t adv;
+            uint8_t mv;
+            if (!sample_kid(n, n->kid[n->ki], &value, &alive, &dist, &adv, &mv)) {
                 return;
             }
             n->val[n->ki] = (int16_t)(alive ? value : -1);
             n->dist[n->ki] = dist;
+            n->adv[n->ki] = adv;
+            n->mv[n->ki] = mv;
             if (n->ki == 0) {
                 n->dref = dist;
             }
@@ -2888,11 +3490,25 @@ static void dfs_one(void) {
     explore_next(n);
 }
 
-/* The menu's order: KO then damage, or longest first with damage breaking
- * ties. */
+/* The view is zeroed when a search starts, so an unset mode is damage. */
+static const char* sort_name(void) {
+    if (s_view.sort_type == NULL) {
+        s_view.sort_type = "damage";
+    }
+    return s_view.sort_type;
+}
+
+/* The menu's order: length, damage, or the path's ending position. */
 static bool listed_before(const SfLine* a, const SfLine* b) {
-    if (s_view.sort_length && a->len != b->len) {
+    const char* mode = sort_name();
+    if (strcmp(mode, "length") == 0 && a->len != b->len) {
         return a->len > b->len;
+    }
+    if (strcmp(mode, "damage") == 0) {
+        return a->dmg > b->dmg;
+    }
+    if (strcmp(mode, "position") == 0) {
+        return a->position > b->position;
     }
     return line_better(a, b);
 }
@@ -2921,6 +3537,119 @@ static void sort_listed(void) {
     s_view.cursor = 0;
 }
 
+/* Left and right X of the solid floor through center stage. A platform is
+ * its own chain, so a side or top platform does not move the ledge. */
+static bool stage_ledges(float* left, float* right) {
+    MapCollData* coll = mpLib_8004D164();
+    CollLine* lines = mpGetGroundCollLine();
+    int best = -1;
+    float best_y = 0.0f;
+    int n;
+    if (coll == NULL || lines == NULL || coll->line_count <= 0) {
+        return false;
+    }
+    n = coll->line_count;
+    for (int i = 0; i < n; i++) {
+        u32 flags = lines[i].flags;
+        Vec3 v0, v1;
+        float x0, x1, span, y;
+        if (lines[i].inner == NULL) {
+            continue;
+        }
+        if ((flags & LINE_FLAG_ENABLED) == 0 || (flags & (LINE_FLAG_HIDDEN | LINE_FLAG_EMPTY)) != 0 ||
+            (flags & LINE_FLAG_PLATFORM) != 0 || (flags & LINE_FLAG_KIND) != CollLine_Floor) {
+            continue;
+        }
+        mpLineGetV0Pos(i, &v0);
+        mpLineGetV1Pos(i, &v1);
+        x0 = v0.x < v1.x ? v0.x : v1.x;
+        x1 = v0.x > v1.x ? v0.x : v1.x;
+        span = x1 - x0;
+        if (span < 0.01f || x0 > 0.0f || x1 < 0.0f) {
+            continue;
+        }
+        y = v0.y + (v1.y - v0.y) * ((0.0f - v0.x) / (v1.x - v0.x));
+        if (best < 0 || y > best_y) {
+            best = i;
+            best_y = y;
+        }
+    }
+    if (best < 0) {
+        return false;
+    }
+    {
+        Vec3 a, b;
+        mpFloorGetLeft(best, &a);
+        mpFloorGetRight(best, &b);
+        *left = a.x < b.x ? a.x : b.x;
+        *right = a.x > b.x ? a.x : b.x;
+    }
+    return *right - *left >= 1.0f;
+}
+
+static bool fighter_gone(const Fighter* fp) {
+    return fp == NULL || (fp->motion_id >= ftCo_MS_DeadDown &&
+                          fp->motion_id <= ftCo_MS_DeadUpFallHitCameraIce);
+}
+
+/* Hitstun frames still left. Hitlag counts: the freeze ends into that stun. */
+static int hitstun_left(const Fighter* fp) {
+    float left;
+    if (fp->dmg.x195c_hitlag_frames <= 0.0f && !fp->x221C_b6) {
+        return 0;
+    }
+    left = fp->mv.co.damage.x0;
+    if (left <= 0.0f) {
+        return 0;
+    }
+    if (left > 255.0f) {
+        left = 255.0f;
+    }
+    return (int)(left + 0.5f);
+}
+
+static int round_place(float x) {
+    return (int)(x >= 0.0f ? x + 0.5f : x - 0.5f);
+}
+
+/* Falls off with distance from center stage: SF_POS_CENTER at center, 0 at
+ * either ledge, then a drop of SF_POS_OFFSTAGE once past it and SF_POS_OFF
+ * less per half-stage beyond. Hitstun still
+ * left subtracts. A missing or dead fighter is the worst place. */
+static float fighter_place(const Fighter* fp, float center, float half, bool have) {
+    float place = 0.0f;
+    if (fighter_gone(fp)) {
+        return -(float)SF_POS_DEAD;
+    }
+    if (have) {
+        float d = (fp->cur_pos.x - center) / half;
+        if (d < 0.0f) {
+            d = -d;
+        }
+        place = d <= 1.0f ? (float)SF_POS_CENTER * (1.0f - d)
+                          : -(float)SF_POS_OFFSTAGE - (float)SF_POS_OFF * (d - 1.0f);
+    }
+    return place - (float)(hitstun_left(fp) * SF_POS_STUN);
+}
+
+/* Attacker's place minus the victim's on the frame currently simulated.
+ * Positive means the attacker is closer to center stage (or in less
+ * hitstun); equal places score 0. Rounded once, after the difference, so
+ * matching places cannot pick up a point from rounding each side. */
+static int calculate_position(void) {
+    float ledge_l = 0.0f;
+    float ledge_r = 0.0f;
+    bool have = stage_ledges(&ledge_l, &ledge_r);
+    float center = (ledge_l + ledge_r) * 0.5f;
+    float half = (ledge_r - ledge_l) * 0.5f;
+    const Fighter* a = fighter_at(s_attacker, 0, NULL);
+    const Fighter* v = fighter_at(s_victim, s_victim_sub, NULL);
+    if (half < 1.0f) {
+        half = 1.0f;
+    }
+    return round_place(fighter_place(a, center, half, have) - fighter_place(v, center, half, have));
+}
+
 static void list_line(const SfLine* l) {
     char text[PC_SF_LINE_TEXT];
     if (!line_spans(l)) {
@@ -2942,8 +3671,14 @@ static void list_line(const SfLine* l) {
     s_view.lines[n].dmg = l->dmg;
     s_view.lines[n].frames = l->len;
     s_view.lines[n].advantage = (int)l->hitstun_remaining - (int)l->actionable_frames;
+    s_view.lines[n].position = l->position;
     s_view.lines[n].ko = l->ko;
     s_view.lines[n].moves = line_moves(l);
+    s_view.lines[n].have_end = s_end.have;
+    s_view.lines[n].end_x = s_end.x;
+    s_view.lines[n].end_y = s_end.y;
+    s_view.lines[n].vel_x = s_end.vx;
+    s_view.lines[n].vel_y = s_end.vy;
     s_lines[n] = *l;
 }
 
@@ -2974,8 +3709,11 @@ static void verify_one(void) {
     shown.dmg = 0;
     shown.ko = false;
     restore_keep_pads(&s_root);
+    s_end.have = false;
     int dealt = 0;
+    int position = 0;
     bool ko = false;
+    bool scored = false;
     uint8_t act = 0;
     for (int i = 0; i < limit && !dropped; i++) {
         int combo = i < n ? l->seq[i] : SF_IN_NONE;
@@ -2986,6 +3724,9 @@ static void verify_one(void) {
             break;
         }
         r = read_result();
+        if (!scored) {
+            sample_victim();
+        }
         if (i < n) {
             shown.seq[shown.len++] = (uint8_t)combo;
             at_script = r;
@@ -3003,6 +3744,15 @@ static void verify_one(void) {
         }
         if (r.ko) {
             ko = true;
+        }
+        /* The tail after the script is only there so a star KO can finish.
+         * The path itself ends on this frame: the last input, or earlier
+         * when somebody already lost the stock. */
+        if (!scored && (i + 1 >= n || ko || r.dead || s_outcome)) {
+            position = calculate_position();
+            l->position = position;
+            shown.position = position;
+            scored = true;
         }
         if (ko || r.dead || s_outcome || (i + 1 >= n && victim_settled())) {
             break;
@@ -3166,6 +3916,11 @@ static bool root_begin(void) {
     Fighter* a = fighter_at(s_attacker, 0, NULL);
     s_victim_gobj = vg;
     s_base_pct = v != NULL ? (int)v->dmg.x1830_percent : 0;
+    s_view.have_root = v != NULL;
+    if (v != NULL) {
+        s_view.root_x = v->cur_pos.x;
+        s_view.root_y = v->cur_pos.y;
+    }
     if (a != NULL && v != NULL) {
         pc_log_line("sf: root at match frame %u: slot %d at %.1f,%.1f vs slot %d at %.1f,%.1f "
                     "(%d percent), horizon %d, depth first",
@@ -3192,7 +3947,7 @@ static bool extend_horizon(int h) {
         return false;
     }
     hof_compact();
-    uint32_t more = (uint32_t)(SF_TRIALS_PER_FRAME * (h - s_horizon));
+    uint32_t more = (uint32_t)(SF_TRIALS_PER_FRAME * (h - s_horizon) * s_effort);
     s_budget += more;
     s_path[0].budget += more;
     s_horizon = h;
@@ -3320,6 +4075,11 @@ static int search_slot(void) {
         restore_keep_pads(&s_root);
         search_begin();
     }
+    if (pressed & SF_BUTTON_Y) {
+        s_effort = s_effort >= 8 ? 1 : s_effort * 2;
+        restore_keep_pads(&s_root);
+        search_begin();
+    }
     }
     uint64_t t0 = SDL_GetTicksNS();
     while (s_phase != PH_DONE && SDL_GetTicksNS() - t0 < SF_SLICE_NS) {
@@ -3340,8 +4100,9 @@ static int search_slot(void) {
             s_view.nlines);
         log_openings();
         for (int i = 0; i < s_view.nlines; i++) {
-            pc_log_line("sf: line %d: %d frames, %s, %s %d", i + 1, s_view.lines[i].frames,
-                s_view.lines[i].text, s_view.lines[i].ko ? "KO" : "plus", s_view.lines[i].dmg);
+            pc_log_line("sf: line %d: %d frames, %s, %s %d, pos %+d", i + 1, s_view.lines[i].frames,
+                s_view.lines[i].text, s_view.lines[i].ko ? "KO" : "plus", s_view.lines[i].dmg,
+                s_view.lines[i].position);
         }
         to_menu(s_view.nlines == 0 ? "no path in range" : NULL);
         return PC_SF_YIELD;
@@ -3552,8 +4313,10 @@ void pc_sf_request(int pause_bit) {
         return;
     }
     memset(&s_view, 0, sizeof s_view);
+    s_view.sort_type = "damage";
     s_view.horizon = s_horizon;
     s_view.endlag = s_endlag;
+    s_view.effort = s_effort;
     s_pause_bit = pause_bit;
     pick_pair();
     s_view.attacker_slot = s_attacker;
@@ -3582,6 +4345,13 @@ void pc_sf_end(void) {
     if (s_state != PC_SF_IDLE) {
         reset(NULL);
     }
+}
+
+/* The file is already in memory. Forget the advisor's root so this tick
+ * does not restore the frame from before the load. */
+void pc_sf_on_loaded(void) {
+    reset(NULL);
+    Stockfish_OnLoad();
 }
 
 void pc_sf_horizon_step(int dir) {
@@ -3632,6 +4402,20 @@ void pc_sf_endlag_step(int dir) {
     }
     s_endlag = lag;
     s_view.endlag = lag;
+    s_restart = true;
+    s_phase = PH_EXPAND;
+    s_state = PC_SF_SEARCH;
+    s_view.state = s_state;
+    s_view.nlines = 0;
+    s_view.note = NULL;
+}
+
+void pc_sf_effort_step(void) {
+    if (s_state != PC_SF_MENU) {
+        return;
+    }
+    s_effort = s_effort >= 8 ? 1 : s_effort * 2;
+    s_view.effort = s_effort;
     s_restart = true;
     s_phase = PH_EXPAND;
     s_state = PC_SF_SEARCH;
@@ -3692,7 +4476,13 @@ void pc_sf_sort_toggle(void) {
     if (s_state != PC_SF_MENU) {
         return;
     }
-    s_view.sort_length = !s_view.sort_length;
+    if (strcmp(sort_name(), "length") == 0) {
+        s_view.sort_type = "damage";
+    } else if (strcmp(s_view.sort_type, "damage") == 0) {
+        s_view.sort_type = "position";
+    } else if (strcmp(s_view.sort_type, "position") == 0) {
+        s_view.sort_type = "length";
+    }
     sort_listed();
 }
 

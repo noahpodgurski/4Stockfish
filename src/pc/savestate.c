@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* Dev savestate. Ctrl+S copies the rollback snapshot (net_snapshot.c) out
- * to a file. A later process, booted into the same scene, copies it back.
+/* Dev savestate. Ctrl+S, or Z while the 4stockfish menu is up, copies the
+ * rollback snapshot (net_snapshot.c) out to a file. Ctrl+O picks a file and
+ * copies it back once this process is in that scene. A later process can
+ * still boot with MELEE_SAVESTATE. A file saved from the pause menu still
+ * has the pause set, so the menu starts a search on that frame.
  *
  * The snapshot is host addresses: code and statics in the exe, allocations
  * in MEM1. ASLR puts the exe somewhere else next run, so every pointer that
@@ -17,7 +20,9 @@
 
 #include <dolphin/os.h>
 
+#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_mutex.h>
 #include <SDL3/SDL_time.h>
 
 #include <errno.h>
@@ -49,6 +54,14 @@ extern void pc_savestate_drop_gfx_cache(void);
 static bool s_save_requested;
 static bool s_save_wait_logged;
 static bool s_save_ignored_logged;
+static int s_generation;
+static bool s_message_on;
+static char s_message[96];
+static SDL_Mutex* s_pick_mu;
+static char s_pick_path[1024];
+static bool s_pick_ready;
+static bool s_dialog_open;
+static char s_dialog_dir[1024];
 
 enum { LOAD_NONE = 0, LOAD_UNREAD, LOAD_WAIT, LOAD_DONE, LOAD_FAIL };
 
@@ -240,6 +253,34 @@ static uint64_t slide(uint64_t v, uint64_t lo, uint64_t hi, int64_t delta) {
     return v;
 }
 
+static void set_message(const char* s) {
+    if (s == NULL || s[0] == '\0') {
+        s_message_on = false;
+        return;
+    }
+    snprintf(s_message, sizeof s_message, "%s", s);
+    s_message_on = true;
+}
+
+static bool ensure_pick_mu(void) {
+    if (s_pick_mu == NULL) {
+        s_pick_mu = SDL_CreateMutex();
+    }
+    return s_pick_mu != NULL;
+}
+
+static FILE* open_rb(const char* path) {
+#if defined(_WIN32)
+    wchar_t wide[1024];
+    if (MultiByteToWideChar(CP_UTF8, 0, path, -1, wide, (int)(sizeof wide / sizeof wide[0])) <= 0) {
+        return NULL;
+    }
+    return _wfopen(wide, L"rb");
+#else
+    return fopen(path, "rb");
+#endif
+}
+
 static bool write_one(const char* path, const SavestateInfo* info, const void* payload) {
     FILE* f = fopen(path, "wb");
     bool ok;
@@ -359,6 +400,7 @@ static void flush_save(void) {
         return;
     }
     s_save_requested = false;
+    set_message("saved");
     pc_log_line("savestate: wrote %s (%.2f MB, %s, frame %d). latest.msv matches it", path,
         snap.used / 1048576.0, scene_name(snap.scene), snap.frame);
 }
@@ -369,17 +411,16 @@ static void fail_load(const char* why) {
     free(s_payload);
     s_payload = NULL;
     s_load_state = LOAD_FAIL;
+    set_message("load failed");
 }
 
-static void read_load(void) {
-    const char* path = getenv("MELEE_SAVESTATE");
+static void read_path(const char* path) {
     FILE* f;
-    s_load_state = LOAD_NONE;
-    if (path == NULL || path[0] == '\0') {
-        return;
-    }
+    free(s_payload);
+    s_payload = NULL;
+    s_frames_since_load = -1;
     snprintf(s_load_path, sizeof s_load_path, "%s", path);
-    f = fopen(s_load_path, "rb");
+    f = open_rb(s_load_path);
     if (f == NULL || !savestate_info_read(f, &s_load)) {
         if (f != NULL) {
             fclose(f);
@@ -403,8 +444,18 @@ static void read_load(void) {
     }
     fclose(f);
     s_load_state = LOAD_WAIT;
+    set_message("loading");
     pc_log_line("savestate: read %s (%.2f MB, %s). waiting for that scene", s_load_path,
         s_load.payload_bytes / 1048576.0, scene_name(s_load.scene));
+}
+
+static void read_env(void) {
+    const char* path = getenv("MELEE_SAVESTATE");
+    s_load_state = LOAD_NONE;
+    if (path == NULL || path[0] == '\0') {
+        return;
+    }
+    read_path(path);
 }
 
 static void apply_load(void) {
@@ -522,21 +573,116 @@ static void apply_load(void) {
     }
     snapshot_restore(&snap);
     pc_savestate_drop_gfx_cache();
+    /* Before this tick's search slice. The old root must not be written
+     * back over the file. */
+    pc_sf_on_loaded();
     free(s_payload);
     s_payload = NULL;
     s_load_state = LOAD_DONE;
     s_frames_since_load = 0;
+    s_generation++;
+    set_message("loaded");
     pc_log_line("savestate: restored %s (%s, frame %d, image %+lld, %zu pointers)", s_load_path,
         scene_name(s_load.scene), s_load.frame, (long long)image_delta, moved);
+}
+
+static void take_pick(void) {
+    char path[1024];
+    bool ready = false;
+    if (s_pick_mu == NULL) {
+        return;
+    }
+    SDL_LockMutex(s_pick_mu);
+    if (s_pick_ready) {
+        snprintf(path, sizeof path, "%s", s_pick_path);
+        s_pick_ready = false;
+        ready = true;
+    }
+    SDL_UnlockMutex(s_pick_mu);
+    if (!ready) {
+        return;
+    }
+    if (pc_net_active()) {
+        set_message("not during netplay");
+        return;
+    }
+    if (s_load_state == LOAD_WAIT || s_load_state == LOAD_UNREAD) {
+        SDL_LockMutex(s_pick_mu);
+        s_pick_ready = true;
+        SDL_UnlockMutex(s_pick_mu);
+        set_message("still loading");
+        return;
+    }
+    read_path(path);
+}
+
+static void on_dialog(void* userdata, const char* const* filelist, int filter) {
+    (void)userdata;
+    (void)filter;
+    if (!ensure_pick_mu()) {
+        return;
+    }
+    SDL_LockMutex(s_pick_mu);
+    s_dialog_open = false;
+    if (filelist != NULL && filelist[0] != NULL) {
+        snprintf(s_pick_path, sizeof s_pick_path, "%s", filelist[0]);
+        s_pick_ready = true;
+    }
+    SDL_UnlockMutex(s_pick_mu);
 }
 
 void pc_savestate_request_save(void) {
     s_save_requested = true;
 }
 
+void pc_savestate_request_open(void) {
+    static const SDL_DialogFileFilter filters[] = {
+        {"Melee savestate", "msv"},
+        {"All files", "*"},
+    };
+    SDL_Window* window = NULL;
+    SDL_Window** wins;
+    int n = 0;
+    bool open;
+    if (pc_net_active()) {
+        set_message("not during netplay");
+        return;
+    }
+    if (!ensure_pick_mu()) {
+        set_message("load failed");
+        return;
+    }
+    SDL_LockMutex(s_pick_mu);
+    open = s_dialog_open;
+    if (!open) {
+        s_dialog_open = true;
+    }
+    SDL_UnlockMutex(s_pick_mu);
+    if (open) {
+        return;
+    }
+    savestate_dir(s_dialog_dir, sizeof s_dialog_dir);
+    wins = SDL_GetWindows(&n);
+    if (wins != NULL && n > 0) {
+        window = wins[0];
+    }
+    SDL_free(wins);
+    set_message("choose a file");
+    SDL_ShowOpenFileDialog(on_dialog, NULL, window, filters, 2,
+        s_dialog_dir[0] != '\0' ? s_dialog_dir : NULL, false);
+}
+
+int pc_savestate_generation(void) {
+    return s_generation;
+}
+
+const char* pc_savestate_message(void) {
+    return s_message_on ? s_message : NULL;
+}
+
 void pc_savestate_on_frame(void) {
     if (s_load_state == LOAD_UNREAD) {
-        read_load();
+        read_env();
     }
     flush_save();
 }
@@ -546,8 +692,9 @@ void pc_savestate_on_tick(void) {
         return;
     }
     if (s_load_state == LOAD_UNREAD) {
-        read_load();
+        read_env();
     }
+    take_pick();
     apply_load();
     if (s_load_state == LOAD_DONE && s_frames_since_load >= 0) {
         s_frames_since_load++;

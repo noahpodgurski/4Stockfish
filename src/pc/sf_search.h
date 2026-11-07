@@ -34,11 +34,13 @@ enum {
 
 #define PC_SF_LINES 64 /* every kept candidate can be listed */
 #define PC_SF_LINE_TEXT 72
+#define PC_SF_FOUND 128 /* hits kept for the search's live arrows */
 
 typedef struct PcSfView {
     int state;
     int horizon;
     int endlag;       /* frames out of hitstun a line may spend before it stops */
+    int effort;       /* budget multiplier: 1, 2, 4 or 8 times the trials per frame */
     int depth;        /* frames searched so far */
     int progress;     /* 0..1000 over the whole search, verification included */
     int elapsed_time; /* seconds since this search started */
@@ -52,11 +54,24 @@ typedef struct PcSfView {
         int dmg;
         int frames; /* input frames in this line */
         int advantage; /* hitstun_remaining - actionable_frames at combo end */
+        int position;  /* attacker place minus victim place on the path's last frame */
         bool ko;
         unsigned moves; /* bit per pc_sf_move_label index that hit in this line */
+        bool have_end;  /* the victim was on screen on the path's last frame */
+        float end_x, end_y; /* victim world position on the path's last frame */
+        float vel_x, vel_y; /* victim self plus knockback velocity on that frame */
     } lines[PC_SF_LINES];
+    bool have_root;
+    float root_x, root_y; /* victim world position at the pause */
+    struct {
+        float x, y;   /* victim world position on the frame a trial hit */
+        float vx, vy; /* victim self plus knockback velocity on that frame */
+        bool ko;
+    } found[PC_SF_FOUND]; /* ring of the newest hits the search found */
+    int nfound;
+    int found_head; /* next slot written */
     int filter;       /* 0 for none, else 1 + the move bit a listed line must have */
-    bool sort_length; /* longest line first, instead of KO then damage */
+    char* sort_type; /* longest line first, damage, length, position */
     int play_index;
     int result_dmg;
     bool result_ko;
@@ -80,8 +95,10 @@ void pc_sf_note_io(void);
 int pc_sf_state(void);
 void pc_sf_request(int pause_bit); /* the match was just paused */
 void pc_sf_end(void);              /* the game unpaused itself from the menu */
+void pc_sf_on_loaded(void);        /* a savestate replaced the match; drop the old root */
 void pc_sf_horizon_step(int dir);  /* -1 / +1: 15 frames shorter / longer, then search again */
 void pc_sf_endlag_step(int dir);   /* -1 / +1: 15 frames less / more endlag, then search again */
+void pc_sf_effort_step(void);      /* 1x, 2x, 4x, 8x search budget, then search again */
 void pc_sf_cursor_step(int dir);   /* skips lines the filter hides */
 void pc_sf_filter_step(int dir);   /* -1 / +1: previous / next move present in the list, or none */
 bool pc_sf_line_shown(int i);      /* line i passes the filter */

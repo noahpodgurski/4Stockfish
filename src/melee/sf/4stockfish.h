@@ -19,4 +19,8 @@ void Stockfish_Repause(int pause_bit);
 /// Redraw the menu text from the engine's view.
 void Stockfish_Redraw(void);
 
+/// A savestate just replaced the match. The menu objects in it are not
+/// the ones this process allocated.
+void Stockfish_OnLoad(void);
+
 #endif
